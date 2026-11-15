@@ -19,19 +19,25 @@ function elapsed(a: AgentView): string {
   return `${Math.round(((a.endedAt ?? Date.now()) - a.startedAt) / MS_PER_SECOND)}s`;
 }
 
+/** Fixed-width columns, so a long last line truncates instead of wrapping the row. */
 function Row({ agent, active }: { agent: AgentView; active: boolean }) {
-  const last = agent.lines.at(-1) ?? "starting…";
+  const last = agent.lines.findLast((l) => l.trim() !== "") ?? "starting…";
   return (
     <Box>
-      <Text color={STATUS_COLOR[agent.status]}>{STATUS_ICON[agent.status]} </Text>
-      <Text inverse={active} color={ROLE_COLOR[agent.role]}>
-        {agent.label.slice(0, LABEL).padEnd(LABEL)}
-      </Text>
-      <Text color="gray"> {shortModel(agent.model).slice(0, MODEL).padEnd(MODEL)} {elapsed(agent).padStart(ELAPSED)} </Text>
-      <Box flexShrink={1}>
-        <Text color="gray" wrap="truncate-end">
-          {last}
-        </Text>
+      <Box width={2} flexShrink={0}>
+        <Text color={STATUS_COLOR[agent.status]}>{STATUS_ICON[agent.status]}</Text>
+      </Box>
+      <Box width={LABEL + 1} flexShrink={0}>
+        <Text inverse={active} color={ROLE_COLOR[agent.role]} wrap="truncate-end">{agent.label}</Text>
+      </Box>
+      <Box width={MODEL + 1} flexShrink={0}>
+        <Text color="gray" wrap="truncate-end">{shortModel(agent.model)}</Text>
+      </Box>
+      <Box width={ELAPSED + 1} flexShrink={0}>
+        <Text color="gray">{elapsed(agent).padStart(ELAPSED)}</Text>
+      </Box>
+      <Box flexGrow={1} flexShrink={1} marginLeft={1}>
+        <Text color="gray" wrap="truncate-end">{last.trim()}</Text>
       </Box>
     </Box>
   );

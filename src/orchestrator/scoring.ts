@@ -4,7 +4,7 @@ import { FIBONACCI, type Story } from "#src/orchestrator/plan.js";
 const PERCENT = 100;
 const SCALE_SPAN = 4;
 const SENSITIVE_RISK = 0.75;
-const SENSITIVE_TAGS = new Set(["security", "auth", "payments", "data", "migration", "infra"]);
+const SENSITIVE_TAGS = new Set(["security", "auth", "payments", "migration", "infra"]);
 const TOP_REASONS = 3;
 /** Saturation points: beyond these, more of the same does not make a story harder. */
 const SAT = { reach: 48, lines: 3000, tests: 32, churn: 40, areas: 5 };

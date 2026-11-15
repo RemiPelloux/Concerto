@@ -1,6 +1,7 @@
 import { Box, Text } from "ink";
 import type { Role } from "#src/config/types.js";
 import type { State } from "#src/state/types.js";
+import { meter } from "#src/ui/meter.js";
 import { ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 
 const EFFORT_CELLS = 8;
@@ -13,7 +14,7 @@ function dot(state: State, role: Role): string {
 function SoloistBox({ state }: { state: State }) {
   const solo = state.roles.soloist;
   const running = Object.values(state.stories).find((s) => s.status === "building" && s.role === "soloist");
-  const fill = EFFORT_FILL[running?.effort ?? "high"] ?? 0;
+  const { filled: fill, empty } = meter(EFFORT_FILL[running?.effort ?? "high"] ?? 0, EFFORT_CELLS, EFFORT_CELLS);
   return (
     <Box flexDirection="column" alignItems="center" borderStyle="round" borderColor={ROLE_COLOR.soloist} paddingX={1}>
       <Text color={ROLE_COLOR.soloist} bold>{dot(state, "soloist")} {shortModel(solo.model)} · main session</Text>
@@ -21,7 +22,7 @@ function SoloistBox({ state }: { state: State }) {
       <Text>
         <Text color="gray">effort </Text>
         <Text color={ROLE_COLOR.soloist}>{"█".repeat(fill)}</Text>
-        <Text color="#444444">{"█".repeat(EFFORT_CELLS - fill)}</Text>
+        <Text color="#444444">{"█".repeat(empty)}</Text>
         <Text color="gray"> {running?.effort ?? "high"}</Text>
       </Text>
       <Text color="gray" wrap="truncate-end">{solo.note}</Text>

@@ -1,4 +1,5 @@
 import { Box, Text } from "ink";
+import { meter } from "#src/ui/meter.js";
 import { COLOR, ROLE_COLOR } from "#src/ui/theme.js";
 import { typed } from "#src/ui/tour/useTick.js";
 
@@ -13,11 +14,11 @@ const W = { title: 28, label: 22, key: 7 };
 type Slide = { title: string; body: (t: number) => React.ReactNode };
 
 function Bar({ value, color }: { value: number; color: string }) {
-  const filled = Math.round(Math.min(1, value) * BAR);
+  const { filled, empty } = meter(value, 1, BAR);
   return (
     <Text>
       <Text color={color}>{"█".repeat(filled)}</Text>
-      <Text color="#333333">{"█".repeat(BAR - filled)}</Text>
+      <Text color="#333333">{"█".repeat(empty)}</Text>
     </Text>
   );
 }

@@ -1,6 +1,7 @@
 import { Box, Text } from "ink";
 import type { FileChange, State } from "#src/state/types.js";
 import { windowAround } from "#src/ui/AgentList.js";
+import { meter } from "#src/ui/meter.js";
 import { COLOR } from "#src/ui/theme.js";
 
 const ROWS = 8;
@@ -14,12 +15,12 @@ const WIDTH = FILE + NUM * 2 + BAR + CHROME;
 
 /** A small proportional bar: green for added lines, red for removed. */
 function Bar({ change, max }: { change: FileChange; max: number }) {
-  const total = Math.max(1, Math.round(((change.added + change.removed) / Math.max(1, max)) * BAR));
-  const green = Math.round((change.added / Math.max(1, change.added + change.removed)) * total);
+  const total = Math.max(1, meter(change.added + change.removed, max, BAR).filled);
+  const green = meter(change.added, change.added + change.removed, total);
   return (
     <Text>
-      <Text color={COLOR.good}>{"■".repeat(green)}</Text>
-      <Text color={COLOR.bad}>{"■".repeat(total - green)}</Text>
+      <Text color={COLOR.good}>{"■".repeat(green.filled)}</Text>
+      <Text color={COLOR.bad}>{"■".repeat(green.empty)}</Text>
     </Text>
   );
 }

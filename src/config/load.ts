@@ -27,9 +27,14 @@ export function configPath(cwd: string): string {
   return candidates.find((p) => existsSync(p)) ?? BUNDLED;
 }
 
-/** First launch: nothing but the bundled config would load. */
+/**
+ * First launch: no personal config yet, no `$CONCERTO_CONFIG`, and no project config of its own.
+ * In Concerto's own repository the project file is the bundled default, which does not count.
+ */
 export function isFirstLaunch(cwd: string): boolean {
-  return configPath(cwd) === BUNDLED;
+  const project = resolve(cwd, "concerto.config.json");
+  const ownProject = existsSync(project) && project !== BUNDLED;
+  return !process.env.CONCERTO_CONFIG && !ownProject && !existsSync(userConfigPath());
 }
 
 /** Validates a config object; errors name the file and the path of each bad field. */

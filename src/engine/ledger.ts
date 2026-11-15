@@ -1,5 +1,5 @@
-import type { Price } from "../models/types.js";
-import { addUsage, promptTokens, ZERO_USAGE, type Usage } from "../runner/usage.js";
+import type { Price } from "#src/models/types.js";
+import { addUsage, promptTokens, ZERO_USAGE, type Usage } from "#src/runner/usage.js";
 
 const PER_MILLION = 1_000_000;
 

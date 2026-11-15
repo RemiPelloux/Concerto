@@ -1,10 +1,10 @@
 import { Box, Text, useApp, useInput } from "ink";
 import { useEffect, useState } from "react";
-import { probeAndSave } from "../commands/setup.js";
-import type { Detection } from "../setup/detect.js";
-import { buildUserConfig, ROUTINGS, writeUserConfig, type Routing } from "../setup/user-config.js";
-import { Banner } from "./Banner.js";
-import { COLOR, ROLE_COLOR } from "./theme.js";
+import { probeAndSave } from "#src/commands/setup.js";
+import type { Detection } from "#src/setup/detect.js";
+import { buildUserConfig, ROUTINGS, writeUserConfig, type Routing } from "#src/setup/user-config.js";
+import { Banner } from "#src/ui/Banner.js";
+import { COLOR, ROLE_COLOR } from "#src/ui/theme.js";
 
 const CHOICES = Object.keys(ROUTINGS) as Routing[];
 const NAME_WIDTH = 8;

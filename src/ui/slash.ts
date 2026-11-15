@@ -1,10 +1,10 @@
-import { routingLines, statsLines } from "../commands/info.js";
-import { configPath } from "../config/load.js";
-import { ROLES, type ConcertoConfig } from "../config/types.js";
-import type { Catalog } from "../models/catalog.js";
-import { isBroken, readHealth } from "../models/health.js";
-import { roleChain } from "../models/router.js";
-import type { Store } from "../state/store.js";
+import { routingLines, statsLines } from "#src/commands/info.js";
+import { configPath } from "#src/config/load.js";
+import { ROLES, type ConcertoConfig } from "#src/config/types.js";
+import type { Catalog } from "#src/models/catalog.js";
+import { isBroken, readHealth } from "#src/models/health.js";
+import { roleChain } from "#src/models/router.js";
+import type { Store } from "#src/state/store.js";
 
 export type Panel = { title: string; lines: string[] };
 export type Session = { config: ConcertoConfig; catalog: Catalog };
@@ -65,7 +65,7 @@ function doctorLines(ctx: SlashContext): string[] {
 }
 
 async function reload(ctx: SlashContext): Promise<void> {
-  const [{ loadConfig }, { loadCatalog }] = await Promise.all([import("../config/load.js"), import("../models/catalog.js")]);
+  const [{ loadConfig }, { loadCatalog }] = await Promise.all([import("#src/config/load.js"), import("#src/models/catalog.js")]);
   const config = loadConfig(ctx.cwd);
   const session = { config, catalog: await loadCatalog(config) };
   ctx.setSession(session);
@@ -74,7 +74,7 @@ async function reload(ctx: SlashContext): Promise<void> {
 }
 
 async function probe(ctx: SlashContext): Promise<void> {
-  const { installedTargets, probeAndSave } = await import("../commands/setup.js");
+  const { installedTargets, probeAndSave } = await import("#src/commands/setup.js");
   const targets = await installedTargets(ctx.session.config);
   const lines: string[] = [];
   ctx.show({ title: `Probing ${targets.length} models`, lines: ["one tiny prompt each…"] });
@@ -101,7 +101,7 @@ function prefer(arg: string, ctx: SlashContext): void {
 
 async function orca(arg: string, ctx: SlashContext): Promise<void> {
   if (!arg) return ctx.show({ title: "Usage", lines: ["/orca <request>   build it in a new Orca worktree, in its own tab"] });
-  const { runInOrca } = await import("../commands/orca.js");
+  const { runInOrca } = await import("#src/commands/orca.js");
   await runInOrca(arg);
   ctx.show({ title: "Started in Orca", lines: [`A new worktree is building: ${arg}`] });
 }

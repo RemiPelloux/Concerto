@@ -1,10 +1,10 @@
-import { configPath, userConfigPath } from "../config/load.js";
-import type { ConcertoConfig } from "../config/types.js";
-import type { Catalog } from "../models/catalog.js";
-import { roleChain } from "../models/router.js";
-import { ROLES } from "../config/types.js";
-import { isBroken, readHealth } from "../models/health.js";
-import type { Detection } from "./detect.js";
+import { configPath, userConfigPath } from "#src/config/load.js";
+import type { ConcertoConfig } from "#src/config/types.js";
+import type { Catalog } from "#src/models/catalog.js";
+import { roleChain } from "#src/models/router.js";
+import { ROLES } from "#src/config/types.js";
+import { isBroken, readHealth } from "#src/models/health.js";
+import type { Detection } from "#src/setup/detect.js";
 
 const COUNT_WIDTH = 3;
 const ROLE_WIDTH = 10;

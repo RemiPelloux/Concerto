@@ -1,7 +1,7 @@
 import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { cacheHitRatio } from "./ledger.js";
-import type { State } from "../state/types.js";
+import { cacheHitRatio } from "#src/engine/ledger.js";
+import type { State } from "#src/state/types.js";
 
 const FILE_MODE = 0o600;
 const DIR_MODE = 0o700;

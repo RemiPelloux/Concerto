@@ -1,8 +1,8 @@
 import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { bundledConfigPath, parseConfig, readConfigFile, userConfigPath } from "../config/load.js";
-import type { ConcertoConfig } from "../config/types.js";
-import type { Detection } from "./detect.js";
+import { bundledConfigPath, parseConfig, readConfigFile, userConfigPath } from "#src/config/load.js";
+import type { ConcertoConfig } from "#src/config/types.js";
+import type { Detection } from "#src/setup/detect.js";
 
 const DIR_MODE = 0o700;
 const FILE_MODE = 0o600;

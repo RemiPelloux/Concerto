@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
-import type { Panel } from "./slash.js";
-import { COLOR } from "./theme.js";
+import type { Panel } from "#src/ui/slash.js";
+import { COLOR } from "#src/ui/theme.js";
 
 const MAX_LINES = 24;
 

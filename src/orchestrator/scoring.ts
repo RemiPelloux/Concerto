@@ -1,5 +1,5 @@
-import type { Impact } from "../engine/impact.js";
-import { FIBONACCI, type Story } from "./plan.js";
+import type { Impact } from "#src/engine/impact.js";
+import { FIBONACCI, type Story } from "#src/orchestrator/plan.js";
 
 const PERCENT = 100;
 const SCALE_SPAN = 4;

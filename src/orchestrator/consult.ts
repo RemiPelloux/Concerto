@@ -1,7 +1,7 @@
-import type { Checkpoint } from "../state/types.js";
-import { details, headline, logBrief, readTag, runSegments } from "./briefs.js";
-import { callRole } from "./call.js";
-import type { Concert } from "./concert.js";
+import type { Checkpoint } from "#src/state/types.js";
+import { details, headline, logBrief, readTag, runSegments } from "#src/orchestrator/briefs.js";
+import { callRole } from "#src/orchestrator/call.js";
+import type { Concert } from "#src/orchestrator/concert.js";
 
 const QUESTIONS: Record<Checkpoint, string> = {
   "plan-lock": "Checkpoint: before the plan locks. What did the plan miss?",

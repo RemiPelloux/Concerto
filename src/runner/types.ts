@@ -1,6 +1,6 @@
-import type { Effort } from "../config/types.js";
-import type { RunEvent } from "./events.js";
-import type { Usage } from "./usage.js";
+import type { Effort } from "#src/config/types.js";
+import type { RunEvent } from "#src/runner/events.js";
+import type { Usage } from "#src/runner/usage.js";
 
 export type Backend = "claude-code" | "codex" | "pi";
 

@@ -1,6 +1,6 @@
-import type { ModelInfo } from "../models/types.js";
-import { RESUMABLE } from "../runner/index.js";
-import { hashParts } from "./hash.js";
+import type { ModelInfo } from "#src/models/types.js";
+import { RESUMABLE } from "#src/runner/index.js";
+import { hashParts } from "#src/engine/hash.js";
 
 export type SessionHandle = { dir: string; id: string; resume: boolean; sent: ReadonlySet<string> };
 

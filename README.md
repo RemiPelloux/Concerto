@@ -195,7 +195,9 @@ pnpm dev                           # run from source
 pnpm check                         # types, lint, tests, Pelloux audit
 ```
 
-The code follows the [Pelloux Guidelines](https://github.com/RemiPelloux/pelloux-guidelines). The
+Imports use the `#src/...` alias (package.json `imports`), never `../..` paths: the `source`
+condition points them at TypeScript in development and tests, and at `dist/` once built. The code
+follows the [Pelloux Guidelines](https://github.com/RemiPelloux/pelloux-guidelines). The
 pre-commit hook runs the tests your change can reach, through SmartTest. Security notes are in
 [SECURITY.md](SECURITY.md).
 

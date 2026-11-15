@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
-import { CHECKPOINTS, type Checkpoint, type State } from "../state/types.js";
-import { ROLE_COLOR, shortModel } from "./theme.js";
+import { CHECKPOINTS, type Checkpoint, type State } from "#src/state/types.js";
+import { ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 
 const LABEL: Record<Checkpoint, [string, string]> = {
   "plan-lock": ["before a plan locks", "what did the plan miss?"],

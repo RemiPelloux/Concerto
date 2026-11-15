@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { ModelRef } from "../runner/types.js";
-import type { Price } from "./types.js";
+import type { ModelRef } from "#src/runner/types.js";
+import type { Price } from "#src/models/types.js";
 
 export type PriceIndex = { byRef: Map<string, Price>; byId: Map<string, Price> };
 

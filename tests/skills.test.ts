@@ -1,8 +1,8 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { bundledSkills, installSkills, skillTargets } from "../src/commands/skills.js";
-import { tempDir } from "./fixtures.js";
+import { bundledSkills, installSkills, skillTargets } from "#src/commands/skills.js";
+import { tempDir } from "#tests/fixtures.js";
 
 describe("skills", () => {
   it("ships a skill set, each with a name and a description agents can match on", () => {

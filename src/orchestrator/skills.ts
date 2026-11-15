@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { expandHome } from "../config/load.js";
-import type { SkillRule } from "../config/types.js";
+import { expandHome } from "#src/config/load.js";
+import type { SkillRule } from "#src/config/types.js";
 
 /** Skill rules with their paths resolved and checked once, so routing never touches the disk. */
 export class Skills {

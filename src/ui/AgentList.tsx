@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
-import type { AgentView, State } from "../state/types.js";
-import { COLOR, ROLE_COLOR, shortModel } from "./theme.js";
+import type { AgentView, State } from "#src/state/types.js";
+import { COLOR, ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 
 const ROWS = 8;
 const LABEL = 30;

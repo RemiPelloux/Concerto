@@ -1,7 +1,7 @@
-import { condense } from "../engine/condense.js";
-import type { Segment } from "../engine/segments.js";
-import type { LogEntry, State } from "../state/types.js";
-import type { Plan, Story } from "./plan.js";
+import { condense } from "#src/engine/condense.js";
+import type { Segment } from "#src/engine/segments.js";
+import type { LogEntry, State } from "#src/state/types.js";
+import type { Plan, Story } from "#src/orchestrator/plan.js";
 
 const LOG_TAIL = 30;
 

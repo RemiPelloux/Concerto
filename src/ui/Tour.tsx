@@ -1,8 +1,8 @@
 import { Box, Text, useInput } from "ink";
 import { useState } from "react";
-import { COLOR } from "./theme.js";
-import { SLIDES } from "./tour/slides.js";
-import { useTick } from "./tour/useTick.js";
+import { COLOR } from "#src/ui/theme.js";
+import { SLIDES } from "#src/ui/tour/slides.js";
+import { useTick } from "#src/ui/tour/useTick.js";
 
 const MIN_HEIGHT = 16;
 

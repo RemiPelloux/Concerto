@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
-import { orcaBin, shellQuote, worktreeName } from "../src/commands/orca.js";
+import { orcaBin, shellQuote, worktreeName } from "#src/commands/orca.js";
 
 describe("orca integration", () => {
   it("quotes a request into one literal shell argument, whatever it contains", () => {

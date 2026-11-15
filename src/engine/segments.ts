@@ -1,5 +1,5 @@
-import { approxTokens } from "./condense.js";
-import { hashParts } from "./hash.js";
+import { approxTokens } from "#src/engine/condense.js";
+import { hashParts } from "#src/engine/hash.js";
 
 /**
  * A piece of a user message. Callers list segments from the most stable (repository snapshot,

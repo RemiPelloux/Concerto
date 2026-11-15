@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { gitEnv } from "../runner/env.js";
+import { gitEnv } from "#src/runner/env.js";
 
 const run = promisify(execFile);
 const GIT_TIMEOUT_MS = 15_000;

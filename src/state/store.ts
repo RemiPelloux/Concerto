@@ -1,6 +1,6 @@
-import { EMPTY_LEDGER } from "../engine/ledger.js";
-import { ROLES, type Role } from "../config/types.js";
-import type { AgentView, LogEntry, RoleView, State, StoryView } from "./types.js";
+import { EMPTY_LEDGER } from "#src/engine/ledger.js";
+import { ROLES, type Role } from "#src/config/types.js";
+import type { AgentView, LogEntry, RoleView, State, StoryView } from "#src/state/types.js";
 
 const LOG_LIMIT = 200;
 const AGENT_LINES = 400;

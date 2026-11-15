@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
-import type { FileChange, State } from "../state/types.js";
-import { windowAround } from "./AgentList.js";
-import { COLOR } from "./theme.js";
+import type { FileChange, State } from "#src/state/types.js";
+import { windowAround } from "#src/ui/AgentList.js";
+import { COLOR } from "#src/ui/theme.js";
 
 const ROWS = 8;
 const FILE = 34;

@@ -1,13 +1,13 @@
-import { approxTokens, condense } from "../engine/condense.js";
-import { bump } from "../engine/ledger.js";
-import { readChanges } from "../engine/changes.js";
-import { impactBrief } from "../engine/impact.js";
-import { headline, readTag, runSegments, storyBrief } from "./briefs.js";
-import { overBudget } from "./budget.js";
-import { callRole } from "./call.js";
-import type { Concert } from "./concert.js";
-import { consult } from "./consult.js";
-import type { Story } from "./plan.js";
+import { approxTokens, condense } from "#src/engine/condense.js";
+import { bump } from "#src/engine/ledger.js";
+import { readChanges } from "#src/engine/changes.js";
+import { impactBrief } from "#src/engine/impact.js";
+import { headline, readTag, runSegments, storyBrief } from "#src/orchestrator/briefs.js";
+import { overBudget } from "#src/orchestrator/budget.js";
+import { callRole } from "#src/orchestrator/call.js";
+import type { Concert } from "#src/orchestrator/concert.js";
+import { consult } from "#src/orchestrator/consult.js";
+import type { Story } from "#src/orchestrator/plan.js";
 
 const REVIEWED_ATTEMPTS = 2;
 

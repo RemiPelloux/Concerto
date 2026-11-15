@@ -1,7 +1,7 @@
 import { Box, Text, useInput } from "ink";
 import { useState } from "react";
-import { completeSlash } from "./slash.js";
-import { COLOR } from "./theme.js";
+import { completeSlash } from "#src/ui/slash.js";
+import { COLOR } from "#src/ui/theme.js";
 
 type Props = { enabled: boolean; onSubmit: (text: string) => void; onTab: () => void };
 

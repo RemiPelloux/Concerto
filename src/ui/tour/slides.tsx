@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
-import { COLOR, ROLE_COLOR } from "../theme.js";
-import { typed } from "./useTick.js";
+import { COLOR, ROLE_COLOR } from "#src/ui/theme.js";
+import { typed } from "#src/ui/tour/useTick.js";
 
 const CHARS_PER_TICK = 2;
 const BAR = 24;

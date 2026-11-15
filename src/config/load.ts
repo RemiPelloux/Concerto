@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ConfigSchema, type ConcertoConfig } from "./types.js";
+import { ConfigSchema, type ConcertoConfig } from "#src/config/types.js";
 
 const BUNDLED = fileURLToPath(new URL("../../concerto.config.json", import.meta.url));
 

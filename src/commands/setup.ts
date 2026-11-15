@@ -1,11 +1,11 @@
-import { reachableRefs } from "../models/discover.js";
-import type { ConcertoConfig } from "../config/types.js";
-import { healthPath, saveHealth, type Health } from "../models/health.js";
-import { runModel } from "../runner/index.js";
-import { parseRef } from "../runner/types.js";
-import { detect, type Detection } from "../setup/detect.js";
-import { probeModels } from "../setup/probe.js";
-import { buildUserConfig, candidateRefs, ROUTINGS, writeUserConfig, type Routing } from "../setup/user-config.js";
+import { reachableRefs } from "#src/models/discover.js";
+import type { ConcertoConfig } from "#src/config/types.js";
+import { healthPath, saveHealth, type Health } from "#src/models/health.js";
+import { runModel } from "#src/runner/index.js";
+import { parseRef } from "#src/runner/types.js";
+import { detect, type Detection } from "#src/setup/detect.js";
+import { probeModels } from "#src/setup/probe.js";
+import { buildUserConfig, candidateRefs, ROUTINGS, writeUserConfig, type Routing } from "#src/setup/user-config.js";
 
 const out = (line: string) => process.stdout.write(`${line}\n`);
 
@@ -47,7 +47,7 @@ export async function runProbe(config: ConcertoConfig): Promise<void> {
 
 /** `--init`: the onboarding screen in a terminal, or a direct write in scripts and CI. */
 export async function runInit(routing: string | undefined): Promise<void> {
-  if (process.stdin.isTTY && routing === undefined) return (await import("../ui/launch.js")).runOnboarding();
+  if (process.stdin.isTTY && routing === undefined) return (await import("#src/ui/launch.js")).runOnboarding();
   const detection = await detect();
   const targets = await probeTargets(detection);
   process.stderr.write(`Probing ${targets.length} models, one tiny prompt each...\n`);

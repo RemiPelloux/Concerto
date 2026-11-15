@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { NO_IMPACT, type Impact } from "../src/engine/impact.js";
-import { effortFor } from "../src/models/router.js";
-import { scoreStory } from "../src/orchestrator/scoring.js";
+import { NO_IMPACT, type Impact } from "#src/engine/impact.js";
+import { effortFor } from "#src/models/router.js";
+import { scoreStory } from "#src/orchestrator/scoring.js";
 
 const STORY = { points: 3, complexity: 3, risk: 2, uncertainty: 2, tags: [] as string[] };
 

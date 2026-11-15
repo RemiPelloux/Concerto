@@ -2,13 +2,13 @@ import { execFileSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { fileDiff, parseNumstat, readChanges } from "../src/engine/changes.js";
-import { gitEnv } from "../src/runner/env.js";
-import { AgentFeed } from "../src/orchestrator/feed.js";
-import { Store } from "../src/state/store.js";
-import { windowAround } from "../src/ui/AgentList.js";
-import { completeSlash, parseSlash } from "../src/ui/slash.js";
-import { tempDir } from "./fixtures.js";
+import { fileDiff, parseNumstat, readChanges } from "#src/engine/changes.js";
+import { gitEnv } from "#src/runner/env.js";
+import { AgentFeed } from "#src/orchestrator/feed.js";
+import { Store } from "#src/state/store.js";
+import { windowAround } from "#src/ui/AgentList.js";
+import { completeSlash, parseSlash } from "#src/ui/slash.js";
+import { tempDir } from "#tests/fixtures.js";
 
 describe("agent feed", () => {
   it("turns deltas, tools and errors into lines, written at most every 150 ms", () => {

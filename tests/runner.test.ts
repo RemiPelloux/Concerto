@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseListModels } from "../src/models/discover.js";
-import { childEnv, gitEnv } from "../src/runner/env.js";
-import { parseLine } from "../src/runner/events.js";
-import { buildPiArgs } from "../src/runner/pi.js";
-import { parseRef } from "../src/runner/types.js";
+import { parseListModels } from "#src/models/discover.js";
+import { childEnv, gitEnv } from "#src/runner/env.js";
+import { parseLine } from "#src/runner/events.js";
+import { buildPiArgs } from "#src/runner/pi.js";
+import { parseRef } from "#src/runner/types.js";
 
 describe("model refs", () => {
   it("reads the backend, profile and provider from a ref", () => {

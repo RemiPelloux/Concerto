@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
-import type { Effort } from "../config/types.js";
-import type { RunEvent } from "./events.js";
-import { asArray, asRecord, num, oneLine, parseJsonLine, str, type Json } from "./json.js";
-import { withSkillNote } from "./skill-note.js";
-import { runJsonl } from "./spawn.js";
-import { parseRef, type Runner, type RunRequest } from "./types.js";
+import type { Effort } from "#src/config/types.js";
+import type { RunEvent } from "#src/runner/events.js";
+import { asArray, asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
+import { withSkillNote } from "#src/runner/skill-note.js";
+import { runJsonl } from "#src/runner/spawn.js";
+import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
 
 const TOOL_NAMES: Record<string, string[]> = {
   read: ["Read", "Grep", "Glob"],

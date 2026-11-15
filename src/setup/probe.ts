@@ -1,8 +1,8 @@
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Health } from "../models/health.js";
-import type { Runner } from "../runner/types.js";
+import type { Health } from "#src/models/health.js";
+import type { Runner } from "#src/runner/types.js";
 
 const PROBE_TIMEOUT_MS = 90_000;
 const DEFAULT_CONCURRENCY = 8;

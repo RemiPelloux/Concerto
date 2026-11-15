@@ -1,17 +1,17 @@
 import { readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseRouting } from "../src/commands/setup.js";
-import { parseConfig } from "../src/config/load.js";
-import { estimateStory } from "../src/orchestrator/estimate.js";
-import type { Detection } from "../src/setup/detect.js";
-import { inferTier } from "../src/setup/tiers.js";
-import { buildUserConfig, writeUserConfig } from "../src/setup/user-config.js";
-import { isBroken, readHealth, saveHealth } from "../src/models/health.js";
-import type { Runner } from "../src/runner/types.js";
-import { ZERO_USAGE } from "../src/runner/usage.js";
-import { probeModels, redact } from "../src/setup/probe.js";
-import { CATALOG, tempDir } from "./fixtures.js";
+import { parseRouting } from "#src/commands/setup.js";
+import { parseConfig } from "#src/config/load.js";
+import { estimateStory } from "#src/orchestrator/estimate.js";
+import type { Detection } from "#src/setup/detect.js";
+import { inferTier } from "#src/setup/tiers.js";
+import { buildUserConfig, writeUserConfig } from "#src/setup/user-config.js";
+import { isBroken, readHealth, saveHealth } from "#src/models/health.js";
+import type { Runner } from "#src/runner/types.js";
+import { ZERO_USAGE } from "#src/runner/usage.js";
+import { probeModels, redact } from "#src/setup/probe.js";
+import { CATALOG, tempDir } from "#tests/fixtures.js";
 
 const DETECTION: Detection = {
   claude: true,

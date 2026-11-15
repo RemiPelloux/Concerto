@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { createConcert } from "../src/orchestrator/concert.js";
-import { perform } from "../src/orchestrator/perform.js";
-import { scoreRequest } from "../src/orchestrator/score.js";
-import type { Runner, RunRequest } from "../src/runner/types.js";
-import { Store } from "../src/state/store.js";
-import { CATALOG, PLAN_REPLY, scriptedRunner, tempDir, testConfig } from "./fixtures.js";
+import { createConcert } from "#src/orchestrator/concert.js";
+import { perform } from "#src/orchestrator/perform.js";
+import { scoreRequest } from "#src/orchestrator/score.js";
+import type { Runner, RunRequest } from "#src/runner/types.js";
+import { Store } from "#src/state/store.js";
+import { CATALOG, PLAN_REPLY, scriptedRunner, tempDir, testConfig } from "#tests/fixtures.js";
 
 const is = (role: string) => (r: RunRequest) => r.systemFile.includes(`${role}-`);
 

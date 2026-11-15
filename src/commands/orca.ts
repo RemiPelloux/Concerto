@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { onPath } from "../models/discover.js";
-import { asRecord, parseJsonLine, str } from "../runner/json.js";
+import { onPath } from "#src/models/discover.js";
+import { asRecord, parseJsonLine, str } from "#src/runner/json.js";
 
 const run = promisify(execFile);
 const ORCA_TIMEOUT_MS = 60_000;

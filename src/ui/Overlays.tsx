@@ -1,8 +1,8 @@
 import { Box, Text } from "ink";
-import type { State } from "../state/types.js";
-import { COLOR, ROLE_COLOR, shortModel } from "./theme.js";
-import { Tour } from "./Tour.js";
-import type { Overlay } from "./useNavigation.js";
+import type { State } from "#src/state/types.js";
+import { COLOR, ROLE_COLOR, shortModel } from "#src/ui/theme.js";
+import { Tour } from "#src/ui/Tour.js";
+import type { Overlay } from "#src/ui/useNavigation.js";
 
 const HEIGHT = 30;
 const PERCENT = 100;

@@ -1,16 +1,16 @@
 import { join } from "node:path";
-import type { ConcertoConfig } from "../config/types.js";
-import { buildRepoMap, type RepoMap } from "../engine/repo-map.js";
-import { ResponseCache } from "../engine/response-cache.js";
-import { Sessions } from "../engine/sessions.js";
-import { SystemPrompts } from "../engine/system-prompts.js";
-import { detectToolchain, toolchainNotes } from "../engine/toolchain.js";
-import type { Catalog } from "../models/catalog.js";
-import { roleChain } from "../models/router.js";
-import type { Price } from "../models/types.js";
-import type { Runner } from "../runner/types.js";
-import type { Store } from "../state/store.js";
-import { Skills } from "./skills.js";
+import type { ConcertoConfig } from "#src/config/types.js";
+import { buildRepoMap, type RepoMap } from "#src/engine/repo-map.js";
+import { ResponseCache } from "#src/engine/response-cache.js";
+import { Sessions } from "#src/engine/sessions.js";
+import { SystemPrompts } from "#src/engine/system-prompts.js";
+import { detectToolchain, toolchainNotes } from "#src/engine/toolchain.js";
+import type { Catalog } from "#src/models/catalog.js";
+import { roleChain } from "#src/models/router.js";
+import type { Price } from "#src/models/types.js";
+import type { Runner } from "#src/runner/types.js";
+import type { Store } from "#src/state/store.js";
+import { Skills } from "#src/orchestrator/skills.js";
 
 const BASE36 = 36;
 

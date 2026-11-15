@@ -1,9 +1,9 @@
 import { render } from "ink";
-import { probeTargets } from "../commands/setup.js";
-import { detect } from "../setup/detect.js";
-import { App, type AppDeps } from "./App.js";
-import type { ExitReason } from "./slash.js";
-import { Onboarding } from "./Onboarding.js";
+import { probeTargets } from "#src/commands/setup.js";
+import { detect } from "#src/setup/detect.js";
+import { App, type AppDeps } from "#src/ui/App.js";
+import type { ExitReason } from "#src/ui/slash.js";
+import { Onboarding } from "#src/ui/Onboarding.js";
 
 /** The only module that loads Ink and React: commands that print and exit never import it. */
 export async function launchTui(deps: Omit<AppDeps, "onExit">): Promise<ExitReason> {

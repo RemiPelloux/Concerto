@@ -1,4 +1,4 @@
-import type { ModelRef } from "../runner/types.js";
+import type { ModelRef } from "#src/runner/types.js";
 
 export type Price = { input: number; output: number; cacheRead: number; cacheWrite: number };
 

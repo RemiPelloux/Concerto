@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
-import { cacheHitRatio, type Ledger } from "../engine/ledger.js";
-import { promptTokens } from "../runner/usage.js";
-import { COLOR, ROLE_COLOR } from "./theme.js";
+import { cacheHitRatio, type Ledger } from "#src/engine/ledger.js";
+import { promptTokens } from "#src/runner/usage.js";
+import { COLOR, ROLE_COLOR } from "#src/ui/theme.js";
 
 const BAR = 44;
 const PERCENT = 100;

@@ -1,11 +1,12 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { analyzeImpact, impactBrief } from "../src/engine/impact.js";
-import { PathMatcher, safePaths } from "../src/engine/paths.js";
-import { areaOf, isSensitive } from "../src/engine/signals.js";
-import { ImportGraph, isTestFile, resolveImport } from "../src/engine/import-graph.js";
-import { tempDir } from "./fixtures.js";
+import { analyzeImpact, impactBrief } from "#src/engine/impact.js";
+import { PathMatcher, safePaths } from "#src/engine/paths.js";
+import { areaOf, isSensitive } from "#src/engine/signals.js";
+import { loadAliases } from "#src/engine/aliases.js";
+import { ImportGraph, isTestFile, resolveImport } from "#src/engine/import-graph.js";
+import { tempDir } from "#tests/fixtures.js";
 
 const REPO: Record<string, string> = {
   "src/money.ts": "export const cents = (n: number) => Math.round(n * 100);",
@@ -35,11 +36,23 @@ describe("import graph", () => {
   const files = new Set(Object.keys(REPO));
 
   it("resolves relative TS/JS imports, .js to .ts, index files, and Python modules", () => {
-    expect(resolveImport("src/invoice.ts", "./money.js", files)).toBe("src/money.ts");
-    expect(resolveImport("src/api/routes.ts", "../invoice", files)).toBe("src/invoice.ts");
-    expect(resolveImport("app/service.py", "app.core", files)).toBe("app/core/__init__.py");
-    expect(resolveImport("app/service.py", ".core.db", files)).toBe("app/core/db.py");
-    expect(resolveImport("src/invoice.ts", "zod", files)).toBeNull();
+    expect(resolveImport("src/invoice.ts", "./money.js", { files })).toBe("src/money.ts");
+    expect(resolveImport("src/api/routes.ts", "../invoice", { files })).toBe("src/invoice.ts");
+    expect(resolveImport("app/service.py", "app.core", { files })).toBe("app/core/__init__.py");
+    expect(resolveImport("app/service.py", ".core.db", { files })).toBe("app/core/db.py");
+    expect(resolveImport("src/invoice.ts", "zod", { files })).toBeNull();
+  });
+
+  it("resolves package.json imports and tsconfig paths aliases to repository files", () => {
+    const cwd = tempDir();
+    writeFileSync(join(cwd, "package.json"), JSON.stringify({ imports: { "#src/*": { source: "./src/*", default: "./dist/*" } } }));
+    writeFileSync(join(cwd, "tsconfig.json"), '{\n  // comment\n  "compilerOptions": { "baseUrl": ".", "paths": { "@/*": ["src/*"], "@ui/*": ["src/ui/*"] } },\n}');
+    const aliases = loadAliases(cwd);
+    expect(aliases.map((a) => `${a.prefix}=${a.target}`)).toEqual(["#src/=src/", "@ui/=src/ui/", "@/=src/"]);
+    const r = { files: new Set(["src/money.ts", "src/ui/Button.tsx"]), aliases };
+    expect(resolveImport("src/invoice.ts", "#src/money.js", r)).toBe("src/money.ts");
+    expect(resolveImport("src/app.ts", "@ui/Button", r)).toBe("src/ui/Button.tsx");
+    expect(resolveImport("src/app.ts", "@/money", r)).toBe("src/money.ts");
   });
 
   it("finds every importer through several hops, across import, require and import()", () => {

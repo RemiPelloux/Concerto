@@ -1,5 +1,5 @@
 import { Box, Text } from "ink";
-import { COLOR } from "./theme.js";
+import { COLOR } from "#src/ui/theme.js";
 
 const GLYPHS: Record<string, string[]> = {
   C: [" ████", "██   ", "██   ", "██   ", " ████"],

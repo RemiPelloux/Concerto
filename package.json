@@ -6,6 +6,13 @@
   "bin": {
     "concerto": "dist/cli.js"
   },
+  "imports": {
+    "#src/*": {
+      "source": "./src/*",
+      "default": "./dist/*"
+    },
+    "#tests/*": "./tests/*"
+  },
   "files": [
     ".pelloux/GUIDELINES.md",
     "concerto.config.json",
@@ -19,7 +26,7 @@
   },
   "packageManager": "pnpm@10.34.9",
   "scripts": {
-    "dev": "tsx src/cli.ts",
+    "dev": "tsx --conditions=source src/cli.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/cli.js",
     "typecheck": "tsc --noEmit",
@@ -33,6 +40,11 @@
   "repository": "github:RemiPelloux/Concerto",
   "homepage": "https://remipelloux.github.io/Concerto/",
   "license": "MIT",
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "esbuild"
+    ]
+  },
   "dependencies": {
     "ink": "^6.8.0",
     "react": "^19.3.1",
@@ -48,10 +60,5 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.2",
     "vitest": "^5.1.0"
-  },
-  "pnpm": {
-    "ignoredBuiltDependencies": [
-      "esbuild"
-    ]
   }
 }

@@ -1,9 +1,9 @@
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
-import { childEnv } from "./env.js";
-import type { RunEvent } from "./events.js";
-import type { RunResult } from "./types.js";
-import { addUsage, ZERO_USAGE } from "./usage.js";
+import { childEnv } from "#src/runner/env.js";
+import type { RunEvent } from "#src/runner/events.js";
+import type { RunResult } from "#src/runner/types.js";
+import { addUsage, ZERO_USAGE } from "#src/runner/usage.js";
 
 const STDERR_TAIL = 2000;
 const ERROR_TAIL = 400;

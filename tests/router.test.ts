@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { Catalog } from "../src/models/catalog.js";
-import { blendedPrice, preferFirst, requiredTier, reviewChain, roleChain, routeStory, tierChain } from "../src/models/router.js";
-import { CATALOG, MODELS, testConfig } from "./fixtures.js";
+import { Catalog } from "#src/models/catalog.js";
+import { blendedPrice, preferFirst, requiredTier, reviewChain, roleChain, routeStory, tierChain } from "#src/models/router.js";
+import { CATALOG, MODELS, testConfig } from "#tests/fixtures.js";
 
 const refs = (models: { ref: string }[]) => models.map((m) => m.ref);
 

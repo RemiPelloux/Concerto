@@ -1,8 +1,8 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { packageRoot } from "../config/load.js";
-import type { Role } from "../config/types.js";
-import { hashParts } from "./hash.js";
+import { packageRoot } from "#src/config/load.js";
+import type { Role } from "#src/config/types.js";
+import { hashParts } from "#src/engine/hash.js";
 
 const GUIDELINES = join(".pelloux", "GUIDELINES.md");
 const SEPARATOR = "\n\n---\n\n";

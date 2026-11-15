@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
-import type { Role } from "../config/types.js";
-import type { State } from "../state/types.js";
-import { ROLE_COLOR, shortModel } from "./theme.js";
+import type { Role } from "#src/config/types.js";
+import type { State } from "#src/state/types.js";
+import { ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 
 const EFFORT_CELLS = 8;
 const EFFORT_FILL: Record<string, number> = { low: 2, medium: 4, high: 6, xhigh: 7, max: 8 };

@@ -1,8 +1,8 @@
-import type { Effort, Role } from "../config/types.js";
-import type { Impact } from "../engine/impact.js";
-import type { Ledger } from "../engine/ledger.js";
-import type { Factor } from "../orchestrator/scoring.js";
-import type { Plan } from "../orchestrator/plan.js";
+import type { Effort, Role } from "#src/config/types.js";
+import type { Impact } from "#src/engine/impact.js";
+import type { Ledger } from "#src/engine/ledger.js";
+import type { Factor } from "#src/orchestrator/scoring.js";
+import type { Plan } from "#src/orchestrator/plan.js";
 
 export type Phase = "idle" | "scoring" | "planned" | "running" | "done" | "failed";
 export type Activity = "idle" | "working" | "waiting" | "done";

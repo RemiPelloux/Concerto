@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { executionWaves, parsePlan, type Story } from "../src/orchestrator/plan.js";
-import { PLAN_REPLY } from "./fixtures.js";
+import { executionWaves, parsePlan, type Story } from "#src/orchestrator/plan.js";
+import { PLAN_REPLY } from "#tests/fixtures.js";
 
 const ids = (waves: Story[][]) => waves.map((w) => w.map((s) => s.id));
 

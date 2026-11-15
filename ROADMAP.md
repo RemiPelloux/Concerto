@@ -31,9 +31,9 @@ Weights and estimates are set by hand.
 
 ## 0.4: reach
 
-- **Import graph for more languages.** Go, Rust, PHP, Java and Kotlin, plus TypeScript path
-  aliases and workspace packages. Today the graph covers relative imports in TS, JS and Python;
-  SmartTest covers more when the repository uses it.
+- **Import graph for more languages.** Go, Rust, PHP, Java and Kotlin, plus workspace packages.
+  Today the graph covers TS, JS and Python, with relative imports, package.json `imports` and
+  tsconfig `paths`; SmartTest covers more when the repository uses it.
 - **Pull requests.** Optional commit per story and `--pr` to open a pull request with the run
   report as its description.
 - **Resumable Codex sessions.** Codex calls are stateless here, so a retry resends everything.

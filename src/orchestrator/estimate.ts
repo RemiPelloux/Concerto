@@ -1,4 +1,4 @@
-import type { ModelInfo } from "../models/types.js";
+import type { ModelInfo } from "#src/models/types.js";
 
 const PER_MILLION = 1_000_000;
 /** Rough agent traffic per story point, measured on small runs: mostly cached prompt tokens. */

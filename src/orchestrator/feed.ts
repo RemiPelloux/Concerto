@@ -1,5 +1,5 @@
-import type { RunEvent } from "../runner/events.js";
-import type { Store } from "../state/store.js";
+import type { RunEvent } from "#src/runner/events.js";
+import type { Store } from "#src/state/store.js";
 
 const FLUSH_MS = 150;
 const MAX_LINE = 400;

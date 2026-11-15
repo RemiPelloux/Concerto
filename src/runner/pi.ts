@@ -1,6 +1,6 @@
-import { parseLine } from "./events.js";
-import { runJsonl } from "./spawn.js";
-import type { Runner, RunRequest } from "./types.js";
+import { parseLine } from "#src/runner/events.js";
+import { runJsonl } from "#src/runner/spawn.js";
+import type { Runner, RunRequest } from "#src/runner/types.js";
 
 export function piBin(): string {
   return process.env.CONCERTO_PI_BIN || "pi";

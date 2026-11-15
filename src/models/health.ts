@@ -1,7 +1,7 @@
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { z } from "zod";
-import { userConfigPath } from "../config/load.js";
+import { userConfigPath } from "#src/config/load.js";
 
 const MS_PER_HOUR = 3_600_000;
 /** A failed probe keeps a model out of routing for a day, then it gets another chance. */

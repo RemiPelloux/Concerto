@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
-import type { LogEntry } from "../state/types.js";
-import { COLOR, ROLE_COLOR } from "./theme.js";
+import type { LogEntry } from "#src/state/types.js";
+import { COLOR, ROLE_COLOR } from "#src/ui/theme.js";
 
 const VISIBLE = 6;
 const LABEL_WIDTH = 10;

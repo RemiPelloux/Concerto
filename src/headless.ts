@@ -1,6 +1,6 @@
-import type { Concert } from "./orchestrator/concert.js";
-import { perform } from "./orchestrator/perform.js";
-import { scoreRequest } from "./orchestrator/score.js";
+import type { Concert } from "#src/orchestrator/concert.js";
+import { perform } from "#src/orchestrator/perform.js";
+import { scoreRequest } from "#src/orchestrator/score.js";
 
 const LABEL = 12;
 const DOLLAR_DIGITS = 3;

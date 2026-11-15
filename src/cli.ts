@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { OPTIONS, USAGE } from "./commands/options.js";
+import { OPTIONS, USAGE } from "#src/commands/options.js";
 
 /**
  * Entry point. Kept tiny on purpose: `--help` and `--version` load nothing else, the commands
@@ -14,7 +14,7 @@ async function main(): Promise<void> {
     const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
     return void process.stdout.write(`concerto ${pkg.version}\n`);
   }
-  const { run } = await import("./main.js");
+  const { run } = await import("#src/main.js");
   await run(values, positionals.join(" ").trim());
 }
 

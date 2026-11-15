@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
-import type { Story } from "../orchestrator/plan.js";
-import type { State, StoryStatus, StoryView } from "../state/types.js";
-import { COLOR, ROLE_COLOR, shortModel } from "./theme.js";
+import type { Story } from "#src/orchestrator/plan.js";
+import type { State, StoryStatus, StoryView } from "#src/state/types.js";
+import { COLOR, ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 
 const STATUS_COLOR: Record<StoryStatus, string> = {
   queued: "gray",

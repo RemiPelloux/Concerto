@@ -1,7 +1,7 @@
-import { runClaude } from "./claude.js";
-import { runCodex } from "./codex.js";
-import { runPi } from "./pi.js";
-import { parseRef, type Backend, type Runner } from "./types.js";
+import { runClaude } from "#src/runner/claude.js";
+import { runCodex } from "#src/runner/codex.js";
+import { runPi } from "#src/runner/pi.js";
+import { parseRef, type Backend, type Runner } from "#src/runner/types.js";
 
 const BACKENDS: Record<Backend, Runner> = { "claude-code": runClaude, codex: runCodex, pi: runPi };
 

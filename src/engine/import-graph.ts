@@ -1,5 +1,6 @@
 import { readFileSync, statSync } from "node:fs";
 import { join, posix } from "node:path";
+import { loadAliases, type Alias } from "#src/engine/aliases.js";
 
 const SOURCE = /\.(?:[cm]?[jt]sx?|py)$/;
 const JS_EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
@@ -35,12 +36,20 @@ function pyCandidates(from: string, spec: string): string[] {
   return [`${base}.py`, `${base}/__init__.py`];
 }
 
+export type Resolution = { files: ReadonlySet<string>; aliases?: readonly Alias[] };
+
+/** A JS/TS specifier as a repository path: relative, or through a declared alias. Else null. */
+function jsBase(from: string, spec: string, aliases: readonly Alias[]): string | null {
+  if (spec.startsWith(".")) return posix.normalize(posix.join(posix.dirname(from), spec));
+  const alias = aliases.find((a) => spec.startsWith(a.prefix));
+  return alias ? posix.normalize(posix.join(alias.target, spec.slice(alias.prefix.length))) : null;
+}
+
 /** Local imports only: packages are not part of the repository's blast radius. */
-export function resolveImport(from: string, spec: string, files: ReadonlySet<string>): string | null {
-  const candidates = from.endsWith(".py")
-    ? pyCandidates(from, spec)
-    : spec.startsWith(".") ? jsCandidates(posix.normalize(posix.join(posix.dirname(from), spec))) : [];
-  return candidates.find((c) => files.has(c)) ?? null;
+export function resolveImport(from: string, spec: string, r: Resolution): string | null {
+  if (from.endsWith(".py")) return pyCandidates(from, spec).find((c) => r.files.has(c)) ?? null;
+  const base = jsBase(from, spec, r.aliases ?? []);
+  return base === null ? null : (jsCandidates(base).find((c) => r.files.has(c)) ?? null);
 }
 
 function specifiers(path: string, text: string): string[] {
@@ -63,7 +72,8 @@ function readSource(cwd: string, path: string): string {
 
 /**
  * Who imports whom, for JavaScript, TypeScript and Python, built once per run from the
- * repository snapshot. Relative imports only; SmartTest, when installed, handles the rest.
+ * repository snapshot. Relative imports and the aliases the repository declares (package.json
+ * `imports`, tsconfig `paths`); SmartTest, when installed, handles the rest.
  */
 export class ImportGraph {
   private readonly importers = new Map<string, Set<string>>();
@@ -73,12 +83,12 @@ export class ImportGraph {
     private readonly cwd: string,
     files: readonly string[],
   ) {
-    const known = new Set(files);
+    const resolution = { files: new Set(files), aliases: loadAliases(cwd) };
     files.filter((f) => SOURCE.test(f)).slice(0, MAX_FILES).forEach((from) => {
       const text = readSource(cwd, from);
       this.lineCounts.set(from, countLines(text));
       specifiers(from, text).forEach((spec) => {
-        const target = resolveImport(from, spec, known);
+        const target = resolveImport(from, spec, resolution);
         if (target && target !== from) this.importers.set(target, (this.importers.get(target) ?? new Set()).add(from));
       });
     });

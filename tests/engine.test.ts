@@ -1,16 +1,16 @@
 import { readdirSync, readFileSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { collapseRepeats, condense } from "../src/engine/condense.js";
-import { cacheHitRatio, EMPTY_LEDGER, record } from "../src/engine/ledger.js";
-import { summarizeDirs } from "../src/engine/repo-map.js";
-import { ResponseCache } from "../src/engine/response-cache.js";
-import { assemble, normalizeForKey } from "../src/engine/segments.js";
-import { Sessions } from "../src/engine/sessions.js";
-import { readStats, saveRun } from "../src/engine/stats.js";
-import { SystemPrompts } from "../src/engine/system-prompts.js";
-import { toolchainNotes } from "../src/engine/toolchain.js";
-import { CATALOG, tempDir } from "./fixtures.js";
+import { collapseRepeats, condense } from "#src/engine/condense.js";
+import { cacheHitRatio, EMPTY_LEDGER, record } from "#src/engine/ledger.js";
+import { summarizeDirs } from "#src/engine/repo-map.js";
+import { ResponseCache } from "#src/engine/response-cache.js";
+import { assemble, normalizeForKey } from "#src/engine/segments.js";
+import { Sessions } from "#src/engine/sessions.js";
+import { readStats, saveRun } from "#src/engine/stats.js";
+import { SystemPrompts } from "#src/engine/system-prompts.js";
+import { toolchainNotes } from "#src/engine/toolchain.js";
+import { CATALOG, tempDir } from "#tests/fixtures.js";
 
 const RESULT = { text: "hi", usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, cost: 0 }, turns: 1 };
 const OWNER_ONLY = 0o600;

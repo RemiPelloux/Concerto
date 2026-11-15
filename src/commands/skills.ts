@@ -1,7 +1,7 @@
 import { cpSync, existsSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { packageRoot } from "../config/load.js";
+import { packageRoot } from "#src/config/load.js";
 
 /** Where each agent looks for skills. Only directories that already exist are used. */
 export function skillTargets(home = homedir()): string[] {

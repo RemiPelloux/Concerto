@@ -1,10 +1,10 @@
-import { writeReport } from "../engine/report.js";
-import { saveRun } from "../engine/stats.js";
-import { runOutcome } from "./budget.js";
-import { buildStory } from "./build.js";
-import type { Concert } from "./concert.js";
-import { consult } from "./consult.js";
-import { executionWaves, type Story } from "./plan.js";
+import { writeReport } from "#src/engine/report.js";
+import { saveRun } from "#src/engine/stats.js";
+import { runOutcome } from "#src/orchestrator/budget.js";
+import { buildStory } from "#src/orchestrator/build.js";
+import type { Concert } from "#src/orchestrator/concert.js";
+import { consult } from "#src/orchestrator/consult.js";
+import { executionWaves, type Story } from "#src/orchestrator/plan.js";
 
 async function inBatches(items: Story[], size: number, fn: (s: Story) => Promise<boolean>): Promise<boolean[]> {
   const results: boolean[] = [];

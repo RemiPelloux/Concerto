@@ -1,12 +1,12 @@
 import { useApp, useInput } from "ink";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
-import { createConcert, type Concert } from "../orchestrator/concert.js";
-import { perform } from "../orchestrator/perform.js";
-import { scoreRequest } from "../orchestrator/score.js";
-import type { Store } from "../state/store.js";
-import type { State } from "../state/types.js";
-import type { AppDeps } from "./App.js";
-import { runSlash, type ExitReason, type Panel, type Session } from "./slash.js";
+import { createConcert, type Concert } from "#src/orchestrator/concert.js";
+import { perform } from "#src/orchestrator/perform.js";
+import { scoreRequest } from "#src/orchestrator/score.js";
+import type { Store } from "#src/state/store.js";
+import type { State } from "#src/state/types.js";
+import type { AppDeps } from "#src/ui/App.js";
+import { runSlash, type ExitReason, type Panel, type Session } from "#src/ui/slash.js";
 
 type Run = { concert: Concert | null; abort: AbortController };
 type Controls = { state: State; panel: Panel | null; submit: (text: string) => void };

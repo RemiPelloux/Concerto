@@ -1,4 +1,4 @@
-import type { Role } from "../config/types.js";
+import type { Role } from "#src/config/types.js";
 
 export const COLOR = {
   brass: "#E0A458",

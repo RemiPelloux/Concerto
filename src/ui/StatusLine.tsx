@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
-import type { State } from "../state/types.js";
-import { COLOR, ROLE_COLOR, shortModel } from "./theme.js";
-import type { Zone } from "./useNavigation.js";
+import type { State } from "#src/state/types.js";
+import { COLOR, ROLE_COLOR, shortModel } from "#src/ui/theme.js";
+import type { Zone } from "#src/ui/useNavigation.js";
 
 const HINT: Record<State["phase"], string> = {
   idle: "enter to score · / for commands · tab to look around",

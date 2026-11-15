@@ -1,6 +1,6 @@
-import type { ConcertoConfig, Effort, Role } from "../config/types.js";
-import type { Catalog } from "./catalog.js";
-import type { ModelInfo } from "./types.js";
+import type { ConcertoConfig, Effort, Role } from "#src/config/types.js";
+import type { Catalog } from "#src/models/catalog.js";
+import type { ModelInfo } from "#src/models/types.js";
 
 /** Typical agent traffic reads about three tokens for every one it writes. */
 const INPUT_SHARE = 0.75;

@@ -2,11 +2,11 @@ import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { childEnv } from "../runner/env.js";
-import { asArray, asRecord, parseJsonLine, str } from "../runner/json.js";
-import { ImportGraph, isCodeFile, isTestFile } from "./import-graph.js";
-import { PathMatcher } from "./paths.js";
-import { areaOf, churnCounts, isSensitive } from "./signals.js";
+import { childEnv } from "#src/runner/env.js";
+import { asArray, asRecord, parseJsonLine, str } from "#src/runner/json.js";
+import { ImportGraph, isCodeFile, isTestFile } from "#src/engine/import-graph.js";
+import { PathMatcher } from "#src/engine/paths.js";
+import { areaOf, churnCounts, isSensitive } from "#src/engine/signals.js";
 
 const run = promisify(execFile);
 const EXPLAIN_TIMEOUT_MS = 30_000;

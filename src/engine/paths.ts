@@ -1,5 +1,5 @@
 import { posix } from "node:path";
-import { isTestFile } from "./import-graph.js";
+import { isTestFile } from "#src/engine/import-graph.js";
 
 const MAX_FILES_PER_STORY = 20;
 /** Shorter stems ("db", "api") match too much to be a safe correction. */

@@ -1,10 +1,10 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { ConcertoConfig } from "../src/config/types.js";
-import { Catalog } from "../src/models/catalog.js";
-import type { ModelInfo } from "../src/models/types.js";
-import { parseRef, type Runner, type RunRequest } from "../src/runner/types.js";
+import type { ConcertoConfig } from "#src/config/types.js";
+import { Catalog } from "#src/models/catalog.js";
+import type { ModelInfo } from "#src/models/types.js";
+import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
 
 const price = (input: number, output: number) => ({ input, output, cacheRead: input / 10, cacheWrite: input * 1.25 });
 

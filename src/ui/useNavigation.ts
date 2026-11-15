@@ -1,7 +1,7 @@
 import { useInput } from "ink";
 import { useState } from "react";
-import { fileDiff } from "../engine/changes.js";
-import type { State } from "../state/types.js";
+import { fileDiff } from "#src/engine/changes.js";
+import type { State } from "#src/state/types.js";
 
 export const ZONES = ["prompt", "agents", "stories", "changes"] as const;
 export type Zone = (typeof ZONES)[number];

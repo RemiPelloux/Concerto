@@ -1,12 +1,12 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildClaudeArgs, parseClaudeLine, sessionUuid } from "../src/runner/claude.js";
-import { buildCodexArgs, codexInput, codexParser } from "../src/runner/codex.js";
-import { parseLine } from "../src/runner/events.js";
-import { runJsonl } from "../src/runner/spawn.js";
-import type { RunRequest } from "../src/runner/types.js";
-import { tempDir } from "./fixtures.js";
+import { buildClaudeArgs, parseClaudeLine, sessionUuid } from "#src/runner/claude.js";
+import { buildCodexArgs, codexInput, codexParser } from "#src/runner/codex.js";
+import { parseLine } from "#src/runner/events.js";
+import { runJsonl } from "#src/runner/spawn.js";
+import type { RunRequest } from "#src/runner/types.js";
+import { tempDir } from "#tests/fixtures.js";
 
 function request(patch: Partial<RunRequest> = {}): RunRequest {
   const dir = tempDir();

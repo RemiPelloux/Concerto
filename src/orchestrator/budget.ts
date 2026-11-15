@@ -1,4 +1,4 @@
-import type { Concert } from "./concert.js";
+import type { Concert } from "#src/orchestrator/concert.js";
 
 const CENTS = 2;
 

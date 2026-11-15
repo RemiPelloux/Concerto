@@ -1,10 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { codexHome, codexProfiles, codexSlugs, onPath, piRefs } from "../models/discover.js";
-import { claudeBin } from "../runner/claude.js";
-import { codexBin } from "../runner/codex.js";
-import { piBin } from "../runner/pi.js";
-import { inferTier } from "./tiers.js";
+import { codexHome, codexProfiles, codexSlugs, onPath, piRefs } from "#src/models/discover.js";
+import { claudeBin } from "#src/runner/claude.js";
+import { codexBin } from "#src/runner/codex.js";
+import { piBin } from "#src/runner/pi.js";
+import { inferTier } from "#src/setup/tiers.js";
 
 /** Claude Code accepts these ids; it has no command that lists them. */
 const CLAUDE_CODE_MODELS = ["claude-fable-5-2", "claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"];

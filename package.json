@@ -7,10 +7,12 @@
     "concerto": "dist/cli.js"
   },
   "files": [
+    ".pelloux/GUIDELINES.md",
+    "concerto.config.json",
     "dist",
     "prompts",
-    "concerto.config.json",
-    ".pelloux/GUIDELINES.md"
+    "scripts/install.sh",
+    "skills"
   ],
   "engines": {
     "node": ">=22"

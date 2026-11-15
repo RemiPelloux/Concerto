@@ -200,8 +200,7 @@
         "claude-code/claude-opus-5-5",
         "anthropic/claude-opus-5-5",
         "ce-claude/claude-opus-5-5"
-      ],
-      "effort": "high"
+      ]
     },
     {
       "name": "complex-build",
@@ -212,8 +211,7 @@
         "claude-code/claude-opus-5-5",
         "anthropic/claude-opus-5-5",
         "ce-claude/claude-opus-5-5"
-      ],
-      "effort": "high"
+      ]
     },
     {
       "name": "light-build",
@@ -225,8 +223,7 @@
         "codex@ce-gpt/gpt-6.1-sol",
         "openai/gpt-6.1-sol",
         "ce-gpt/gpt-6.1-sol"
-      ],
-      "effort": "medium"
+      ]
     }
   ],
   "reviews": [

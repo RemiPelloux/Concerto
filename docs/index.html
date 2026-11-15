@@ -50,17 +50,20 @@
       <div class="split">
         <div class="split-text">
           <h2 id="scoring-title" class="head reveal">How a story is scored</h2>
-          <p class="reveal">A scorer model reads your request and writes user stories. Each story gets Fibonacci points (1, 2, 3, 5, 8 or 13), complexity, risk and value on a 1 to 5 scale, tags, and the stories it depends on.</p>
+          <p class="reveal">A scorer model reads your request and writes user stories. Each story gets Fibonacci points (1, 2, 3, 5, 8 or 13), complexity, risk, value and scope uncertainty on a 1 to 5 scale, tags, and the stories it depends on.</p>
           <p class="reveal">It also names the files each story will touch. Concerto checks them against the repository, matches misremembered paths to the real files, then measures the story's reach: those files, every file that imports them, and the tests that cover them, from SmartTest or from its own import graph.</p>
           <p class="reveal">The difficulty score from 0 to 100 is computed in code. No model is asked for it, so the same story always gets the same number.</p>
-          <pre class="reveal"><code>score = 40% complexity
-      + 25% risk
-      + 15% points
-      + 20% reach
+          <pre class="reveal"><code>from the model           measured in the repo
+complexity   22%         reach (importers)  14%
+risk         16%         coverage gap       10%
+effort       10%         size of files       8%
+uncertainty   8%         tests to run        4%
+                         churn, 90 days      4%
+                         areas touched       4%
 
-reach is files + importers + tests,
-on a log scale that tops out at 64.
-No file named: 50 / 30 / 20.</code></pre>
+risk is at least 4/5 for auth, payments,
+migrations and CI. No file named: the
+model's four factors are reweighted.</code></pre>
         </div>
 
         <form class="calc reveal" data-ui aria-labelledby="calc-title" onsubmit="return false">
@@ -97,18 +100,18 @@ No file named: 50 / 30 / 20.</code></pre>
             </div>
           </fieldset>
           <fieldset>
-            <legend>Reach: files, importers and tests</legend>
+            <legend>What it touches in the repository</legend>
             <div class="seg">
-              <label><input type="radio" name="reach" value="0"><span>none</span></label>
-              <label><input type="radio" name="reach" value="2"><span>2</span></label>
-              <label><input type="radio" name="reach" value="8" checked><span>8</span></label>
-              <label><input type="radio" name="reach" value="24"><span>24</span></label>
-              <label><input type="radio" name="reach" value="64"><span>64+</span></label>
+              <label><input type="radio" name="reach" value="none"><span>unknown</span></label>
+              <label><input type="radio" name="reach" value="quiet"><span>quiet</span></label>
+              <label><input type="radio" name="reach" value="typical" checked><span>typical</span></label>
+              <label><input type="radio" name="reach" value="wide"><span>wide</span></label>
             </div>
           </fieldset>
+          <label class="check"><input type="checkbox" name="sensitive"> Touches auth, payments or migrations</label>
           <label class="check"><input type="checkbox" name="ui"> Tagged UI/UX</label>
           <div class="calc-out" aria-live="polite">
-            <output name="score" class="calc-score">43</output>
+            <output name="score" class="calc-score">45</output>
             <dl>
               <div><dt>Built by</dt><dd data-out="builder"><span class="dot dot-soloist"></span>GPT-6.1 Sol, through Codex CLI</dd></div>
               <div><dt>Reviewed by</dt><dd data-out="reviewer"><span class="dot dot-critic"></span>the critic, Claude Sonnet 5.5</dd></div>

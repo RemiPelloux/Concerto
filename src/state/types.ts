@@ -43,6 +43,8 @@ export type AgentView = {
   status: "working" | "done" | "failed";
   lines: string[];
   startedAt: number;
+  /** When the agent last printed something: a long gap means it waits on a command, not a hang. */
+  lastAt: number;
   endedAt: number | null;
 };
 

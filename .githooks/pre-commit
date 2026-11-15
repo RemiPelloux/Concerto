@@ -2,7 +2,7 @@
 # >>> smarttest >>>
 # Runs only the tests the staged change can affect (https://github.com/RemiPelloux/SmarttyTest).
 if [ -x node_modules/.bin/smarttest ]; then
-  npx --no-install smarttest run --staged --hook || exit 1
+  pnpm exec smarttest run --staged --hook || exit 1
 else
   echo "smarttest is not installed: install the project's dependencies first. The affected tests were not run, so the commit stops here (--no-verify skips this check)." >&2
   exit 1
@@ -11,4 +11,4 @@ fi
 # Pelloux rule 10: check the staged files before every commit.
 set -e
 python3 .pelloux/pelloux.py audit --staged
-npx --no-install tsc --noEmit
+pnpm exec tsc --noEmit

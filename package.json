@@ -6,9 +6,16 @@
   "bin": {
     "concerto": "dist/cli.js"
   },
+  "files": [
+    "dist",
+    "prompts",
+    "concerto.config.json",
+    ".pelloux/GUIDELINES.md"
+  ],
   "engines": {
     "node": ">=22"
   },
+  "packageManager": "pnpm@10.34.9",
   "scripts": {
     "dev": "tsx src/cli.tsx",
     "build": "tsc -p tsconfig.build.json",
@@ -16,14 +23,14 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint --max-warnings 0 .",
     "test": "vitest run",
-    "audit": "python3 .pelloux/pelloux.py audit",
-    "check": "npm run typecheck && npm run lint && npm test && npm run audit",
     "test:affected": "smarttest run --affected",
-    "test:explain": "smarttest explain"
+    "test:explain": "smarttest explain",
+    "pelloux": "python3 .pelloux/pelloux.py audit",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm pelloux"
   },
-  "license": "MIT",
   "repository": "github:RemiPelloux/Concerto",
   "homepage": "https://remipelloux.github.io/Concerto/",
+  "license": "MIT",
   "dependencies": {
     "ink": "^6.8.0",
     "react": "^19.3.1",
@@ -39,5 +46,10 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.2",
     "vitest": "^5.1.0"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

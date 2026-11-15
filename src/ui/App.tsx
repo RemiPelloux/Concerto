@@ -23,7 +23,7 @@ import { StatusLine } from "#src/ui/StatusLine.js";
 import { StoryBoard } from "#src/ui/StoryBoard.js";
 import { ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 import { useConcert } from "#src/ui/useConcert.js";
-import { useNavigation, type Navigation } from "#src/ui/useNavigation.js";
+import { TYPING_PHASES, useNavigation, type Navigation } from "#src/ui/useNavigation.js";
 
 /** Below this many rows the decorative diagram is left out, so the useful parts fit. */
 const ROOMY_ROWS = 72;
@@ -130,7 +130,7 @@ export function App(deps: AppDeps) {
   const nav = useNavigation(state, deps.cwd, deps.showTour);
   const { panel, submit } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }) });
   const brain = useMemo(() => shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? ""), [deps.catalog, deps.config]);
-  const idle = ["idle", "done", "failed"].includes(state.phase);
+  const idle = TYPING_PHASES.includes(state.phase);
   if (nav.overlay) return <OverlayScreen state={state} nav={nav} session={deps.log.id} />;
   return (
     <Box flexDirection="column" paddingX={1}>

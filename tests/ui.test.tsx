@@ -10,6 +10,7 @@ import { CATALOG, scriptedRunner, tempDir, testConfig } from "#tests/fixtures.js
 
 const TOOL_EVENTS = 30;
 const ESCAPE = "\u001b";
+const TAB = "\t";
 
 /** A roomy terminal that keeps every frame Ink writes. */
 class Terminal extends EventEmitter {
@@ -109,6 +110,23 @@ describe("app rendering", () => {
     keyboard.press(ESCAPE);
     await nextFrame();
     expect(store.get().phase).toBe("idle");
+    app.unmount();
+  });
+});
+
+describe("keyboard navigation", () => {
+  it("tab reaches the agents while a run is going, when the prompt takes no input", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const store = new Store();
+    const { app, terminal, keyboard } = mount(store);
+    store.update(() => ({ phase: "running" }));
+    store.agentStart({ id: "section:a", role: "section", model: "b/cheap-builder", label: "story a" });
+    await nextFrame();
+    await nextFrame();
+    keyboard.press(TAB);
+    await nextFrame();
+    await nextFrame();
+    expect(terminal.frames.at(-1)).toContain("agents · ↑↓ select");
     app.unmount();
   });
 });

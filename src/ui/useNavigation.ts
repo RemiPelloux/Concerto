@@ -17,6 +17,8 @@ export type Navigation = {
 };
 
 const PAGE = 10;
+/** In these phases the prompt takes typing, Tab included; otherwise the prompt is read-only. */
+export const TYPING_PHASES: readonly State["phase"][] = ["idle", "done", "failed"];
 
 /** How many rows each zone has right now. Empty zones are skipped by Tab. */
 function sizes(state: State): Record<Zone, number> {
@@ -63,7 +65,8 @@ export function useNavigation(state: State, cwd: string, showTour: boolean): Nav
       if (key.upArrow || key.downArrow) setSelected((s) => ({ ...s, [zone]: clamp(s[zone] + (key.upArrow ? -1 : 1), n) }));
       if (key.return && n > 0) pick({ zone, index: clamp(selected[zone], n), state, cwd, open });
     },
-    { isActive: zone !== "prompt" || overlay !== null },
+    // While scoring, waiting on a plan or building, the prompt takes no input: Tab still moves on.
+    { isActive: zone !== "prompt" || overlay !== null || !TYPING_PHASES.includes(state.phase) },
   );
   return { zone, selected, overlay, scroll, nextZone, open };
 }

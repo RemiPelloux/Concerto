@@ -2,8 +2,8 @@
 
 Concerto works end to end today: scoring, routing across Claude Code, Codex and pi, review,
 fallbacks, the token engine, probes, session history and resume, and installers for Linux, macOS
-and Windows. This page is the plan from 0.1 to 1.0 in two-week sprints. Each sprint has one goal,
-the work that serves it, and a test that says when it is done. Dates are targets, not promises.
+and Windows. This page is the plan from 0.1 to 1.0 in sprints, in order. Each sprint has one goal, the work
+that serves it, and a test that says when it is done.
 
 ## Shipped
 
@@ -14,7 +14,7 @@ the work that serves it, and a test that says when it is done. Dates are targets
 | 0.1.2 | Tab works in every phase, a visible "enter to build" |
 | 0.1.3 | Windows support, release packages and installers, `/history` and `--resume`, a live agent panel |
 
-## Sprint 1 · 0.2 · trust the result · 16 to 29 November 2026
+## Sprint 1 · 0.2 · trust the result
 
 Today a builder that says "tests pass" is only checked by another model, and parallel stories
 share one folder, so a critic can fail a story for someone else's edit.
@@ -29,7 +29,7 @@ share one folder, so a critic can fail a story for someone else's edit.
 Done when: two section stories editing neighbouring files both pass in one run, and a story whose
 tests fail never reaches the critic.
 
-## Sprint 2 · 0.3 · learn from runs · 30 November to 13 December
+## Sprint 2 · 0.3 · learn from runs
 
 The score weights and the cost estimate are set by hand.
 
@@ -43,7 +43,7 @@ The score weights and the cost estimate are set by hand.
 Done when: on a repository with 20 recorded runs, the estimate lands within 30 % of the real cost
 for 8 runs out of 10.
 
-## Sprint 3 · 0.4 · reach · 14 to 27 December
+## Sprint 3 · 0.4 · reach
 
 - **Import graph for more languages:** Go, Rust, PHP, Java and Kotlin, plus workspace packages.
 - **Pull requests:** an optional commit per story and `--pr` to open a pull request with the run
@@ -53,7 +53,7 @@ for 8 runs out of 10.
 Done when: a Go and a Rust repository score with real importers and covering tests, and `--pr`
 opens a reviewable pull request.
 
-## Sprint 4 · 0.5 · teams and CI · 4 to 17 January 2027
+## Sprint 4 · 0.5 · teams and CI
 
 - **A GitHub Action:** run a request from an issue or a comment, with `--budget`, and post the
   report.
@@ -64,7 +64,7 @@ opens a reviewable pull request.
 Done when: labelling an issue `concerto` in a test repository opens a pull request within the
 budget, with the report as its body.
 
-## Sprint 5 · 0.6 · distribution · 18 to 31 January
+## Sprint 5 · 0.6 · distribution
 
 - **npm** (`npx concerto`), **Homebrew** and **Scoop** packages, published by the release workflow.
 - **Standalone binaries** with Node's single executable applications, so Node is not required.
@@ -74,7 +74,7 @@ budget, with the report as its body.
 Done when: a fresh Mac, a fresh Windows machine and a fresh Ubuntu install Concerto with their
 usual package manager, without installing Node first.
 
-## Sprint 6 · 0.7 · control during a run · 1 to 14 February
+## Sprint 6 · 0.7 · control during a run
 
 - **Edit the plan before building:** drop, merge or reword a story, change its model, from the TUI.
 - **Accept or reject per story:** after a run, keep one story's diff and discard another's.
@@ -83,7 +83,7 @@ usual package manager, without installing Node first.
 Done when: a five-story plan can be trimmed to three, built, and two of the three diffs kept,
 without leaving the TUI.
 
-## Sprint 7 · 0.8 · more agents · 15 to 28 February
+## Sprint 7 · 0.8 · more agents
 
 - **More backends:** Gemini CLI, OpenCode and Cursor's agent, each behind the same runner interface.
 - **Custom roles:** a role defined in the config (a security reviewer, a docs writer) with its own
@@ -92,7 +92,7 @@ without leaving the TUI.
 Done when: a story can be built by Gemini CLI and reviewed by a custom security role, with the
 same fallbacks and accounting as the built-in roles.
 
-## Sprint 8 · 0.9 · hardening · 1 to 14 March
+## Sprint 8 · 0.9 · hardening
 
 - **Security review** of every place model output reaches a shell, a path or a file.
 - **Fuzz** the plan parser and the event parsers of every backend.
@@ -101,7 +101,7 @@ same fallbacks and accounting as the built-in roles.
 
 Done when: the fuzzers run for an hour without a crash and every documented failure has a test.
 
-## 1.0 · 15 to 21 March
+## 1.0
 
 - **Stable config:** a versioned schema with migrations from every 0.x format.
 - **Stable CLI:** flags and slash commands follow semantic versioning from here on.

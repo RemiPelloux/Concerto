@@ -24,7 +24,7 @@ function hint(state: State, zone: Zone, overlay: boolean): string {
   return state.error && zone === "prompt" ? `${base} · ${state.error}` : base;
 }
 
-export function StatusLine({ state, zone, overlay }: { state: State; zone: Zone; overlay: boolean }) {
+export function StatusLine({ state, zone, overlay, session }: { state: State; zone: Zone; overlay: boolean; session: string }) {
   const color = state.phase === "failed" && zone === "prompt" ? COLOR.bad : "gray";
   return (
     <Box justifyContent="space-between">
@@ -36,6 +36,7 @@ export function StatusLine({ state, zone, overlay }: { state: State; zone: Zone;
           <Text color={ROLE_COLOR.conductor}>advisor: {shortModel(state.roles.conductor.model)}</Text>
           <Text color="gray"> · </Text>
           <Text color={ROLE_COLOR.soloist}>{shortModel(state.roles.soloist.model)}</Text>
+          <Text color="gray"> · {session}</Text>
         </Text>
       </Box>
     </Box>

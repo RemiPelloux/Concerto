@@ -4,6 +4,7 @@ import { ROLES, type ConcertoConfig } from "#src/config/types.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { isBroken, readHealth } from "#src/models/health.js";
 import { roleChain } from "#src/models/router.js";
+import type { SessionLog } from "#src/engine/session-log.js";
 import type { Store } from "#src/state/store.js";
 
 export type Panel = { title: string; lines: string[] };
@@ -18,6 +19,7 @@ export type SlashContext = {
   show: (panel: Panel | null) => void;
   exit: (reason: ExitReason) => void;
   tour: () => void;
+  log: SessionLog;
 };
 
 type Command = { name: string; args: string; help: string; run: (arg: string, ctx: SlashContext) => Promise<void> | void };
@@ -108,6 +110,7 @@ async function orca(arg: string, ctx: SlashContext): Promise<void> {
 
 export const COMMANDS: readonly Command[] = [
   { name: "help", args: "", help: "list these commands", run: (_a, ctx) => ctx.show({ title: "Commands", lines: COMMANDS.map((c) => `/${`${c.name} ${c.args}`.trim().padEnd(HELP_NAME)} ${c.help}`) }) },
+  { name: "session", args: "", help: "this session's id and its log file, for debugging", run: (_a, ctx) => ctx.show({ title: "Session", lines: [`id    ${ctx.log.id}`, `log   ${ctx.log.shownPath}`, "Every phase, agent line and error with its stack is in that file. Attach it to a bug report."] }) },
   { name: "onboarding", args: "", help: "replay the animated tour of Concerto", run: (_a, ctx) => ctx.tour() },
   { name: "setup", args: "", help: "detect and test your models again, then pick the routing", run: (_a, ctx) => ctx.exit("setup") },
   { name: "config", args: "", help: "the config in use: file, preference, budget, routes", run: (_a, ctx) => ctx.show({ title: "Configuration", lines: configLines(ctx) }) },

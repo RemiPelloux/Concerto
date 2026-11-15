@@ -32,11 +32,15 @@ export function initialState(): State {
 }
 
 type Listener = () => void;
+/** Receives a line for everything worth keeping in the session log. */
+export type Sink = (kind: string, text: string) => void;
 
 /** A tiny external store: the orchestrator writes, Ink components subscribe. */
 export class Store {
   private state = initialState();
   private readonly listeners = new Set<Listener>();
+
+  constructor(private readonly sink: Sink = () => undefined) {}
 
   get = (): State => this.state;
 
@@ -46,7 +50,11 @@ export class Store {
   };
 
   update(change: (s: State) => Partial<State>): void {
+    const before = this.state;
     this.state = { ...this.state, ...change(this.state) };
+    if (this.state.phase !== before.phase || this.state.error !== before.error) {
+      this.sink("phase", this.state.error ? `${this.state.phase}: ${this.state.error}` : this.state.phase);
+    }
     this.listeners.forEach((l) => l());
   }
 
@@ -69,6 +77,7 @@ export class Store {
 
   /** Starts or restarts an agent; a retry keeps its earlier lines under a separator. */
   agentStart(view: Omit<AgentView, "lines" | "status" | "startedAt" | "endedAt">): void {
+    this.sink(`agent ${view.id}`, `start · ${view.model} · ${view.label}`);
     this.update((s) => {
       const before = s.agents[view.id];
       const lines = before ? [...before.lines, `── ${view.model} ──`] : [];
@@ -80,6 +89,7 @@ export class Store {
   }
 
   agentLines(id: string, lines: string[]): void {
+    lines.forEach((line) => this.sink(`agent ${id}`, line));
     this.update((s) => {
       const agent = s.agents[id];
       return agent ? { agents: { ...s.agents, [id]: { ...agent, lines: [...agent.lines, ...lines].slice(-AGENT_LINES) } } } : {};
@@ -87,6 +97,7 @@ export class Store {
   }
 
   agentEnd(id: string, status: "done" | "failed"): void {
+    this.sink(`agent ${id}`, `end · ${status}`);
     this.update((s) => {
       const agent = s.agents[id];
       return agent ? { agents: { ...s.agents, [id]: { ...agent, status, endedAt: Date.now() } } } : {};
@@ -94,6 +105,7 @@ export class Store {
   }
 
   log(entry: LogEntry): void {
+    this.sink(`log ${entry.role}`, `${entry.label}: ${entry.detail} -> ${entry.result}`);
     this.update((s) => ({ log: [...s.log, entry].slice(-LOG_LIMIT) }));
   }
 

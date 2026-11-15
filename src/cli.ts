@@ -24,7 +24,15 @@ process.stdout.on("error", (error: NodeJS.ErrnoException) => {
   throw error;
 });
 
-main().catch((error: unknown) => {
+/** Every crash names its session and log, with the full stack written to the log. */
+async function report(error: unknown): Promise<void> {
   process.stderr.write(`concerto: ${error instanceof Error ? error.message : String(error)}\n`);
   process.exitCode = 1;
-});
+  const { SessionLog } = await import("#src/engine/session-log.js");
+  const log = SessionLog.current;
+  if (!log) return;
+  log.error(error, "crash");
+  process.stderr.write(`session ${log.id} · full log: ${log.shownPath}\n`);
+}
+
+main().catch(report);

@@ -27,7 +27,8 @@ function summary(concert: Concert): void {
 }
 
 /** Scores and performs without the TUI, printing the log as it grows. Exit code 1 on failure. */
-export async function runHeadless(concert: Concert, request: string): Promise<void> {
+export async function runHeadless(concert: Concert, request: string, log: { id: string; shownPath: string }): Promise<void> {
+  write(`session ${log.id} · log ${log.shownPath}`);
   const unsubscribe = follow(concert);
   try {
     await scoreRequest(concert, request);

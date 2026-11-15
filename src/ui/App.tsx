@@ -4,6 +4,7 @@ import type { ConcertoConfig } from "#src/config/types.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { roleChain } from "#src/models/router.js";
 import type { Runner } from "#src/runner/types.js";
+import type { SessionLog } from "#src/engine/session-log.js";
 import type { Store } from "#src/state/store.js";
 import type { State } from "#src/state/types.js";
 import { AgentList } from "#src/ui/AgentList.js";
@@ -35,6 +36,8 @@ export type AppDeps = {
   cwd: string;
   autoPerform: boolean;
   initialRequest: string;
+  /** This launch's session: its id is shown, its log keeps every event and error. */
+  log: SessionLog;
   /** Opens with the animated tour: the first launch does. */
   showTour: boolean;
   /** Why the TUI closed: "setup" asks the launcher to rerun onboarding and come back. */
@@ -75,13 +78,13 @@ function Header({ state }: { state: State }) {
   );
 }
 
-function OverlayScreen({ state, nav }: { state: State; nav: Navigation }) {
+function OverlayScreen({ state, nav, session }: { state: State; nav: Navigation; session: string }) {
   if (!nav.overlay) return null;
   return (
     <Box flexDirection="column" paddingX={1}>
       <Header state={state} />
       <OverlayView overlay={nav.overlay} state={state} scroll={nav.scroll} close={() => nav.open(null)} />
-      <StatusLine state={state} zone={nav.zone} overlay />
+      <StatusLine state={state} zone={nav.zone} overlay session={session} />
     </Box>
   );
 }
@@ -106,7 +109,7 @@ export function App(deps: AppDeps) {
   const { panel, submit } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }) });
   const brain = shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? "");
   const idle = ["idle", "done", "failed"].includes(state.phase);
-  if (nav.overlay) return <OverlayScreen state={state} nav={nav} />;
+  if (nav.overlay) return <OverlayScreen state={state} nav={nav} session={deps.log.id} />;
   return (
     <Box flexDirection="column" paddingX={1}>
       <Header state={state} />
@@ -116,7 +119,7 @@ export function App(deps: AppDeps) {
       <LogView log={state.log} />
       <PanelView panel={panel} />
       <PromptBar enabled={idle && nav.zone === "prompt"} onSubmit={submit} onTab={nav.nextZone} />
-      <StatusLine state={state} zone={nav.zone} overlay={false} />
+      <StatusLine state={state} zone={nav.zone} overlay={false} session={deps.log.id} />
     </Box>
   );
 }

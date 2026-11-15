@@ -35,6 +35,7 @@ function useStartOnce(request: string, submit: (text: string) => void): void {
 
 function useRequest(deps: AppDeps, session: Session, run: RefObject<Run | null>) {
   const fail = useCallback((e: unknown) => {
+    deps.log.error(e, "run");
     const error = run.current?.abort.signal.aborted ? "interrupted" : e instanceof Error ? e.message : String(e);
     deps.store.update(() => ({ phase: "failed", error }));
   }, [deps.store, run]);
@@ -67,7 +68,8 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   }, [deps, exit]);
   const submit = useCallback((text: string) => {
     if (!text.startsWith("/")) return request(text);
-    void runSlash(text, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour });
+    deps.log.write("command", text);
+    void runSlash(text, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, log: deps.log });
   }, [deps.cwd, deps.store, session, request, leave, nav.tour]);
   const closePanel = () => (panel ? (setPanel(null), true) : false);
   useKeys({ store: deps.store, state, run, fail, closePanel, active: nav.active });

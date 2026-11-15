@@ -1,13 +1,14 @@
 import { clearCache, printModels, printStats } from "#src/commands/info.js";
 import type { Values } from "#src/commands/options.js";
-import { isFirstLaunch, loadConfig } from "#src/config/load.js";
+import { configPath, isFirstLaunch, loadConfig } from "#src/config/load.js";
+import { SessionLog } from "#src/engine/session-log.js";
 import { ROLES, type ConcertoConfig } from "#src/config/types.js";
 import { loadCatalog, type Catalog } from "#src/models/catalog.js";
 import { roleChain } from "#src/models/router.js";
 import { runModel } from "#src/runner/index.js";
 import { Store } from "#src/state/store.js";
 
-export type Setup = { config: ConcertoConfig; catalog: Catalog; store: Store; cwd: string };
+export type Setup = { config: ConcertoConfig; catalog: Catalog; store: Store; cwd: string; log: SessionLog };
 
 function overrides(values: Values): Partial<ConcertoConfig> {
   const budget = values.budget === undefined ? undefined : Number(values.budget);
@@ -20,9 +21,12 @@ async function setup(values: Values): Promise<Setup> {
   const cwd = process.cwd();
   const config = { ...loadConfig(cwd), ...overrides(values) };
   const catalog = await loadCatalog(config);
-  const store = new Store();
+  const log = SessionLog.current ?? new SessionLog(cwd);
+  const store = new Store((kind, text) => log.write(kind, text));
   ROLES.forEach((role) => store.role(role, { model: roleChain(catalog, config, role)[0]?.ref ?? "" }));
-  return { config, catalog, store, cwd };
+  log.write("start", `concerto in ${cwd} · config ${configPath(cwd)} · ${catalog.models.length} models reachable`);
+  log.write("start", `prefer ${config.prefer.join(",") || "-"} · budget ${config.budgetUsd ?? "-"} · roles ${ROLES.map((r) => `${r}=${store.get().roles[r].model}`).join(" ")}`);
+  return { config, catalog, store, cwd, log };
 }
 
 async function printPlan(s: Setup, request: string): Promise<void> {
@@ -34,7 +38,7 @@ async function printPlan(s: Setup, request: string): Promise<void> {
 
 async function headless(s: Setup, request: string): Promise<void> {
   const [{ createConcert }, { runHeadless }] = await Promise.all([import("#src/orchestrator/concert.js"), import("#src/headless.js")]);
-  await runHeadless(await createConcert({ ...s, runner: runModel }), request);
+  await runHeadless(await createConcert({ ...s, runner: runModel }), request, s.log);
 }
 
 /** Commands that need no model catalog. */

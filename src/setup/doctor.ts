@@ -3,6 +3,7 @@ import type { ConcertoConfig } from "../config/types.js";
 import type { Catalog } from "../models/catalog.js";
 import { roleChain } from "../models/router.js";
 import { ROLES } from "../config/types.js";
+import { isBroken, readHealth } from "../models/health.js";
 import type { Detection } from "./detect.js";
 
 const COUNT_WIDTH = 3;
@@ -35,5 +36,8 @@ export function printDoctor(cwd: string, d: Detection, setup: { config: Concerto
     const first = roleChain(setup.catalog, setup.config, r)[0];
     out(`${r.padEnd(ROLE_WIDTH)}${first?.ref ?? "nothing reachable"}`);
   });
+  const health = readHealth();
+  const broken = Object.keys(setup.config.models).filter((ref) => isBroken(health, ref));
+  broken.forEach((ref) => out(`skipped   ${ref}: ${health[ref]?.error ?? "failed its last probe"}`));
   if (!d.claude && !d.codex && !d.pi) out("\nInstall and log into at least one of: claude, codex, pi.");
 }

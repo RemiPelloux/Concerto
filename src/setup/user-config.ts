@@ -15,16 +15,23 @@ export const ROUTINGS = {
 } as const;
 export type Routing = keyof typeof ROUTINGS;
 
+/** Every model worth probing: the bundled list plus whatever this machine links. */
+export function candidateRefs(detection: Detection): string[] {
+  return [...new Set([...Object.keys(readConfigFile(bundledConfigPath()).models), ...detection.linked.map((m) => m.ref)])];
+}
+
 /**
- * The bundled config plus every model this machine can reach, so the file lists all linked AI
- * in one place. Routes and roles keep the bundled defaults; `prefer` follows the user's choice.
+ * Every linked model that answered its probe, so the file lists exactly the AI that works on
+ * this machine. Routes and roles keep the bundled defaults (unreachable entries are skipped at
+ * run time); `prefer` follows the user's choice.
  */
-export function buildUserConfig(detection: Detection, routing: Routing): ConcertoConfig {
+export function buildUserConfig(detection: Detection, routing: Routing, working: ReadonlySet<string>): ConcertoConfig {
   const base = readConfigFile(bundledConfigPath());
-  const models = { ...base.models };
+  const all = { ...base.models };
   detection.linked.forEach((m) => {
-    models[m.ref] ??= { tier: m.tier };
+    all[m.ref] ??= { tier: m.tier };
   });
+  const models = Object.fromEntries(Object.entries(all).filter(([ref]) => working.has(ref)));
   return parseConfig({ ...base, models, prefer: [...ROUTINGS[routing].prefer] }, "the generated config");
 }
 

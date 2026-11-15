@@ -2,7 +2,7 @@
 import { render } from "ink";
 import { parseArgs } from "node:util";
 import { clearCache, printModels, printStats } from "./commands/info.js";
-import { runInit, runOnboarding } from "./commands/setup.js";
+import { runInit, runOnboarding, runProbe } from "./commands/setup.js";
 import { isFirstLaunch, loadConfig } from "./config/load.js";
 import { ROLES, type ConcertoConfig } from "./config/types.js";
 import { runHeadless } from "./headless.js";
@@ -25,6 +25,7 @@ const USAGE = `concerto [options] [request]
   --prefer <list>     providers to try first, e.g. ce-* or ce-gpt,openai
   --init              detect every linked AI and write your personal config
   --routing <choice>  with --init outside a terminal: subscriptions, proxy or api
+  --probe             send each configured model a tiny prompt; failures are skipped for a day
   --doctor            what is installed, linked and reachable
   --models            reachable models, each role's chain and sample routes
   --stats             token and cache totals for this repository
@@ -40,6 +41,7 @@ const OPTIONS = {
   init: { type: "boolean" },
   routing: { type: "string" },
   doctor: { type: "boolean" },
+  probe: { type: "boolean" },
   models: { type: "boolean" },
   stats: { type: "boolean" },
   "clear-cache": { type: "boolean" },
@@ -82,6 +84,7 @@ async function main(): Promise<void> {
   if (values.help) return void process.stdout.write(`${USAGE}\n`);
   if (values.stats) return printStats(process.cwd());
   if (values.init) return runInit(values.routing);
+  if (values.probe) return runProbe(loadConfig(process.cwd()));
   const tui = !values.plan && !values.run && !values.models && !values.doctor && !values["clear-cache"];
   if (tui && process.stdin.isTTY && isFirstLaunch(process.cwd())) await runOnboarding();
   const s = await setup(values);

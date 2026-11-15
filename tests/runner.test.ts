@@ -26,10 +26,10 @@ describe("pi adapter", () => {
   });
 
   it("parses the pi model table", () => {
-    const table = "provider  model  context  max-out\nanthropic  claude-opus-5-5  1M  128K\nce-gpt  gpt-6-luna  272K  32.8K\n";
+    const table = "provider  model  context  max-out\nanthropic  claude-opus-5-5  1M  128K\nopenai  gpt-6-luna  272K  32.8K\n";
     expect(parseListModels(table)).toEqual([
       { ref: "anthropic/claude-opus-5-5", contextK: 1000 },
-      { ref: "ce-gpt/gpt-6-luna", contextK: 272 },
+      { ref: "openai/gpt-6-luna", contextK: 272 },
     ]);
   });
 });

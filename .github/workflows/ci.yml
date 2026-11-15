@@ -1,0 +1,26 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: Tests (SmartTest picks the affected ones on pull requests)
+        run: npx smarttest ci
+      - name: Pelloux audit
+        run: python3 .pelloux/pelloux.py audit
+      - run: npm run build

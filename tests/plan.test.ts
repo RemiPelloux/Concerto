@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { executionWaves, parsePlan, scoreStory, type Story } from "../src/orchestrator/plan.js";
+import { executionWaves, parsePlan, type Story } from "../src/orchestrator/plan.js";
 import { PLAN_REPLY } from "./fixtures.js";
 
 const ids = (waves: Story[][]) => waves.map((w) => w.map((s) => s.id));
@@ -22,12 +22,6 @@ describe("plan", () => {
 
   it("rejects a reply with no JSON", () => {
     expect(() => parsePlan("I could not do it")).toThrow(/did not return a JSON plan/);
-  });
-
-  it("scores from 0 for trivial to 100 for the hardest story", () => {
-    expect(scoreStory({ points: 1, complexity: 1, risk: 1 })).toBe(0);
-    expect(scoreStory({ points: 13, complexity: 5, risk: 5 })).toBe(100);
-    expect(scoreStory({ points: 8, complexity: 4, risk: 5 })).toBe(84);
   });
 
   it("groups independent stories into one wave and dependents into later ones", () => {

@@ -10,6 +10,13 @@ const JS_IMPORT = /(?:import|export)\s[^'"`;]*?from\s*['"]([^'"]+)['"]|import\s*
 const PY_IMPORT = /^\s*(?:from\s+([.\w]+)\s+import|import\s+([.\w]+))/gm;
 const TEST_FILE = /(?:^|\/)(?:__tests__|tests?|spec)\/|\.(?:test|spec)\.[cm]?[jt]sx?$|(?:^|\/)test_[^/]+\.py$|_test\.py$/;
 
+/** Code that tests can cover: docs, config and assets are not. */
+const CODE_FILE = /\.(?:[cm]?[jt]sx?|py|go|rs|php|rb|java|kt|kts|swift|dart|cs|c|cc|cpp|h|hpp|scala|ex|exs|vue|svelte)$/;
+
+export function isCodeFile(path: string): boolean {
+  return CODE_FILE.test(path);
+}
+
 export function isTestFile(path: string): boolean {
   return TEST_FILE.test(path);
 }
@@ -41,6 +48,10 @@ function specifiers(path: string, text: string): string[] {
   return [...text.matchAll(pattern)].flatMap((m) => m.slice(1).filter((g): g is string => Boolean(g)));
 }
 
+function countLines(text: string): number {
+  return text === "" ? 0 : text.split("\n").length;
+}
+
 function readSource(cwd: string, path: string): string {
   try {
     const full = join(cwd, path);
@@ -56,26 +67,46 @@ function readSource(cwd: string, path: string): string {
  */
 export class ImportGraph {
   private readonly importers = new Map<string, Set<string>>();
+  private readonly lineCounts = new Map<string, number>();
 
-  constructor(cwd: string, files: readonly string[]) {
+  constructor(
+    private readonly cwd: string,
+    files: readonly string[],
+  ) {
     const known = new Set(files);
     files.filter((f) => SOURCE.test(f)).slice(0, MAX_FILES).forEach((from) => {
-      specifiers(from, readSource(cwd, from)).forEach((spec) => {
+      const text = readSource(cwd, from);
+      this.lineCounts.set(from, countLines(text));
+      specifiers(from, text).forEach((spec) => {
         const target = resolveImport(from, spec, known);
         if (target && target !== from) this.importers.set(target, (this.importers.get(target) ?? new Set()).add(from));
       });
     });
   }
 
+  /** Every file that imports any of `files`, with its distance: 1 = imports it directly. */
+  levels(files: readonly string[], depth = DEFAULT_DEPTH): Map<string, number> {
+    const hops = new Map<string, number>(files.map((f) => [f, 0]));
+    let frontier = [...files];
+    for (let hop = 1; hop <= depth && frontier.length > 0; hop += 1) {
+      frontier = frontier.flatMap((f) => [...(this.importers.get(f) ?? [])]).filter((f) => !hops.has(f) && hops.set(f, hop));
+    }
+    files.forEach((f) => hops.delete(f));
+    return hops;
+  }
+
+  /** Line count of a repository file; parsed sources are already known, others are read once. */
+  lines(file: string): number {
+    const known = this.lineCounts.get(file);
+    if (known !== undefined) return known;
+    const counted = countLines(readSource(this.cwd, file));
+    this.lineCounts.set(file, counted);
+    return counted;
+  }
+
   /** Files that import any of `files`, directly or through up to `depth` hops. */
   dependentsOf(files: readonly string[], depth = DEFAULT_DEPTH): string[] {
-    const start = new Set(files);
-    const seen = new Set(files);
-    let frontier = [...start];
-    for (let hop = 0; hop < depth && frontier.length > 0; hop += 1) {
-      frontier = frontier.flatMap((f) => [...(this.importers.get(f) ?? [])]).filter((f) => !seen.has(f) && seen.add(f));
-    }
-    return [...seen].filter((f) => !start.has(f));
+    return [...this.levels(files, depth).keys()];
   }
 }
 

@@ -1,9 +1,10 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { analyzeImpact, impactBrief, PathMatcher, safePaths } from "../src/engine/impact.js";
+import { analyzeImpact, impactBrief } from "../src/engine/impact.js";
+import { PathMatcher, safePaths } from "../src/engine/paths.js";
+import { areaOf, isSensitive } from "../src/engine/signals.js";
 import { ImportGraph, isTestFile, resolveImport } from "../src/engine/import-graph.js";
-import { blastRadius, scoreStory } from "../src/orchestrator/plan.js";
 import { tempDir } from "./fixtures.js";
 
 const REPO: Record<string, string> = {
@@ -80,26 +81,23 @@ describe("impact", () => {
       ],
     });
     const money = impacts.get("money")!;
-    expect(money).toMatchObject({ newFiles: 1, dependents: 4, source: "imports" });
+    expect(money).toMatchObject({ newFiles: 1, direct: 2, indirect: 2, sourceFiles: 2, untested: 1, lines: 1, areas: 1, source: "imports" });
     expect(money.tests.sort()).toEqual(["tests/invoice.test.ts", "tests/routes.spec.ts"]);
     expect(impacts.get("none")?.source).toBe("none");
-    expect(impactBrief(money)).toMatch(/Imported by 4 other files\.\nTests that cover them, run these first: tests\//);
+    const docs = (await analyzeImpact({ cwd, repoFiles: Object.keys(REPO), stories: [{ id: "d", files: ["README.md"] }] })).get("d");
+    expect(docs).toMatchObject({ sourceFiles: 0, untested: 0 });
+    expect(impactBrief(money)).toMatch(/Imported directly by 2 files, indirectly by 2\.\nTests that cover them, run these first: tests\//);
+    expect(impactBrief(money)).toContain("1 source files have no covering test");
   });
 });
 
-describe("score with blast radius", () => {
-  const story = { points: 3, complexity: 3, risk: 3 } as const;
-
-  it("grows with what a story reaches and saturates", () => {
-    expect(blastRadius({ files: 0, dependents: 0, tests: 0 })).toBe(0);
-    expect(blastRadius({ files: 64, dependents: 0, tests: 0 })).toBe(1);
-    expect(blastRadius({ files: 100, dependents: 900, tests: 50 })).toBe(1);
-    const small = scoreStory(story, { files: 1, dependents: 0, tests: 1 });
-    const wide = scoreStory(story, { files: 4, dependents: 30, tests: 12 });
-    expect(wide).toBeGreaterThan(small);
+describe("signals", () => {
+  it("flags code where mistakes cost more", () => {
+    expect(["src/auth/session.ts", "db/migrations/001.sql", ".github/workflows/ci.yml", "src/payment-intent.ts", "Dockerfile"].every(isSensitive)).toBe(true);
+    expect(["src/ui/Button.tsx", "src/authors.ts", "README.md"].some(isSensitive)).toBe(false);
   });
 
-  it("falls back to the model's numbers when no file is known", () => {
-    expect(scoreStory(story, { files: 0, dependents: 9, tests: 9 })).toBe(scoreStory(story));
+  it("groups files into areas two levels deep", () => {
+    expect(["src/engine/impact.ts", "src/cli.tsx", "README.md", "packages/web/src/a.ts"].map(areaOf)).toEqual(["src/engine", "src", ".", "packages/web"]);
   });
 });

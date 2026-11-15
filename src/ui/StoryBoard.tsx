@@ -20,8 +20,8 @@ function dollars(n: number): string {
 
 /** "3·12·5": files the story touches, files importing them, tests covering them. "-" when unknown. */
 function reachCell(view: StoryView): string {
-  const { files, dependents, tests } = view.impact;
-  return files.length === 0 ? "-" : `${files.length}·${dependents}·${tests.length}`;
+  const { files, direct, indirect, tests } = view.impact;
+  return files.length === 0 ? "-" : `${files.length}·${direct + indirect}·${tests.length}`;
 }
 
 function Header() {
@@ -40,11 +40,14 @@ function StoryRow({ story, view }: { story: Story; view: StoryView }) {
     dollars(view.estimate).padStart(W.est),
   ];
   return (
-    <Text>
-      {cells.join(" ")}  <Text color={ROLE_COLOR[view.role]}>{shortModel(view.model).padEnd(W.model)}</Text>{" "}
-      <Text color={ROLE_COLOR.critic}>{shortModel(view.critics[0] ?? "").padEnd(W.review)}</Text>{" "}
-      <Text color={STATUS_COLOR[view.status]}>{view.status}</Text>
-    </Text>
+    <Box flexDirection="column">
+      <Text>
+        {cells.join(" ")}  <Text color={ROLE_COLOR[view.role]}>{shortModel(view.model).padEnd(W.model)}</Text>{" "}
+        <Text color={ROLE_COLOR.critic}>{shortModel(view.critics[0] ?? "").padEnd(W.review)}</Text>{" "}
+        <Text color={STATUS_COLOR[view.status]}>{view.status}</Text>
+      </Text>
+      <Text color="gray" wrap="truncate-end">{`  why ${view.score}: ${view.reasons.join(" · ")} · effort ${view.effort}`}</Text>
+    </Box>
   );
 }
 

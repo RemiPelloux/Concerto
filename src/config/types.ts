@@ -34,7 +34,8 @@ const RouteSchema = z.object({
   minScore: z.number().min(0).max(MAX_SCORE).default(0),
   role: z.enum(["soloist", "section"]),
   models: z.array(REF).min(1),
-  effort: EffortSchema,
+  /** "auto": from the score, low under 25, medium under 50, high under 75, xhigh above. */
+  effort: EffortSchema.or(z.literal("auto")).default("auto"),
 });
 export type Route = z.infer<typeof RouteSchema>;
 

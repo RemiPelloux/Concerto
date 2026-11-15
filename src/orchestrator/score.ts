@@ -1,23 +1,25 @@
-import { analyzeImpact, NO_IMPACT, safePaths, type Impact } from "../engine/impact.js";
+import { analyzeImpact, NO_IMPACT, type Impact } from "../engine/impact.js";
+import { safePaths } from "../engine/paths.js";
 import { reviewChain, routeStory } from "../models/router.js";
 import type { StoryView } from "../state/types.js";
 import { callRole } from "./call.js";
 import type { Concert } from "./concert.js";
 import { estimateStory } from "./estimate.js";
-import { parsePlan, scoreStory, type Plan, type Story } from "./plan.js";
+import { parsePlan, type Plan, type Story } from "./plan.js";
+import { scoreStory } from "./scoring.js";
 
 const NO_CHECKPOINTS = { "plan-lock": "", "repeat-error": "", "before-done": "" };
 
 function view(c: Concert, story: Story, impact: Impact): StoryView {
-  const reach = { files: impact.files.length, dependents: impact.dependents, tests: impact.tests.length };
-  const score = scoreStory(story, reach);
+  const breakdown = scoreStory(story, impact);
+  const { score } = breakdown;
   const route = routeStory({ score, tags: story.tags }, c.catalog, c.config);
   const chain = route.chain.map((m) => m.ref);
   const reviewers = reviewChain(story.tags, c.catalog, c.config);
   const estimate = estimateStory(story.points, route.chain[0], reviewers[0]);
   const critics = reviewers.map((m) => m.ref);
   const { role, effort, rule } = route;
-  return { id: story.id, score, role, effort, rule, chain, model: chain[0] ?? "", critics, estimate, impact, status: "queued" };
+  return { id: story.id, score, reasons: breakdown.reasons, factors: breakdown.factors, role, effort, rule, chain, model: chain[0] ?? "", critics, estimate, impact, status: "queued" };
 }
 
 /** The scorer's file paths are model output: normalized and kept inside the repository. */

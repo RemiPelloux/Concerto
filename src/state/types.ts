@@ -1,6 +1,7 @@
 import type { Effort, Role } from "../config/types.js";
 import type { Impact } from "../engine/impact.js";
 import type { Ledger } from "../engine/ledger.js";
+import type { Factor } from "../orchestrator/scoring.js";
 import type { Plan } from "../orchestrator/plan.js";
 
 export type Phase = "idle" | "scoring" | "planned" | "running" | "done" | "failed";
@@ -12,6 +13,9 @@ export type RoleView = { model: string; activity: Activity; note: string };
 export type StoryView = {
   id: string;
   score: number;
+  /** The factors that moved the score most, in words. */
+  reasons: string[];
+  factors: Factor[];
   role: Role;
   effort: Effort;
   /** Name of the routing rule that picked the chain. */

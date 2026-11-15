@@ -15,6 +15,18 @@ const TIER_BY_SCORE: ReadonlyArray<[number, number]> = [
 ];
 
 /** `chain[0]` runs; the rest are fallbacks when a call fails (rate limit, outage). */
+/** Score bands for the builder's effort when a route says "auto". */
+const BAND = { xhigh: 75, high: 50, medium: 25 };
+const EFFORT_BANDS: ReadonlyArray<[number, Effort]> = [
+  [BAND.xhigh, "xhigh"],
+  [BAND.high, "high"],
+  [BAND.medium, "medium"],
+];
+
+export function effortFor(score: number): Effort {
+  return EFFORT_BANDS.find(([min]) => score >= min)?.[1] ?? "low";
+}
+
 export type Assignment = { role: Role; chain: ModelInfo[]; effort: Effort; rule: string };
 export type StoryShape = { score: number; tags: string[] };
 
@@ -83,12 +95,12 @@ export function routeStory(story: StoryShape, catalog: Catalog, config: Concerto
     const wanted = catalog.reachable(route.models);
     if (wanted.length === 0) continue;
     const fallback = tierChain(catalog, Math.min(...wanted.map((m) => m.tier)));
-    return { role: route.role, chain: chainOf(config, wanted, fallback), effort: route.effort, rule: route.name };
+    const effort = route.effort === "auto" ? effortFor(story.score) : route.effort;
+    return { role: route.role, chain: chainOf(config, wanted, fallback), effort, rule: route.name };
   }
   const fallback = tierChain(catalog, requiredTier(story.score));
   const role: Role = story.score >= FLOOR.strong ? "soloist" : "section";
-  const effort: Effort = story.score >= FLOOR.frontier ? "high" : story.score >= FLOOR.strong ? "medium" : "low";
-  return { role, chain: chainOf(config, [], fallback), effort, rule: "cheapest-tier" };
+  return { role, chain: chainOf(config, [], fallback), effort: effortFor(story.score), rule: "cheapest-tier" };
 }
 
 /** UI stories can get a specialist reviewer; everything else gets the critic role's chain. */

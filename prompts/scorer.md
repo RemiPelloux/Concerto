@@ -13,6 +13,8 @@ For each story give:
 - `complexity`: 1 to 5. How much reasoning the change needs (1 = rename, 5 = new concurrency model).
 - `risk`: 1 to 5. Blast radius if it is wrong (1 = docs, 5 = auth, payments, data loss).
 - `value`: 1 to 5. What the user gains.
+- `uncertainty`: 1 to 5. How unsure you are about the scope (1 = fully specified, 5 = the request
+  leaves most decisions open).
 - `tags`: domain tags from this list when they apply: ui, ux, frontend, backend, api, data,
   infra, test, docs, copy, perf, security, design-system.
 - `dependsOn`: ids of stories that must land first. Keep the graph shallow.

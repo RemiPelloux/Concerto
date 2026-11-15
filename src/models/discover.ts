@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { delimiter, join } from "node:path";
+import { delimiter, dirname, join } from "node:path";
 import { promisify } from "node:util";
 import { claudeBin } from "../runner/claude.js";
 import { codexBin } from "../runner/codex.js";
@@ -52,10 +52,54 @@ export function parseListModels(text: string): string[] {
     });
 }
 
-export async function piRefs(): Promise<Set<string>> {
-  if (!onPath(piBin())) return new Set();
+const PI_LIST_TTL_MS = 600_000;
+let piListing: Promise<Set<string>> | null = null;
+
+/** Changes to pi's own config files invalidate the cached list. Reads mtimes, never contents. */
+function piConfigStamp(): string {
+  const dir = process.env.PI_AGENT_DIR ?? join(homedir(), ".pi", "agent");
+  return ["models.json", "auth.json", "settings.json"]
+    .map((f) => join(dir, f))
+    .map((f) => (existsSync(f) ? String(statSync(f).mtimeMs) : "-"))
+    .join(":");
+}
+
+function piCacheFile(): string {
+  return join(process.env.XDG_CACHE_HOME || join(homedir(), ".cache"), "concerto", "pi-models.json");
+}
+
+function readPiCache(stamp: string): Set<string> | null {
+  try {
+    const cached = JSON.parse(readFileSync(piCacheFile(), "utf8")) as { stamp?: string; at?: number; refs?: unknown };
+    const fresh = cached.stamp === stamp && Date.now() - (cached.at ?? 0) < PI_LIST_TTL_MS && Array.isArray(cached.refs);
+    return fresh ? new Set((cached.refs as unknown[]).filter((r): r is string => typeof r === "string")) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function listPi(): Promise<Set<string>> {
+  const stamp = piConfigStamp();
+  const cached = readPiCache(stamp);
+  if (cached) return cached;
   const { stdout } = await run(piBin(), ["--list-models", "--offline"], { timeout: LIST_TIMEOUT_MS, env: childEnv() });
-  return new Set(parseListModels(stdout));
+  const refs = parseListModels(stdout);
+  mkdirSync(dirname(piCacheFile()), { recursive: true, mode: 0o700 });
+  writeFileSync(piCacheFile(), JSON.stringify({ stamp, at: Date.now(), refs }), { mode: 0o600 });
+  return new Set(refs);
+}
+
+/**
+ * Models pi can reach. `pi --list-models` takes about half a second, so the answer is shared
+ * within a run and cached for ten minutes on disk, until pi's config files change.
+ */
+export function piRefs(): Promise<Set<string>> {
+  if (!onPath(piBin())) return Promise.resolve(new Set());
+  piListing ??= listPi().catch((error: unknown) => {
+    piListing = null;
+    throw error;
+  });
+  return piListing;
 }
 
 /**

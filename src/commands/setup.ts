@@ -1,4 +1,3 @@
-import { render } from "ink";
 import { reachableRefs } from "../models/discover.js";
 import type { ConcertoConfig } from "../config/types.js";
 import { healthPath, saveHealth, type Health } from "../models/health.js";
@@ -7,7 +6,6 @@ import { parseRef } from "../runner/types.js";
 import { detect, type Detection } from "../setup/detect.js";
 import { probeModels } from "../setup/probe.js";
 import { buildUserConfig, candidateRefs, ROUTINGS, writeUserConfig, type Routing } from "../setup/user-config.js";
-import { Onboarding } from "../ui/Onboarding.js";
 
 const out = (line: string) => process.stdout.write(`${line}\n`);
 
@@ -31,15 +29,6 @@ export async function probeAndSave(refs: string[], onResult?: (ref: string, ok: 
   return new Set(Object.entries(results).filter(([, c]) => c.ok).map(([ref]) => ref));
 }
 
-/** The interactive first-launch screen. Resolves once the personal config is written. */
-export async function runOnboarding(): Promise<void> {
-  const detection = await detect();
-  const targets = await probeTargets(detection);
-  let written = "";
-  await render(<Onboarding detection={detection} targets={targets} onDone={(path) => (written = path)} />).waitUntilExit();
-  if (written) out(`Saved the working models to ${written}\n`);
-}
-
 /** `--probe`: tests every configured model that is installed, and records the result. */
 export async function runProbe(config: ConcertoConfig): Promise<void> {
   const refs = Object.keys(config.models);
@@ -52,7 +41,7 @@ export async function runProbe(config: ConcertoConfig): Promise<void> {
 
 /** `--init`: the onboarding screen in a terminal, or a direct write in scripts and CI. */
 export async function runInit(routing: string | undefined): Promise<void> {
-  if (process.stdin.isTTY && routing === undefined) return runOnboarding();
+  if (process.stdin.isTTY && routing === undefined) return (await import("../ui/launch.js")).runOnboarding();
   const detection = await detect();
   const targets = await probeTargets(detection);
   process.stderr.write(`Probing ${targets.length} models, one tiny prompt each...\n`);

@@ -197,9 +197,6 @@ one key is the simplest fallback. I use [CodexEverywhere](https://codex-everywhe
 Add it to pi or as a Codex profile with providers named `ce-gpt`, `ce-claude`, `ce-deepseek` and
 `ce-grok`, and Concerto picks them up.
 
-*Affiliate link: I get a commission if you sign up through it, at no cost to you. Any
-OpenAI-compatible provider works the same way.*
-
 ## Roadmap
 
 What is missing and what comes next: [ROADMAP.md](ROADMAP.md).

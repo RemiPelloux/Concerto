@@ -133,13 +133,6 @@ describe("tool notification performance", () => {
   });
 });
 
-/**
- * The fixture writes and commits 256 files and starts dozens of git and SmartTest processes: about
- * half a second on Linux, several seconds on Windows runners, where every file and process start
- * is slower. A hang still fails at this limit.
- */
-const FIXTURE_TIMEOUT_MS = 30_000;
-
 describe("performance harness", () => {
   it("reports medians without changing the samples", () => {
     const samples = [9, 1, 3];
@@ -184,7 +177,7 @@ describe("performance harness", () => {
       fixture.cleanup();
     }
     expect(existsSync(fixture.cwd)).toBe(false);
-  }, FIXTURE_TIMEOUT_MS);
+  });
 
   it("rejects a fan-out without a scored plan and cleans up", async () => {
     const fixture = await createFixture();
@@ -195,5 +188,5 @@ describe("performance harness", () => {
       fixture.cleanup();
     }
     expect(existsSync(fixture.cwd)).toBe(false);
-  }, FIXTURE_TIMEOUT_MS);
+  });
 });

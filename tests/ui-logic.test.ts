@@ -5,9 +5,11 @@ import { describe, expect, it, vi } from "vitest";
 import { fileDiff, parseNumstat, readChanges } from "#src/engine/changes.js";
 import { gitEnv } from "#src/runner/env.js";
 import { AgentFeed } from "#src/orchestrator/feed.js";
-import { Store } from "#src/state/store.js";
+import { initialState, Store } from "#src/state/store.js";
 import { windowAround } from "#src/ui/AgentList.js";
 import { completeSlash, parseSlash } from "#src/ui/slash.js";
+import { hintTone } from "#src/ui/StatusLine.js";
+import { COLOR } from "#src/ui/theme.js";
 import { tempDir } from "#tests/fixtures.js";
 
 describe("agent feed", () => {
@@ -85,5 +87,15 @@ describe("slash commands and lists", () => {
     expect(windowAround(10, 20, 8)).toBe(6);
     expect(windowAround(19, 20, 8)).toBe(12);
     expect(windowAround(3, 5, 8)).toBe(0);
+  });
+});
+
+describe("status line", () => {
+  it("makes the waiting plan's 'enter to build' stand out, and keeps the other hints quiet", () => {
+    const planned = { ...initialState(), phase: "planned" as const };
+    expect(hintTone(planned, "prompt", false)).toEqual({ color: COLOR.brass, bold: true });
+    expect(hintTone(planned, "stories", false)).toEqual({ color: COLOR.dim, bold: false });
+    expect(hintTone(initialState(), "prompt", false)).toEqual({ color: COLOR.dim, bold: false });
+    expect(hintTone({ ...initialState(), phase: "failed" }, "prompt", false)).toEqual({ color: COLOR.bad, bold: false });
   });
 });

@@ -24,12 +24,19 @@ function hint(state: State, zone: Zone, overlay: boolean): string {
   return state.error && zone === "prompt" ? `${base} · ${state.error}` : base;
 }
 
+/** A plan waiting for Enter is the one moment the hint asks for something: it stands out. */
+export function hintTone(state: State, zone: Zone, overlay: boolean): { color: string; bold: boolean } {
+  const atPrompt = zone === "prompt" && !overlay;
+  if (atPrompt && state.phase === "planned") return { color: COLOR.brass, bold: true };
+  return { color: atPrompt && state.phase === "failed" ? COLOR.bad : COLOR.dim, bold: false };
+}
+
 export function StatusLine({ state, zone, overlay, session }: { state: State; zone: Zone; overlay: boolean; session: string }) {
-  const color = state.phase === "failed" && zone === "prompt" ? COLOR.bad : "gray";
+  const { color, bold } = hintTone(state, zone, overlay);
   return (
     <Box justifyContent="space-between">
       <Box flexShrink={1}>
-        <Text color={color} wrap="truncate-end">{hint(state, zone, overlay)}</Text>
+        <Text color={color} bold={bold} wrap="truncate-end">{hint(state, zone, overlay)}</Text>
       </Box>
       <Box flexShrink={0} marginLeft={2}>
         <Text>

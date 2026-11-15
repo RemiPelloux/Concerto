@@ -1,19 +1,13 @@
-import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { delimiter, dirname, join } from "node:path";
-import { promisify } from "node:util";
+import { dirname, join } from "node:path";
 import { claudeBin, codexBin, piBin } from "#src/runner/bins.js";
 import { childEnv } from "#src/runner/env.js";
+import { onPath, runTool } from "#src/runner/tool.js";
 import type { ModelRef } from "#src/runner/types.js";
 
-const run = promisify(execFile);
 const LIST_TIMEOUT_MS = 30_000;
 
-export function onPath(bin: string): boolean {
-  if (bin.includes("/")) return existsSync(bin);
-  return (process.env.PATH ?? "").split(delimiter).some((dir) => dir && existsSync(join(dir, bin)));
-}
 
 export function codexHome(): string {
   return process.env.CODEX_HOME ?? join(homedir(), ".codex");
@@ -80,7 +74,7 @@ async function listPi(): Promise<Set<string>> {
   const stamp = piConfigStamp();
   const cached = readPiCache(stamp);
   if (cached) return cached;
-  const { stdout } = await run(piBin(), ["--list-models", "--offline"], { timeout: LIST_TIMEOUT_MS, env: childEnv() });
+  const { stdout } = await runTool(piBin(), ["--list-models", "--offline"], { timeout: LIST_TIMEOUT_MS, env: childEnv() });
   const refs = parseListModels(stdout);
   mkdirSync(dirname(piCacheFile()), { recursive: true, mode: 0o700 });
   writeFileSync(piCacheFile(), JSON.stringify({ stamp, at: Date.now(), refs }), { mode: 0o600 });

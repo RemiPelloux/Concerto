@@ -1,15 +1,12 @@
-import { execFile } from "node:child_process";
-import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { promisify } from "node:util";
 import { childEnv } from "#src/runner/env.js";
+import { onPath, runTool } from "#src/runner/tool.js";
 import { asArray, asRecord, parseJsonLine, str } from "#src/runner/json.js";
 import { BlastRadius } from "#src/engine/blast-radius.js";
 import { type ImportGraph, isCodeFile, isTestFile } from "#src/engine/import-graph.js";
 import { PathMatcher } from "#src/engine/paths.js";
 import { areaOf, churnCounts, isSensitive } from "#src/engine/signals.js";
 
-const run = promisify(execFile);
 const EXPLAIN_TIMEOUT_MS = 30_000;
 const EXPLAIN_CONCURRENCY = 4;
 const LISTED_TESTS = 10;
@@ -42,13 +39,13 @@ type Context = { known: ReadonlySet<string>; graph: ImportGraph; explained: Map<
 
 function smarttestBin(cwd: string): string | null {
   const bin = join(cwd, "node_modules", ".bin", "smarttest");
-  return existsSync(bin) ? bin : null;
+  return onPath(bin) ? bin : null;
 }
 
 /** `smarttest explain <file> --json`: the tests protecting one file, through every import path. */
 async function explain(bin: string, cwd: string, file: string): Promise<string[]> {
   try {
-    const { stdout } = await run(bin, ["explain", file, "--json"], { cwd, timeout: EXPLAIN_TIMEOUT_MS, env: childEnv() });
+    const { stdout } = await runTool(bin, ["explain", file, "--json"], { cwd, timeout: EXPLAIN_TIMEOUT_MS, env: childEnv() });
     return asArray((parseJsonLine(stdout.trim()) ?? {}).tests).map((t) => str(asRecord(t).test)).filter(Boolean);
   } catch {
     return [];

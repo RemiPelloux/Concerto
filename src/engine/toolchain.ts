@@ -1,6 +1,6 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { onPath } from "#src/models/discover.js";
+import { onPath } from "#src/runner/tool.js";
 
 export type Toolchain = { packageManager: string; rtk: boolean; smarttest: boolean };
 

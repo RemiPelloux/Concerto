@@ -1,9 +1,6 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import { onPath } from "#src/models/discover.js";
 import { asRecord, parseJsonLine, str } from "#src/runner/json.js";
+import { onPath, runTool } from "#src/runner/tool.js";
 
-const run = promisify(execFile);
 const ORCA_TIMEOUT_MS = 60_000;
 const NAME_WORDS = 5;
 const NAME_MAX = 40;
@@ -30,7 +27,7 @@ export function worktreeName(request: string): string {
 }
 
 async function orca(args: string[]): Promise<Record<string, unknown>> {
-  const { stdout } = await run(orcaBin(), [...args, "--json"], { timeout: ORCA_TIMEOUT_MS });
+  const { stdout } = await runTool(orcaBin(), [...args, "--json"], { timeout: ORCA_TIMEOUT_MS });
   const reply = parseJsonLine(stdout.trim()) ?? {};
   if (reply.ok === false) throw new Error(`orca ${args[0]} ${args[1]} failed: ${JSON.stringify(reply.error ?? reply)}`);
   return asRecord(reply.result);

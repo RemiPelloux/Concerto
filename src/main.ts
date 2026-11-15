@@ -5,7 +5,6 @@ import { SessionLog } from "#src/engine/session-log.js";
 import { ROLES, type ConcertoConfig } from "#src/config/types.js";
 import { loadCatalog, type Catalog } from "#src/models/catalog.js";
 import { roleChain } from "#src/models/router.js";
-import { runModel } from "#src/runner/index.js";
 import { Store } from "#src/state/store.js";
 
 export type Setup = { config: ConcertoConfig; catalog: Catalog; store: Store; cwd: string; log: SessionLog };
@@ -30,14 +29,18 @@ async function setup(values: Values): Promise<Setup> {
 }
 
 async function printPlan(s: Setup, request: string): Promise<void> {
-  const [{ createConcert }, { scoreRequest }] = await Promise.all([import("#src/orchestrator/concert.js"), import("#src/orchestrator/score.js")]);
+  const [{ createConcert }, { scoreRequest }, { runModel }] = await Promise.all([
+    import("#src/orchestrator/concert.js"), import("#src/orchestrator/score.js"), import("#src/runner/index.js"),
+  ]);
   await scoreRequest(await createConcert({ ...s, runner: runModel }), request);
   const { plan, order, stories } = s.store.get();
   process.stdout.write(`${JSON.stringify({ ...plan, routing: order.map((id) => stories[id]) }, null, 2)}\n`);
 }
 
 async function headless(s: Setup, request: string): Promise<void> {
-  const [{ createConcert }, { runHeadless }] = await Promise.all([import("#src/orchestrator/concert.js"), import("#src/headless.js")]);
+  const [{ createConcert }, { runHeadless }, { runModel }] = await Promise.all([
+    import("#src/orchestrator/concert.js"), import("#src/headless.js"), import("#src/runner/index.js"),
+  ]);
   await runHeadless(await createConcert({ ...s, runner: runModel }), request, s.log);
 }
 
@@ -69,7 +72,9 @@ export async function run(values: Values, request: string): Promise<void> {
 
 /** The TUI; `/setup` closes it, reruns onboarding with fresh detection, and opens it again. */
 async function interactive(values: Values, first: Setup, start: { request: string; tour: boolean }): Promise<void> {
-  const { launchTui, runOnboarding } = await import("#src/ui/launch.js");
+  const [{ launchTui, runOnboarding }, { runModel }] = await Promise.all([
+    import("#src/ui/launch.js"), import("#src/runner/index.js"),
+  ]);
   let s = first;
   for (let initial = start.request, tour = start.tour; ; initial = "", tour = false) {
     const reason = await launchTui({ ...s, runner: runModel, autoPerform: Boolean(values.yes), initialRequest: initial, showTour: tour });

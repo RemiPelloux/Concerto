@@ -1,5 +1,5 @@
 import { Box, Text, useStdout } from "ink";
-import { useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { ConcertoConfig } from "#src/config/types.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { roleChain } from "#src/models/router.js";
@@ -27,6 +27,10 @@ import { useNavigation, type Navigation } from "#src/ui/useNavigation.js";
 
 /** Below this many rows the decorative diagram is left out, so the useful parts fit. */
 const ROOMY_ROWS = 72;
+/** Ink writes at most 30 frames a second; rendering more often than that is work nobody sees. */
+const FRAMES_PER_SECOND = 30;
+const MS_PER_SECOND = 1000;
+export const FRAME_MS = Math.ceil(MS_PER_SECOND / FRAMES_PER_SECOND);
 
 export type AppDeps = {
   config: ConcertoConfig;
@@ -102,12 +106,30 @@ function Diagram({ state, swarmSize }: { state: State; swarmSize: number }) {
   );
 }
 
+/** The store's state, re-read at most once a frame however fast the orchestrator writes. */
+function useFrameState(store: Store): State {
+  const subscribe = useCallback((notify: () => void) => {
+    let timer: NodeJS.Timeout | null = null;
+    const stop = store.subscribe(() => {
+      timer ??= setTimeout(() => {
+        timer = null;
+        notify();
+      }, FRAME_MS);
+    });
+    return () => {
+      stop();
+      if (timer) clearTimeout(timer);
+    };
+  }, [store]);
+  return useSyncExternalStore(subscribe, store.get);
+}
+
 export function App(deps: AppDeps) {
-  const state = useSyncExternalStore(deps.store.subscribe, deps.store.get);
+  const state = useFrameState(deps.store);
   const roomy = (useStdout().stdout.rows ?? ROOMY_ROWS) >= ROOMY_ROWS;
   const nav = useNavigation(state, deps.cwd, deps.showTour);
   const { panel, submit } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }) });
-  const brain = shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? "");
+  const brain = useMemo(() => shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? ""), [deps.catalog, deps.config]);
   const idle = ["idle", "done", "failed"].includes(state.phase);
   if (nav.overlay) return <OverlayScreen state={state} nav={nav} session={deps.log.id} />;
   return (

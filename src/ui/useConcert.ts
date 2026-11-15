@@ -1,22 +1,23 @@
 import { useApp, useInput } from "ink";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { createConcert, type Concert } from "#src/orchestrator/concert.js";
 import { perform } from "#src/orchestrator/perform.js";
 import { scoreRequest } from "#src/orchestrator/score.js";
 import type { Store } from "#src/state/store.js";
-import type { State } from "#src/state/types.js";
 import type { AppDeps } from "#src/ui/App.js";
 import { runSlash, type ExitReason, type Panel, type Session } from "#src/ui/slash.js";
 
 type Run = { concert: Concert | null; abort: AbortController };
-type Controls = { state: State; panel: Panel | null; submit: (text: string) => void };
-type KeyContext = { store: Store; state: State; run: RefObject<Run | null>; fail: (e: unknown) => void; closePanel: () => boolean; active: boolean };
+type Controls = { panel: Panel | null; submit: (text: string) => void };
+type KeyContext = { store: Store; run: RefObject<Run | null>; fail: (e: unknown) => void; closePanel: () => boolean; active: boolean };
 export type NavHooks = { active: boolean; tour: () => void };
 
-function useKeys({ store, state, run, fail, closePanel, active }: KeyContext): void {
+/** Reads the store at keypress time, so this hook never subscribes and never re-renders the App. */
+function useKeys({ store, run, fail, closePanel, active }: KeyContext): void {
   useInput((_input, key) => {
     if (!active) return;
     const concert = run.current?.concert;
+    const state = store.get();
     if (key.escape && closePanel()) return;
     if (key.escape && state.phase === "planned") return store.update(() => ({ phase: "idle", plan: null, stories: {}, order: [] }));
     if (key.escape) return run.current?.abort.abort();
@@ -56,7 +57,6 @@ function useRequest(deps: AppDeps, session: Session, run: RefObject<Run | null>)
 
 /** Wires keyboard, prompt and slash commands to the orchestrator for one interactive session. */
 export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
-  const state = useSyncExternalStore(deps.store.subscribe, deps.store.get);
   const [session, setSession] = useState<Session>({ config: deps.config, catalog: deps.catalog });
   const [panel, setPanel] = useState<Panel | null>(null);
   const run = useRef<Run | null>(null);
@@ -72,7 +72,7 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
     void runSlash(text, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, log: deps.log });
   }, [deps.cwd, deps.store, session, request, leave, nav.tour]);
   const closePanel = () => (panel ? (setPanel(null), true) : false);
-  useKeys({ store: deps.store, state, run, fail, closePanel, active: nav.active });
+  useKeys({ store: deps.store, run, fail, closePanel, active: nav.active });
   useStartOnce(deps.initialRequest, submit);
-  return { state, panel, submit };
+  return { panel, submit };
 }

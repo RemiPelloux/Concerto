@@ -35,6 +35,10 @@ type Listener = () => void;
 /** Receives a line for everything worth keeping in the session log. */
 export type Sink = (kind: string, text: string) => void;
 
+function unchanged<T extends object>(current: T, patch: Partial<T>): boolean {
+  return (Object.keys(patch) as (keyof T)[]).every((key) => Object.is(current[key], patch[key]));
+}
+
 /** A tiny external store: the orchestrator writes, Ink components subscribe. */
 export class Store {
   private state = initialState();
@@ -49,9 +53,12 @@ export class Store {
     return () => this.listeners.delete(listener);
   };
 
+  /** Listeners hear only real changes: a patch that matches the current state is dropped. */
   update(change: (s: State) => Partial<State>): void {
+    const patch = change(this.state);
+    if (unchanged(this.state, patch)) return;
     const before = this.state;
-    this.state = { ...this.state, ...change(this.state) };
+    this.state = { ...this.state, ...patch };
     if (this.state.phase !== before.phase || this.state.error !== before.error) {
       this.sink("phase", this.state.error ? `${this.state.phase}: ${this.state.error}` : this.state.phase);
     }
@@ -59,6 +66,7 @@ export class Store {
   }
 
   role(role: Role, patch: Partial<RoleView>): void {
+    if (unchanged(this.state.roles[role], patch)) return;
     this.update((s) => ({ roles: { ...s.roles, [role]: { ...s.roles[role], ...patch } } }));
   }
 

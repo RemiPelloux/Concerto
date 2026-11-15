@@ -3,6 +3,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { fileDiff, parseNumstat, readChanges } from "../src/engine/changes.js";
+import { gitEnv } from "../src/runner/env.js";
 import { AgentFeed } from "../src/orchestrator/feed.js";
 import { Store } from "../src/state/store.js";
 import { windowAround } from "../src/ui/AgentList.js";
@@ -51,7 +52,7 @@ describe("changes", () => {
 
   it("reads modified and untracked files from a real repository, biggest first", async () => {
     const cwd = tempDir();
-    const git = (...args: string[]) => execFileSync("git", args, { cwd });
+    const git = (...args: string[]) => execFileSync("git", args, { cwd, env: gitEnv() });
     writeFileSync(join(cwd, "a.txt"), "one\ntwo\n");
     git("init", "-q");
     git("add", "-A");

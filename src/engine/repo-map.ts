@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import { gitEnv } from "../runner/env.js";
 
 const run = promisify(execFile);
 const GIT_TIMEOUT_MS = 10_000;
@@ -13,7 +14,7 @@ const GIT_MAX_BUFFER = 67_108_864; // 64 MiB of `git ls-files` output
 export type RepoMap = { text: string; key: string; files: string[] };
 
 async function git(cwd: string, args: string[]): Promise<string> {
-  const { stdout } = await run("git", args, { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: GIT_MAX_BUFFER });
+  const { stdout } = await run("git", args, { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: GIT_MAX_BUFFER, env: gitEnv() });
   return stdout.trim();
 }
 

@@ -1,14 +1,16 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { gitEnv } from "../runner/env.js";
 import type { FileChange } from "../state/types.js";
 
 const run = promisify(execFile);
 const GIT_TIMEOUT_MS = 10_000;
 const GIT_MAX_BUFFER = 16_777_216;
-const OWN_STATE = /^\.concerto\//;
+/** Concerto's own state and agent tool caches (Serena) are not part of the change. */
+const OWN_STATE = /^\.(?:concerto|serena)\//;
 
 async function git(cwd: string, args: string[]): Promise<string> {
-  const { stdout } = await run("git", args, { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: GIT_MAX_BUFFER });
+  const { stdout } = await run("git", args, { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: GIT_MAX_BUFFER, env: gitEnv() });
   return stdout;
 }
 

@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { gitEnv } from "../runner/env.js";
 
 const run = promisify(execFile);
 const GIT_TIMEOUT_MS = 15_000;
@@ -34,7 +35,7 @@ export function areaOf(path: string): string {
 export async function churnCounts(cwd: string): Promise<Map<string, number>> {
   try {
     const args = ["log", `--since=${CHURN_WINDOW}`, "--name-only", "--pretty=format:"];
-    const { stdout } = await run("git", args, { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: GIT_MAX_BUFFER });
+    const { stdout } = await run("git", args, { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: GIT_MAX_BUFFER, env: gitEnv() });
     const counts = new Map<string, number>();
     stdout.split("\n").filter(Boolean).forEach((f) => counts.set(f, (counts.get(f) ?? 0) + 1));
     return counts;

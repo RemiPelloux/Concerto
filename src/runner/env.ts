@@ -15,8 +15,19 @@ const ALLOWED = new RegExp(
     ")$",
 );
 
+/**
+ * Variables that point git at another repository. Git sets them while it runs a hook, so a git
+ * command started from inside one would otherwise act on that repository instead of `cwd`.
+ */
+const REPO_LOCATION = /^GIT_(?:DIR|WORK_TREE|INDEX_FILE|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|COMMON_DIR|NAMESPACE|PREFIX)$/;
+
 export function childEnv(source: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
   const extra = new Set((source.CONCERTO_ENV_PASSTHROUGH ?? "").split(",").map((s) => s.trim()).filter(Boolean));
-  const kept = Object.entries(source).filter(([key, value]) => value !== undefined && (ALLOWED.test(key) || extra.has(key)));
+  const kept = Object.entries(source).filter(([key, value]) => value !== undefined && (ALLOWED.test(key) || extra.has(key)) && !REPO_LOCATION.test(key));
   return Object.fromEntries(kept);
+}
+
+/** Our own environment for git commands, minus anything that would aim git at another repository. */
+export function gitEnv(source: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  return Object.fromEntries(Object.entries(source).filter(([key]) => !REPO_LOCATION.test(key)));
 }

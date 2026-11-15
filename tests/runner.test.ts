@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseListModels } from "../src/models/discover.js";
-import { childEnv } from "../src/runner/env.js";
+import { childEnv, gitEnv } from "../src/runner/env.js";
 import { parseLine } from "../src/runner/events.js";
 import { buildPiArgs } from "../src/runner/pi.js";
 import { parseRef } from "../src/runner/types.js";
@@ -20,6 +20,12 @@ describe("child environment", () => {
     const env = childEnv({ PATH: "/bin", HOME: "/h", OPENAI_API_KEY: "k", CE_API_KEY: "c", AWS_SECRET_ACCESS_KEY: "s", SHODAN_API_KEY: "x" });
     expect(Object.keys(env).sort()).toEqual(["CE_API_KEY", "HOME", "OPENAI_API_KEY", "PATH"]);
     expect(childEnv({ PATH: "/bin", MY_TOKEN: "t", CONCERTO_ENV_PASSTHROUGH: "MY_TOKEN" }).MY_TOKEN).toBe("t");
+  });
+
+  it("never lets a git hook's repository variables aim git or an agent at another repository", () => {
+    const hook = { PATH: "/bin", GIT_DIR: "/repo/.git", GIT_INDEX_FILE: "/repo/.git/index", GIT_AUTHOR_NAME: "me" };
+    expect(childEnv(hook)).toEqual({ PATH: "/bin", GIT_AUTHOR_NAME: "me" });
+    expect(gitEnv(hook)).toEqual({ PATH: "/bin", GIT_AUTHOR_NAME: "me" });
   });
 });
 

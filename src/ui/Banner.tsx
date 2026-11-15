@@ -12,6 +12,7 @@ const GLYPHS: Record<string, string[]> = {
 };
 const WORD = "CONCERTO";
 const ROWS = 5;
+export const CREDIT = "built by tkmremi";
 /** How long the welcome stays on screen after launch; the logo stays. */
 export const WELCOME_MS = 3000;
 
@@ -39,8 +40,9 @@ export function Banner() {
         </Box>
       )}
       {rows.map((line, i) => (
-        <Text key={i} color={i < 2 ? COLOR.brass : COLOR.brassDeep} bold>
-          {line}
+        <Text key={i}>
+          <Text color={i < 2 ? COLOR.brass : COLOR.brassDeep} bold>{line}</Text>
+          {i === ROWS - 1 && <Text color={COLOR.dim}>{`  ${CREDIT}`}</Text>}
         </Text>
       ))}
     </Box>

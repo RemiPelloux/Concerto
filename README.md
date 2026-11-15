@@ -218,4 +218,4 @@ pre-commit hook runs the tests your change can reach, through SmartTest. Securit
 
 ## License
 
-MIT
+MIT. Built by [tkmremi](https://github.com/RemiPelloux).

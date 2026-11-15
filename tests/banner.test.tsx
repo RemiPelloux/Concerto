@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 import { setImmediate as nextTask } from "node:timers/promises";
 import { render } from "ink";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Banner, WELCOME_MS } from "#src/ui/Banner.js";
+import { Banner, CREDIT, WELCOME_MS } from "#src/ui/Banner.js";
 
 class Terminal extends EventEmitter {
   columns = 120;
@@ -28,6 +28,7 @@ describe("banner", () => {
     await nextTask();
     expect(stdout.frames.at(-1)).not.toContain("Welcome to Concerto");
     expect(stdout.frames.at(-1)).toContain("████");
+    expect(stdout.frames.at(-1)).toContain(CREDIT);
     app.unmount();
   });
 });

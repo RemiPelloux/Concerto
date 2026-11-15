@@ -6,6 +6,7 @@ import type { FileChange } from "#src/state/types.js";
 const run = promisify(execFile);
 const GIT_TIMEOUT_MS = 10_000;
 const GIT_MAX_BUFFER = 16_777_216;
+const DIFF_CONCURRENCY = 4;
 /** Concerto's own state and agent tool caches (Serena) are not part of the change. */
 const OWN_STATE = /^\.(?:concerto|serena)\//;
 
@@ -35,7 +36,11 @@ export async function readChanges(cwd: string): Promise<FileChange[]> {
   try {
     const [tracked, untracked] = await Promise.all([git(cwd, ["diff", "--numstat", "HEAD"]), git(cwd, ["ls-files", "--others", "--exclude-standard", "-z"])]);
     const added = untracked.split("\0").filter((f) => f && !OWN_STATE.test(f));
-    const counts = await Promise.all(added.map((f) => git(cwd, ["diff", "--no-index", "--numstat", "/dev/null", f]).catch((e: { stdout?: string }) => e.stdout ?? "")));
+    const counts: string[] = [];
+    for (let i = 0; i < added.length; i += DIFF_CONCURRENCY) {
+      const batch = added.slice(i, i + DIFF_CONCURRENCY);
+      counts.push(...await Promise.all(batch.map((f) => git(cwd, ["diff", "--no-index", "--numstat", "/dev/null", f]).catch((e: { stdout?: string }) => e.stdout ?? ""))));
+    }
     const fresh = counts.flatMap((text, i) => parseNumstat(text).map((c) => ({ ...c, file: added[i] ?? c.file, status: "added" as const })));
     return [...parseNumstat(tracked), ...fresh].sort((a, b) => b.added + b.removed - (a.added + a.removed));
   } catch {

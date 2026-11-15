@@ -1,6 +1,9 @@
-import { readdirSync, readFileSync, statSync, utimesSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { readdir } from "node:fs/promises";
+import { describe, expect, it, vi } from "vitest";
+import { BlastRadius } from "#src/engine/blast-radius.js";
+import { analyzeImpact } from "#src/engine/impact.js";
 import { collapseRepeats, condense } from "#src/engine/condense.js";
 import { cacheHitRatio, EMPTY_LEDGER, record } from "#src/engine/ledger.js";
 import { summarizeDirs } from "#src/engine/repo-map.js";
@@ -131,5 +134,95 @@ describe("ledger and stats", () => {
     const after = saveRun(cwd, { ...EMPTY_LEDGER, localHits: 3, fallbacks: 1 });
     expect(after).toMatchObject({ runs: 2, ledger: { localHits: 5, fallbacks: 1 } });
     expect(readStats(cwd).runs).toBe(2);
+  });
+});
+
+vi.mock("node:fs", async (original) => {
+  const fs = await original<typeof import("node:fs")>();
+  return { ...fs, readFileSync: vi.fn(fs.readFileSync) };
+});
+
+vi.mock("node:fs/promises", async (original) => {
+  const fs = await original<typeof import("node:fs/promises")>();
+  return { ...fs, readdir: vi.fn(fs.readdir) };
+});
+
+describe("run repository scan cache", () => {
+  it("reads sources once across stories and repeated analysis, but isolates runs", async () => {
+    const cwd = tempDir();
+    writeFileSync(join(cwd, "a.ts"), "export const a = 1;");
+    writeFileSync(join(cwd, "a.test.ts"), 'import { a } from "./a";');
+    const cache = new BlastRadius(cwd, ["a.ts", "a.test.ts"]);
+    const input = { cwd, repoFiles: ["a.ts", "a.test.ts"], cache, stories: [{ id: "a", files: ["a.ts"] }, { id: "b", files: ["a.ts"] }] };
+    vi.mocked(readFileSync).mockClear();
+    vi.mocked(readdir).mockClear();
+    const first = await analyzeImpact(input);
+    const second = await analyzeImpact(input);
+    expect(first.get("a")?.tests).toEqual(["a.test.ts"]);
+    expect(second).toEqual(first);
+    const reads = () => vi.mocked(readFileSync).mock.calls.filter(([path]) => String(path).startsWith(cwd));
+    expect(reads()).toHaveLength(2);
+    expect(vi.mocked(readdir).mock.calls.filter(([path]) => String(path).startsWith(cwd))).toHaveLength(1);
+    await analyzeImpact({ ...input, cache: new BlastRadius(cwd, input.repoFiles) });
+    expect(reads()).toHaveLength(4);
+  });
+
+  it("refreshes imports, line counts and file membership after edits, additions and deletions", async () => {
+    const cwd = tempDir();
+    writeFileSync(join(cwd, "a.ts"), "export const a = 1;");
+    mkdirSync(join(cwd, "tests"));
+    const cache = new BlastRadius(cwd, ["a.ts"]);
+    const input = { cwd, repoFiles: ["a.ts"], cache, stories: [{ id: "a", files: ["a.ts"] }] };
+    expect((await analyzeImpact(input)).get("a")?.tests).toEqual([]);
+    writeFileSync(join(cwd, "tests/a.test.ts"), 'import { a } from "../a";');
+    expect((await analyzeImpact(input)).get("a")?.tests).toEqual(["tests/a.test.ts"]);
+    writeFileSync(join(cwd, "a.ts"), "export const a = 1;\nexport const b = 2;");
+    expect((await analyzeImpact(input)).get("a")?.lines).toBe(2);
+    writeFileSync(join(cwd, "tests/a.test.ts"), "export {};");
+    expect((await analyzeImpact(input)).get("a")?.tests).toEqual([]);
+    rmSync(join(cwd, "a.ts"));
+    expect((await analyzeImpact(input)).get("a")?.newFiles).toBe(1);
+  });
+});
+
+const coverageProcess = vi.hoisted(() => ({ enabled: false, calls: 0, fail: false }));
+
+vi.mock("node:child_process", async (original) => {
+  const cp = await original<typeof import("node:child_process")>();
+  const { promisify } = await import("node:util");
+  const run = promisify(cp.execFile);
+  const execFile = (...args: unknown[]) => Reflect.apply(cp.execFile, undefined, args);
+  Object.assign(execFile, { [promisify.custom]: async (bin: string, args: string[], options: object) => {
+    if (!coverageProcess.enabled || !bin.endsWith("/smarttest")) return run(bin, args, options);
+    coverageProcess.calls += 1;
+    if (coverageProcess.fail) throw new Error("SmartTest unavailable");
+    return { stdout: JSON.stringify({ tests: [{ test: "a.test.ts" }] }), stderr: "" };
+  } });
+  return { ...cp, execFile };
+});
+
+describe("run coverage cache", () => {
+  it("explains each distinct file once and refreshes coverage after repository changes", async () => {
+    const cwd = tempDir();
+    mkdirSync(join(cwd, "node_modules/.bin"), { recursive: true });
+    const bin = join(cwd, "node_modules/.bin/smarttest");
+    writeFileSync(bin, "fixture");
+    writeFileSync(join(cwd, "a.ts"), "export const a = 1;");
+    const cache = new BlastRadius(cwd, ["a.ts"]);
+    const input = { cwd, repoFiles: ["a.ts"], cache, stories: [{ id: "a", files: ["a.ts"] }, { id: "b", files: ["a.ts"] }] };
+    Object.assign(coverageProcess, { enabled: true, calls: 0, fail: false });
+    try {
+      expect((await analyzeImpact(input)).get("a")?.tests).toEqual(["a.test.ts"]);
+      await analyzeImpact(input);
+      expect(coverageProcess.calls).toBe(1);
+      writeFileSync(join(cwd, "a.ts"), "export const a = 2;");
+      await analyzeImpact(input);
+      expect(coverageProcess.calls).toBe(2);
+      coverageProcess.fail = true;
+      writeFileSync(bin, "changed fixture");
+      expect((await analyzeImpact(input)).get("a")?.untested).toBe(1);
+    } finally {
+      coverageProcess.enabled = false;
+    }
   });
 });

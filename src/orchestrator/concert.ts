@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import type { ConcertoConfig } from "#src/config/types.js";
+import { BlastRadius } from "#src/engine/blast-radius.js";
 import { buildRepoMap, type RepoMap } from "#src/engine/repo-map.js";
 import { ResponseCache } from "#src/engine/response-cache.js";
 import { Sessions } from "#src/engine/sessions.js";
@@ -28,6 +29,7 @@ export type Concert = {
   prompts: SystemPrompts;
   skills: Skills;
   repo: RepoMap;
+  blastRadius: BlastRadius;
   /** Conductor list price: the "one frontier model alone" baseline in the cost panel. */
   brainPrice: Price | null;
 };
@@ -39,6 +41,7 @@ export async function createConcert(init: ConcertInit): Promise<Concert> {
   const runId = `run-${Date.now().toString(BASE36)}`;
   const cache = new ResponseCache({ ...config.cache, dir: join(cwd, config.cache.dir) });
   cache.prune();
+  const repo = await buildRepoMap(cwd);
   return {
     ...init,
     runId,
@@ -47,7 +50,8 @@ export async function createConcert(init: ConcertInit): Promise<Concert> {
     sessions: new Sessions(join(cwd, ".concerto", "sessions"), runId),
     prompts: new SystemPrompts(cwd, toolchainNotes(detectToolchain(cwd))),
     skills: new Skills(config.skills, cwd),
-    repo: await buildRepoMap(cwd),
+    repo,
+    blastRadius: new BlastRadius(cwd, repo.files),
     brainPrice: roleChain(init.catalog, config, "conductor")[0]?.price ?? null,
   };
 }

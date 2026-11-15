@@ -4,7 +4,8 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { childEnv } from "#src/runner/env.js";
 import { asArray, asRecord, parseJsonLine, str } from "#src/runner/json.js";
-import { ImportGraph, isCodeFile, isTestFile } from "#src/engine/import-graph.js";
+import { BlastRadius } from "#src/engine/blast-radius.js";
+import { type ImportGraph, isCodeFile, isTestFile } from "#src/engine/import-graph.js";
 import { PathMatcher } from "#src/engine/paths.js";
 import { areaOf, churnCounts, isSensitive } from "#src/engine/signals.js";
 
@@ -101,7 +102,7 @@ function measure(ctx: Context, files: string[], source: Impact["source"]): Impac
   return { files, newFiles: files.length - present.length, ...reachOf(ctx, present), ...coverageOf(ctx, files, present), ...extra };
 }
 
-export type ImpactInput = { cwd: string; repoFiles: readonly string[]; stories: { id: string; files: string[] }[] };
+export type ImpactInput = { cwd: string; repoFiles: readonly string[]; stories: { id: string; files: string[] }[]; cache?: BlastRadius };
 
 /**
  * Every story's reach in one pass: one import graph, one `git log` and one SmartTest call per
@@ -109,13 +110,15 @@ export type ImpactInput = { cwd: string; repoFiles: readonly string[]; stories: 
  * otherwise from the import graph.
  */
 export async function analyzeImpact(input: ImpactInput): Promise<Map<string, Impact>> {
-  const known = new Set(input.repoFiles);
+  const snapshot = await (input.cache ?? new BlastRadius(input.cwd, input.repoFiles)).get();
+  const known = new Set(snapshot.files);
   const matcher = new PathMatcher(known);
   const stories = input.stories.map((s) => ({ id: s.id, files: [...new Set(s.files.map((f) => matcher.match(f) ?? f))] }));
   const bin = smarttestBin(input.cwd);
-  const existing = [...new Set(stories.flatMap((s) => s.files))].filter((f) => known.has(f) && isSource(f));
+  const existing = [...new Set(stories.flatMap((s) => s.files))].filter((f) => known.has(f) && isSource(f) && !snapshot.explained.has(f));
   const [explained, churn] = await Promise.all([bin ? explainAll(bin, input.cwd, existing) : null, churnCounts(input.cwd)]);
-  const ctx: Context = { known, graph: new ImportGraph(input.cwd, input.repoFiles), explained, churn, perFile: new Map() };
+  explained?.forEach((tests, file) => snapshot.explained.set(file, tests));
+  const ctx: Context = { known, graph: snapshot.graph, explained: bin ? snapshot.explained : null, churn, perFile: snapshot.perFile };
   return new Map(stories.map((s) => [s.id, measure(ctx, s.files, bin ? "smarttest" : "imports")]));
 }
 

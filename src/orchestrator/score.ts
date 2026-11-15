@@ -40,7 +40,7 @@ export async function scoreRequest(c: Concert, request: string): Promise<void> {
   ];
   const reply = await callRole(c, { role: "scorer", segments, cacheable: true, label: "scoring the request" });
   const plan = withSafeFiles(parsePlan(reply.text));
-  const impacts = await analyzeImpact({ cwd: c.cwd, repoFiles: c.repo.files, stories: plan.stories });
+  const impacts = await analyzeImpact({ cwd: c.cwd, repoFiles: c.repo.files, cache: c.blastRadius, stories: plan.stories });
   const views = plan.stories.map((s) => view(c, s, impacts.get(s.id) ?? NO_IMPACT));
   c.store.update(() => ({ phase: "planned", plan, stories: Object.fromEntries(views.map((v) => [v.id, v])), order: views.map((v) => v.id) }));
   c.store.role("scorer", { activity: "done", note: `${views.length} stories` });

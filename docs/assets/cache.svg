@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" width="1200" height="340" role="img" aria-labelledby="t d">
+  <title id="t">Concerto cache layers</title>
+  <desc id="d">Three cache layers. A byte-stable system prompt prefix per role gets provider cache reads. Warm sessions reuse earlier turns. A local response cache answers a repeated scoring request in 0.9 seconds with no tokens instead of 21 seconds.</desc>
+  <style>
+text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; }
+rect { transform-box: fill-box; transform-origin: 0 50%; }
+@keyframes pr0 { 0%, 4% { opacity: 0; } 5.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.pr0 { animation: pr0 10s linear infinite; }
+@keyframes pr1 { 0%, 15% { opacity: 0; } 16.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.pr1 { animation: pr1 10s linear infinite; }
+@keyframes ph1 { 0%, 18% { opacity: 0; } 19.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.ph1 { animation: ph1 10s linear infinite; }
+@keyframes pr2 { 0%, 26% { opacity: 0; } 27.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.pr2 { animation: pr2 10s linear infinite; }
+@keyframes ph2 { 0%, 29% { opacity: 0; } 30.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.ph2 { animation: ph2 10s linear infinite; }
+@keyframes sr0 { 0%, 38% { opacity: 0; } 39.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.sr0 { animation: sr0 10s linear infinite; }
+@keyframes sr1 { 0%, 48% { opacity: 0; } 49.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.sr1 { animation: sr1 10s linear infinite; }
+@keyframes sh1 { 0%, 51% { opacity: 0; } 52.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.sh1 { animation: sh1 10s linear infinite; }
+@keyframes sr2 { 0%, 58% { opacity: 0; } 59.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.sr2 { animation: sr2 10s linear infinite; }
+@keyframes sh2 { 0%, 61% { opacity: 0; } 62.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.sh2 { animation: sh2 10s linear infinite; }
+@keyframes lr0 { 0%, 64% { opacity: 0; } 65.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.lr0 { animation: lr0 10s linear infinite; }
+@keyframes lr1 { 0%, 82% { opacity: 0; } 83.5%, 93% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.lr1 { animation: lr1 10s linear infinite; }
+@keyframes lg0 { 0%, 65% { transform: scaleX(0); } 80%, 93% { transform: scaleX(1); } 97%, 100% { transform: scaleX(1); } }
+.lg0 { animation: lg0 10s linear infinite; }
+@keyframes n0 { 0%, 19% { opacity: 1; } 19.5%, 96% { opacity: 0; } 97%, 100% { opacity: 1; } }
+.n0 { animation: n0 10s linear infinite; }
+@keyframes n1 { 0%, 19% { opacity: 0; } 19.5%, 30% { opacity: 1; } 30.5%, 100% { opacity: 0; } }
+.n1 { animation: n1 10s linear infinite; }
+@keyframes n2 { 0%, 30% { opacity: 0; } 30.5%, 51% { opacity: 1; } 51.5%, 100% { opacity: 0; } }
+.n2 { animation: n2 10s linear infinite; }
+@keyframes n3 { 0%, 51% { opacity: 0; } 51.5%, 61% { opacity: 1; } 61.5%, 100% { opacity: 0; } }
+.n3 { animation: n3 10s linear infinite; }
+@keyframes n4 { 0%, 61% { opacity: 0; } 61.5%, 85% { opacity: 1; } 85.5%, 100% { opacity: 0; } }
+.n4 { animation: n4 10s linear infinite; }
+@keyframes n5 { 0%, 85% { opacity: 0; } 85.5%, 96% { opacity: 1; } 96.5%, 100% { opacity: 0; } }
+.n5 { animation: n5 10s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+</style>
+  <rect width="1200" height="340" rx="14" fill="#0E0F12"/>
+  <text x="30" y="44" fill="#E6E3DC" font-size="15">Where Concerto saves tokens</text>
+  <text x="1130" y="44" fill="#8A8F98" font-size="12" text-anchor="end">cache hits</text>
+  <text class="n0" opacity="0" x="1170" y="44" fill="#4FD08A" font-size="22" font-weight="700" text-anchor="end">0</text>
+  <text class="n1" opacity="0" x="1170" y="44" fill="#4FD08A" font-size="22" font-weight="700" text-anchor="end">1</text>
+  <text class="n2" opacity="0" x="1170" y="44" fill="#4FD08A" font-size="22" font-weight="700" text-anchor="end">2</text>
+  <text class="n3" opacity="0" x="1170" y="44" fill="#4FD08A" font-size="22" font-weight="700" text-anchor="end">3</text>
+  <text class="n4" opacity="0" x="1170" y="44" fill="#4FD08A" font-size="22" font-weight="700" text-anchor="end">4</text>
+  <text class="n5" x="1170" y="44" fill="#4FD08A" font-size="22" font-weight="700" text-anchor="end">5</text>
+  <rect x="30" y="70" width="370" height="250" rx="10" fill="#15171C"/>
+  <text x="48" y="100" fill="#E6E3DC" font-size="15" font-weight="700">Stable prefix</text>
+  <text x="48" y="121" fill="#8A8F98" font-size="12">same bytes on every call per role</text>
+  <g class="pr0">
+    <text x="48" y="153" fill="#8A8F98" font-size="12">call 1</text>
+    <rect x="114" y="140" width="150" height="16" rx="3" fill="#E0A458"/>
+    <rect x="268" y="140" width="70" height="16" rx="3" fill="#2A2D35"/>
+  </g><g class="pr1">
+    <text x="48" y="193" fill="#8A8F98" font-size="12">call 2</text>
+    <rect x="114" y="180" width="150" height="16" rx="3" fill="#E0A458"/><rect class="ph1" x="114" y="180" width="150" height="16" rx="3" fill="#4FD08A"/>
+    <rect x="268" y="180" width="96" height="16" rx="3" fill="#2A2D35"/>
+  </g><g class="pr2">
+    <text x="48" y="233" fill="#8A8F98" font-size="12">call 3</text>
+    <rect x="114" y="220" width="150" height="16" rx="3" fill="#E0A458"/><rect class="ph2" x="114" y="220" width="150" height="16" rx="3" fill="#4FD08A"/>
+    <rect x="268" y="220" width="54" height="16" rx="3" fill="#2A2D35"/>
+  </g>
+  <text x="48" y="282" fill="#8A8F98" font-size="12"><tspan fill="#4FD08A">■</tspan> provider cache read</text>
+  <text x="48" y="302" fill="#8A8F98" font-size="12"><tspan fill="#E0A458">■</tspan> written once  <tspan fill="#555A63">■</tspan> story text</text>
+  <rect x="415" y="70" width="370" height="250" rx="10" fill="#15171C"/>
+  <text x="433" y="100" fill="#E6E3DC" font-size="15" font-weight="700">Warm session</text>
+  <text x="433" y="121" fill="#8A8F98" font-size="12">one per story, one for the conductor</text>
+  <g class="sr0">
+    <text x="433" y="153" fill="#8A8F98" font-size="12">turn 1</text>
+    <rect x="499" y="140" width="70" height="16" rx="3" fill="#B48CFF"/>
+  </g><g class="sr1">
+    <text x="433" y="193" fill="#8A8F98" font-size="12">turn 2</text>
+    <rect x="499" y="180" width="70" height="16" rx="3" fill="#2A2D35"/><rect class="sh1" x="499" y="180" width="70" height="16" rx="3" fill="#4FD08A"/><rect x="569" y="180" width="70" height="16" rx="3" fill="#B48CFF"/>
+  </g><g class="sr2">
+    <text x="433" y="233" fill="#8A8F98" font-size="12">turn 3</text>
+    <rect x="499" y="220" width="140" height="16" rx="3" fill="#2A2D35"/><rect class="sh2" x="499" y="220" width="140" height="16" rx="3" fill="#4FD08A"/><rect x="639" y="220" width="70" height="16" rx="3" fill="#B48CFF"/>
+  </g>
+  <text x="433" y="282" fill="#8A8F98" font-size="12">later turns reuse the cached</text>
+  <text x="433" y="302" fill="#8A8F98" font-size="12">prefix of earlier ones</text>
+  <rect x="800" y="70" width="370" height="250" rx="10" fill="#15171C"/>
+  <text x="818" y="100" fill="#E6E3DC" font-size="15" font-weight="700">Local response cache</text>
+  <text x="818" y="121" fill="#8A8F98" font-size="12">read-only calls, keyed on the prompt</text>
+  <g class="lr0">
+    <text x="818" y="153" fill="#8A8F98" font-size="12">score request, first time</text>
+    <rect x="818" y="164" width="300" height="16" rx="3" fill="#2A2D35"/>
+    <rect class="lg0" x="818" y="164" width="300" height="16" rx="3" fill="#E0A458"/>
+    <text x="1126" y="177" fill="#E6E3DC" font-size="12">21 s</text>
+  </g>
+  <g class="lr1">
+    <text x="818" y="215" fill="#8A8F98" font-size="12">same request again</text>
+    <rect x="818" y="226" width="300" height="16" rx="3" fill="#2A2D35"/>
+    <rect x="818" y="226" width="13" height="16" rx="3" fill="#4FD08A"/>
+    <text x="840" y="239" fill="#4FD08A" font-size="12">0.9 s · 0 tokens</text>
+  </g>
+  <text x="818" y="282" fill="#8A8F98" font-size="12">build calls change the tree</text>
+  <text x="818" y="302" fill="#8A8F98" font-size="12">and are never cached</text>
+</svg>

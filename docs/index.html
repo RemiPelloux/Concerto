@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Concerto · terminal orchestrator for coding agents</title>
+  <meta name="description" content="Concerto splits one request into scored user stories and sends each story to the model that fits it, through Claude Code, Codex CLI or pi. It never holds API keys.">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0E0F12" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F4F4F1" media="(prefers-color-scheme: light)">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap"> <!-- taste-skill-ignore: mono is for code blocks and the calculator only -->
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add("js");</script>
+  <script src="main.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="bar wrap">
+    <a class="mark" href="#top" aria-label="Concerto, back to top">Concerto</a>
+    <nav aria-label="Sections">
+      <a href="#scoring">Scoring</a>
+      <a href="#backends">Backends</a>
+      <a href="#cache">Cache</a>
+      <a href="#config">Config</a>
+    </nav>
+    <a class="button button-small" href="#install">Install</a>
+  </header>
+
+  <main id="main">
+    <section class="hero wrap" id="top" aria-labelledby="hero-title">
+      <div class="hero-text">
+        <h1 id="hero-title" class="display reveal">Concerto</h1>
+        <p class="lead reveal">A terminal orchestrator for coding agents. You give it one request. It splits the work into scored user stories and sends each story to the model that fits it.</p>
+        <div class="hero-actions reveal">
+          <a class="button" href="#install">Install and run</a>
+          <a class="link" href="https://github.com/RemiPelloux/Concerto">Source on GitHub</a>
+        </div>
+      </div>
+      <figure class="hero-figure reveal">
+        <a class="zoom" href="assets/hero.svg"><img src="assets/hero.svg" width="1200" height="560" alt="The Concerto screen: a conductor panel with three checkpoints on the left; a task node dispatching stories to Opus 5.5, GPT-6.1 Sol and a swarm of small builders, then to the critic and to verify and ship; a bar comparing the cost of the conductor alone with the conductor used only as the brain."></a>
+        <figcaption>One run: stories go out to builders, come back through the critic, then get verified. The conductor only wakes at its three checkpoints.</figcaption>
+      </figure>
+    </section>
+
+    <section class="scoring wrap" id="scoring" aria-labelledby="scoring-title">
+      <div class="split">
+        <div class="split-text">
+          <h2 id="scoring-title" class="head reveal">How a story is scored</h2>
+          <p class="reveal">A scorer model reads your request and writes user stories. Each story gets Fibonacci points (1, 2, 3, 5, 8 or 13), complexity, risk and value on a 1 to 5 scale, tags, and the stories it depends on.</p>
+          <p class="reveal">Concerto then works out a difficulty score from 0 to 100 in code. No model is asked for it, so the same story always gets the same number.</p>
+          <pre class="reveal"><code>score = 50% complexity
+      + 30% risk
+      + 20% points
+
+each one scaled to 0..1 first</code></pre>
+        </div>
+
+        <form class="calc reveal" data-ui aria-labelledby="calc-title" onsubmit="return false">
+          <h3 id="calc-title" class="calc-title">Try a story</h3>
+          <fieldset>
+            <legend>Points</legend>
+            <div class="seg">
+              <label><input type="radio" name="points" value="1"><span>1</span></label>
+              <label><input type="radio" name="points" value="2"><span>2</span></label>
+              <label><input type="radio" name="points" value="3" checked><span>3</span></label>
+              <label><input type="radio" name="points" value="5"><span>5</span></label>
+              <label><input type="radio" name="points" value="8"><span>8</span></label>
+              <label><input type="radio" name="points" value="13"><span>13</span></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Complexity</legend>
+            <div class="seg">
+              <label><input type="radio" name="complexity" value="1"><span>1</span></label>
+              <label><input type="radio" name="complexity" value="2"><span>2</span></label>
+              <label><input type="radio" name="complexity" value="3" checked><span>3</span></label>
+              <label><input type="radio" name="complexity" value="4"><span>4</span></label>
+              <label><input type="radio" name="complexity" value="5"><span>5</span></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Risk</legend>
+            <div class="seg">
+              <label><input type="radio" name="risk" value="1"><span>1</span></label>
+              <label><input type="radio" name="risk" value="2" checked><span>2</span></label>
+              <label><input type="radio" name="risk" value="3"><span>3</span></label>
+              <label><input type="radio" name="risk" value="4"><span>4</span></label>
+              <label><input type="radio" name="risk" value="5"><span>5</span></label>
+            </div>
+          </fieldset>
+          <label class="check"><input type="checkbox" name="ui"> Tagged UI/UX</label>
+          <div class="calc-out" aria-live="polite">
+            <output name="score" class="calc-score">41</output>
+            <dl>
+              <div><dt>Built by</dt><dd data-out="builder"><span class="dot dot-soloist"></span>GPT-6.1 Sol, through Codex CLI</dd></div>
+              <div><dt>Reviewed by</dt><dd data-out="reviewer"><span class="dot dot-critic"></span>the critic, Claude Sonnet 5.5</dd></div>
+            </dl>
+          </div>
+        </form>
+      </div>
+
+      <figure class="wide-figure reveal">
+        <a class="zoom" href="assets/routing.svg"><img src="assets/routing.svg" width="1200" height="520" loading="lazy" alt="Four stories from the request &quot;Move the API to Rust&quot;. Dark mode for settings, tagged UI, scores 28 and goes to Opus 5.5, reviewed by GPT-6 Astra. Port auth handlers scores 76 and goes to Opus 5.5. Port JSON helpers scores 24 and Add request logging scores 41; both go to GPT-6.1 Sol. The critic reviews the three non-UI stories."></a>
+      </figure>
+
+      <div class="table-wrap reveal">
+        <table>
+          <caption>Who builds and who reviews</caption>
+          <thead>
+            <tr><th scope="col">Story</th><th scope="col">Builder</th><th scope="col">Reviewer</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Tagged UI or UX, any score</td><td><span class="dot dot-soloist"></span>Claude Opus 5.5</td><td><span class="dot dot-astra"></span>GPT-6 Astra</td></tr>
+            <tr><td>Score 55 or higher</td><td><span class="dot dot-soloist"></span>Claude Opus 5.5</td><td><span class="dot dot-critic"></span>Critic, Claude Sonnet 5.5</td></tr>
+            <tr><td>Score under 55</td><td><span class="dot dot-soloist"></span>GPT-6.1 Sol</td><td><span class="dot dot-critic"></span>Critic, Claude Sonnet 5.5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note reveal">Stories that depend on nothing run in the same wave. If a builder's CLI is missing or fails, the story falls back to the same kind of model through pi.</p>
+    </section>
+
+    <section class="backends wrap" id="backends" aria-labelledby="backends-title">
+      <div class="backends-head">
+        <h2 id="backends-title" class="head reveal">Three backends, no API keys</h2>
+        <p class="reveal">Concerto starts other programs and reads what they print. Your logins stay with those programs. Concerto never reads, stores or sends a key.</p>
+      </div>
+      <ul class="backend-list">
+        <li class="reveal">
+          <h3>Claude Code CLI</h3>
+          <p class="backend-account">Your Claude subscription</p>
+          <p>Builds UI/UX stories and stories scored 55 and up with Claude Opus 5.5. Concerto starts it without your user settings, plugins or MCP servers, so a call opens with about 600 tokens of context instead of about 131,000.</p>
+        </li>
+        <li class="reveal">
+          <h3>Codex CLI</h3>
+          <p class="backend-account">Your ChatGPT subscription</p>
+          <p>Builds stories scored under 55 with GPT-6.1 Sol. GPT-6 Astra reviews UI/UX work.</p>
+        </li>
+        <li class="reveal">
+          <h3>pi</h3>
+          <p class="backend-account">Any API provider you log into</p>
+          <p>Anthropic, OpenAI, DeepSeek, Grok or a custom endpoint. It is the fallback for both CLIs, and it runs any model you add to the config by hand.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="conductor" id="checkpoints" aria-labelledby="conductor-title">
+      <div class="wrap conductor-inner">
+        <div class="conductor-text">
+          <h2 id="conductor-title" class="head reveal">The conductor wakes three times</h2>
+          <p class="reveal">Claude Fable 5.2 is the conductor. It can read the whole session and has no tool that writes. It stays asleep while the builders work and is called at three fixed moments, each with one question.</p>
+        </div>
+        <ol class="gates">
+          <li class="reveal"><h3>Before a plan locks</h3><p>What did the plan miss?</p></li>
+          <li class="reveal"><h3>When an error repeats twice</h3><p>Is this the root cause, or a rabbit hole?</p></li>
+          <li class="reveal"><h3>Before calling it done</h3><p>Did the diff break anything?</p></li>
+        </ol>
+        <p class="conductor-cost reveal">The cost panel in the terminal shows what the same tokens would have cost on the conductor model alone, next to what the run cost with the conductor used only as the brain.</p>
+      </div>
+    </section>
+
+    <section class="cache wrap" id="cache" aria-labelledby="cache-title">
+      <h2 id="cache-title" class="head reveal">Three layers of cache</h2>
+      <figure class="wide-figure reveal">
+        <a class="zoom" href="assets/cache.svg"><img src="assets/cache.svg" width="1200" height="340" loading="lazy" alt="Three panels. Stable prefix: the first call writes the role prompt, later calls read it from the provider cache. Warm session: each turn reuses the earlier turns. Local response cache: scoring a request takes 21 seconds the first time and 0.9 seconds with no tokens the second time. A counter shows five cache hits."></a>
+      </figure>
+      <div class="cache-grid">
+        <div class="cache-copy">
+          <h3 class="reveal">Stable prefix</h3>
+          <p class="reveal">Each role's system prompt is the same bytes on every call: the Pelloux guidelines first, then the role brief, with no dates, paths or story text. The provider's prompt cache matches it each time.</p>
+          <h3 class="reveal">Warm sessions</h3>
+          <p class="reveal">Each story keeps one session for its retries, and the conductor keeps one for the whole run. Later turns reuse the cached start of earlier ones.</p>
+          <h3 class="reveal">Local response cache</h3>
+          <p class="reveal">Read-only calls, such as scoring, are saved on disk keyed on model, role, prompt file and prompt. Build calls change your files and are never cached.</p>
+        </div>
+        <div class="figures">
+          <p class="reveal"><span class="big">0.9 s</span> <span class="was">to score the same request a second time, down from 21 s, with 0 tokens used</span></p>
+          <p class="reveal"><span class="big">~600</span> <span class="was">tokens of context when Claude Code starts, instead of ~131K with your user settings loaded</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="install wrap" id="install" aria-labelledby="install-title">
+      <div class="install-main">
+        <h2 id="install-title" class="head reveal">Install and run</h2>
+        <p class="reveal">You need Node 22 or newer, and at least one of <code>claude</code>, <code>codex</code> or <code>pi</code> on your PATH and logged in.</p>
+        <div class="code-block reveal">
+          <div class="code-bar"><button class="copy" type="button" data-copy="install-cmd">Copy</button></div>
+          <pre><code id="install-cmd">git clone https://github.com/RemiPelloux/Concerto
+cd Concerto
+npm install
+npm run dev -- "Move the API to Rust. Done means: every test passes."</code></pre>
+        </div>
+        <p class="reveal">Concerto's agents edit files in the directory you start it from. Run it in a git worktree or on a clean branch.</p>
+      </div>
+      <div class="install-side">
+        <h3 class="reveal">Flags</h3>
+        <dl class="flags">
+          <div class="reveal"><dt><code>--plan</code></dt><dd>Print the scored stories as JSON and stop. Nothing is built.</dd></div>
+          <div class="reveal"><dt><code>--models</code></dt><dd>Show which model each role and each score range gets.</dd></div>
+          <div class="reveal"><dt><code>--yes</code></dt><dd>Skip the confirm step and start building after scoring.</dd></div>
+          <div class="reveal"><dt><code>--run</code></dt><dd>Score and build without the TUI, printing the log. For scripts and CI.</dd></div>
+        </dl>
+        <h3 class="reveal">In the terminal</h3>
+        <p class="reveal">Enter scores the request and shows the stories. Enter again runs the plan, Esc throws it away. While a run is going, Esc stops it.</p>
+      </div>
+    </section>
+
+    <section class="config wrap" id="config" aria-labelledby="config-title">
+      <div class="config-text">
+        <h2 id="config-title" class="head reveal">Change who does what</h2>
+        <p class="reveal">Routing lives in <code>concerto.config.json</code> at the root of the repository. <code>routes</code> picks the builder for a story and <code>reviews</code> picks who checks it. Each model is written as backend, slash, model id. A route lists models in order of preference and the first reachable one wins. A story with no review match goes to the critic role.</p>
+        <p class="reveal">Run <code>npm run dev -- --models</code> after an edit to see the result.</p>
+      </div>
+      <pre class="config-code reveal"><code><span class="t-p">{</span>
+  <span class="t-k">"routes"</span>: [
+    { <span class="t-k">"name"</span>: <span class="t-s">"ux-build"</span>, <span class="t-k">"tags"</span>: [<span class="t-s">"ui"</span>, <span class="t-s">"ux"</span>, <span class="t-s">"frontend"</span>],
+      <span class="t-k">"role"</span>: <span class="t-s">"soloist"</span>, <span class="t-k">"effort"</span>: <span class="t-s">"high"</span>,
+      <span class="t-k">"models"</span>: [<span class="t-s">"claude-code/claude-opus-5-5"</span>, <span class="t-s">"anthropic/claude-opus-5-5"</span>] },
+    { <span class="t-k">"name"</span>: <span class="t-s">"complex-build"</span>, <span class="t-k">"minScore"</span>: <span class="t-n">55</span>,
+      <span class="t-k">"role"</span>: <span class="t-s">"soloist"</span>, <span class="t-k">"effort"</span>: <span class="t-s">"high"</span>,
+      <span class="t-k">"models"</span>: [<span class="t-s">"claude-code/claude-opus-5-5"</span>, <span class="t-s">"anthropic/claude-opus-5-5"</span>] },
+    { <span class="t-k">"name"</span>: <span class="t-s">"light-build"</span>,
+      <span class="t-k">"role"</span>: <span class="t-s">"section"</span>, <span class="t-k">"effort"</span>: <span class="t-s">"medium"</span>,
+      <span class="t-k">"models"</span>: [<span class="t-s">"codex/gpt-6.1-sol"</span>, <span class="t-s">"openai/gpt-6.1-sol"</span>] }
+  ],
+  <span class="t-k">"reviews"</span>: [
+    { <span class="t-k">"tags"</span>: [<span class="t-s">"ui"</span>, <span class="t-s">"ux"</span>, <span class="t-s">"frontend"</span>],
+      <span class="t-k">"models"</span>: [<span class="t-s">"codex/gpt-6-astra"</span>, <span class="t-s">"openai/gpt-6-astra"</span>] }
+  ]
+<span class="t-p">}</span></code></pre>
+    </section>
+
+    <section class="quality wrap" id="quality" aria-labelledby="quality-title">
+      <h2 id="quality-title" class="head reveal">Held to its own rules</h2>
+      <div class="quality-cols">
+        <div class="reveal">
+          <h3><a href="https://github.com/RemiPelloux/pelloux-guidelines">Pelloux Guidelines</a></h3>
+          <p>Files up to 400 lines, functions up to 25, at most three parameters, no debug output. A pre-commit hook audits the staged files and CI audits the whole tree. Builders get the same guidelines at the top of their prompt.</p>
+        </div>
+        <div class="reveal">
+          <h3><a href="https://github.com/RemiPelloux/SmarttyTest">SmartTest</a></h3>
+          <p>Runs only the tests a change can affect, so a one-file edit does not wait on the full suite. Install it from npm as <code>@tkmremi/smarttest</code>.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot wrap">
+    <p class="foot-name" aria-hidden="true">Concerto</p>
+    <div class="foot-row">
+      <p>A terminal orchestrator for coding agents.</p>
+      <ul>
+        <li><a href="https://github.com/RemiPelloux/Concerto">GitHub</a></li>
+        <li><a href="https://github.com/RemiPelloux/Concerto/issues">Issues</a></li>
+        <li><a href="https://github.com/RemiPelloux/pelloux-guidelines">Pelloux Guidelines</a></li>
+        <li><a href="https://www.npmjs.com/package/@tkmremi/smarttest">SmartTest on npm</a></li>
+      </ul>
+    </div>
+  </footer>
+</body>
+</html>

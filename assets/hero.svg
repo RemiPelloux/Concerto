@@ -1,0 +1,270 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" role="img" aria-labelledby="t d">
+  <title id="t">Concerto</title>
+  <desc id="d">A request is dispatched as stories to builder models, checked by a critic, then verified and shipped. The conductor wakes at three checkpoints. Using the conductor model only as the brain costs a fraction of running it alone.</desc>
+  <style>
+text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; }
+.pill { fill: #2A2140; stroke: #B48CFF; }
+.mark-off { opacity: 0; }
+.dot { opacity: 0; }
+.c0, .c1, .c2 { opacity: 0; }
+.bar { transform-box: fill-box; transform-origin: 0 50%; }
+.money { opacity: 1; }
+.verify { fill: #133325; stroke: #4FD08A; }
+.check { opacity: 1; }
+.flash { stroke: #E8826A; }
+.cell { fill: #4FD08A; }
+@keyframes bar { 0%, 10% { transform: scaleX(0); } 70%, 92% { transform: scaleX(1); } 99%, 100% { transform: scaleX(0); } }
+@keyframes money { 0%, 70% { opacity: 0; } 73%, 92% { opacity: 1; } 95%, 100% { opacity: 0; } }
+@keyframes verify { 0%, 69% { fill: #15171C; stroke: #2A2D35; } 71%, 92% { fill: #133325; stroke: #4FD08A; } 95%, 100% { fill: #15171C; stroke: #2A2D35; } }
+@keyframes check { 0%, 59% { opacity: 0; } 61%, 92% { opacity: 1; } 95%, 100% { opacity: 0; } }
+@keyframes flash { 0%, 31% { stroke: #E8826A; } 32%, 37% { stroke: #F06A6A; } 39%, 100% { stroke: #E8826A; } }
+@keyframes cell { 0%, 26% { fill: #2A2D35; } 30%, 92% { fill: #4FD08A; } 96%, 100% { fill: #2A2D35; } }
+.bar { animation: bar 8s cubic-bezier(.3,.7,.3,1) infinite; }
+.money { animation: money 8s linear infinite; }
+.verify { animation: verify 8s linear infinite; }
+.check { animation: check 8s linear infinite; }
+.flash { animation: flash 8s linear infinite; }
+.cell { animation: cell 8s linear infinite; }
+.cell.s2 { animation-delay: .15s; } .cell.s3 { animation-delay: .3s; }
+@keyframes p1 {
+  0%, 6% { fill: #15171C; stroke: #2A2D35; }
+  7.5%, 92% { fill: #2A2140; stroke: #B48CFF; }
+  95%, 100% { fill: #15171C; stroke: #2A2D35; }
+}
+@keyframes p1on { 0%, 6% { opacity: 0; } 7.5%, 92% { opacity: 1; } 95%, 100% { opacity: 0; } }
+@keyframes p1off { 0%, 6% { opacity: 1; } 7.5%, 92% { opacity: 0; } 95%, 100% { opacity: 1; } }
+.p1 { animation: p1 8s linear infinite; }
+.mark-on.p1t { animation: p1on 8s linear infinite; }
+.mark-off.p1t { animation: p1off 8s linear infinite; }
+@keyframes p2 {
+  0%, 38% { fill: #15171C; stroke: #2A2D35; }
+  39.5%, 92% { fill: #2A2140; stroke: #B48CFF; }
+  95%, 100% { fill: #15171C; stroke: #2A2D35; }
+}
+@keyframes p2on { 0%, 38% { opacity: 0; } 39.5%, 92% { opacity: 1; } 95%, 100% { opacity: 0; } }
+@keyframes p2off { 0%, 38% { opacity: 1; } 39.5%, 92% { opacity: 0; } 95%, 100% { opacity: 1; } }
+.p2 { animation: p2 8s linear infinite; }
+.mark-on.p2t { animation: p2on 8s linear infinite; }
+.mark-off.p2t { animation: p2off 8s linear infinite; }
+@keyframes p3 {
+  0%, 74% { fill: #15171C; stroke: #2A2D35; }
+  75.5%, 92% { fill: #2A2140; stroke: #B48CFF; }
+  95%, 100% { fill: #15171C; stroke: #2A2D35; }
+}
+@keyframes p3on { 0%, 74% { opacity: 0; } 75.5%, 92% { opacity: 1; } 95%, 100% { opacity: 0; } }
+@keyframes p3off { 0%, 74% { opacity: 1; } 75.5%, 92% { opacity: 0; } 95%, 100% { opacity: 1; } }
+.p3 { animation: p3 8s linear infinite; }
+.mark-on.p3t { animation: p3on 8s linear infinite; }
+.mark-off.p3t { animation: p3off 8s linear infinite; }
+@keyframes c0 { 0%, 6% { opacity: 1; } 7%, 93% { opacity: 0; } 95%, 100% { opacity: 1; } }
+.c0 { animation: c0 8s linear infinite; }
+@keyframes c1 { 0%, 6% { opacity: 0; } 7%, 38% { opacity: 1; } 39%, 100% { opacity: 0; } }
+.c1 { animation: c1 8s linear infinite; }
+@keyframes c2 { 0%, 38% { opacity: 0; } 39%, 74% { opacity: 1; } 75%, 100% { opacity: 0; } }
+.c2 { animation: c2 8s linear infinite; }
+@keyframes c3 { 0%, 74% { opacity: 0; } 75%, 92% { opacity: 1; } 94%, 100% { opacity: 0; } }
+.c3 { animation: c3 8s linear infinite; }
+@keyframes d1 {
+  0%, 9.5% { stroke-dashoffset: 0; opacity: 0; }
+  10% { stroke-dashoffset: 0; opacity: 1; }
+  22% { stroke-dashoffset: -100; opacity: 1; }
+  22.5%, 100% { stroke-dashoffset: -100; opacity: 0; }
+}
+.d1 { animation: d1 8s linear infinite; }
+@keyframes d2 {
+  0%, 12.5% { stroke-dashoffset: 0; opacity: 0; }
+  13% { stroke-dashoffset: 0; opacity: 1; }
+  25% { stroke-dashoffset: -100; opacity: 1; }
+  25.5%, 100% { stroke-dashoffset: -100; opacity: 0; }
+}
+.d2 { animation: d2 8s linear infinite; }
+@keyframes d3 {
+  0%, 15.5% { stroke-dashoffset: 0; opacity: 0; }
+  16% { stroke-dashoffset: 0; opacity: 1; }
+  28% { stroke-dashoffset: -100; opacity: 1; }
+  28.5%, 100% { stroke-dashoffset: -100; opacity: 0; }
+}
+.d3 { animation: d3 8s linear infinite; }
+@keyframes r1 {
+  0%, 43.5% { stroke-dashoffset: 0; opacity: 0; }
+  44% { stroke-dashoffset: 0; opacity: 1; }
+  54% { stroke-dashoffset: -100; opacity: 1; }
+  54.5%, 100% { stroke-dashoffset: -100; opacity: 0; }
+}
+.r1 { animation: r1 8s linear infinite; }
+@keyframes r2 {
+  0%, 46.5% { stroke-dashoffset: 0; opacity: 0; }
+  47% { stroke-dashoffset: 0; opacity: 1; }
+  57% { stroke-dashoffset: -100; opacity: 1; }
+  57.5%, 100% { stroke-dashoffset: -100; opacity: 0; }
+}
+.r2 { animation: r2 8s linear infinite; }
+@keyframes r3 {
+  0%, 49.5% { stroke-dashoffset: 0; opacity: 0; }
+  50% { stroke-dashoffset: 0; opacity: 1; }
+  60% { stroke-dashoffset: -100; opacity: 1; }
+  60.5%, 100% { stroke-dashoffset: -100; opacity: 0; }
+}
+.r3 { animation: r3 8s linear infinite; }
+@keyframes v {
+  0%, 62.5% { stroke-dashoffset: 0; opacity: 0; }
+  63% { stroke-dashoffset: 0; opacity: 1; }
+  70% { stroke-dashoffset: -100; opacity: 1; }
+  70.5%, 100% { stroke-dashoffset: -100; opacity: 0; }
+}
+.v { animation: v 8s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  *, .dot, .bar, .pill, .mark-on, .mark-off { animation: none !important; }
+  .c3 { opacity: 1; }
+}
+</style>
+  <rect width="1200" height="560" rx="14" fill="#0E0F12"/>
+
+  <g aria-hidden="true">
+    <rect x="51" y="34" width="44" height="12" fill="#E0A458"/>
+    <rect x="117" y="34" width="33" height="12" fill="#E0A458"/>
+    <rect x="172" y="34" width="22" height="12" fill="#E0A458"/>
+    <rect x="216" y="34" width="22" height="12" fill="#E0A458"/>
+    <rect x="260" y="34" width="44" height="12" fill="#E0A458"/>
+    <rect x="315" y="34" width="55" height="12" fill="#E0A458"/>
+    <rect x="381" y="34" width="44" height="12" fill="#E0A458"/>
+    <rect x="447" y="34" width="66" height="12" fill="#E0A458"/>
+    <rect x="535" y="34" width="33" height="12" fill="#E0A458"/>
+    <rect x="40" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="106" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="139" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="172" y="48" width="33" height="12" fill="#E0A458"/>
+    <rect x="216" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="249" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="315" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="381" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="414" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="469" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="524" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="557" y="48" width="22" height="12" fill="#E0A458"/>
+    <rect x="40" y="62" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="106" y="62" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="139" y="62" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="172" y="62" width="66" height="12" fill="#9C6B2E"/>
+    <rect x="249" y="62" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="315" y="62" width="44" height="12" fill="#9C6B2E"/>
+    <rect x="381" y="62" width="44" height="12" fill="#9C6B2E"/>
+    <rect x="469" y="62" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="524" y="62" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="557" y="62" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="40" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="106" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="139" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="172" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="205" y="76" width="33" height="12" fill="#9C6B2E"/>
+    <rect x="249" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="315" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="381" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="414" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="469" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="524" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="557" y="76" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="51" y="90" width="44" height="12" fill="#9C6B2E"/>
+    <rect x="117" y="90" width="33" height="12" fill="#9C6B2E"/>
+    <rect x="172" y="90" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="216" y="90" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="260" y="90" width="44" height="12" fill="#9C6B2E"/>
+    <rect x="315" y="90" width="55" height="12" fill="#9C6B2E"/>
+    <rect x="381" y="90" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="425" y="90" width="11" height="12" fill="#9C6B2E"/>
+    <rect x="469" y="90" width="22" height="12" fill="#9C6B2E"/>
+    <rect x="535" y="90" width="33" height="12" fill="#9C6B2E"/>
+  </g>
+  <text x="640" y="58" fill="#E6E3DC" font-size="17">A terminal orchestrator for coding agents.</text>
+  <text x="640" y="84" fill="#8A8F98" font-size="13">One request, scored stories, the right model for each.</text>
+
+  <!-- conductor -->
+  <rect x="40" y="140" width="300" height="384" rx="10" fill="#15171C" stroke="#B48CFF" stroke-width="1.5"/>
+  <text x="60" y="172" fill="#B48CFF" font-size="14" font-weight="700">● fable-5.2 · on call</text>
+  <text x="60" y="194" fill="#8A8F98" font-size="12">conductor · reads all, writes nothing</text>
+  <g>
+    <rect class="pill p1" x="60" y="222" width="260" height="34" rx="17" stroke-width="1.5"/>
+    <text class="mark-off p1t" x="78" y="244" fill="#8A8F98" font-size="13">› before a plan locks</text>
+    <text class="mark-on p1t" x="78" y="244" fill="#B48CFF" font-size="13" font-weight="700">✓ before a plan locks</text>
+    <text x="64" y="276" fill="#8A8F98" font-size="11.5">what did the plan miss?</text>
+  </g>
+  <g>
+    <rect class="pill p2" x="60" y="304" width="260" height="34" rx="17" stroke-width="1.5"/>
+    <text class="mark-off p2t" x="78" y="326" fill="#8A8F98" font-size="13">› error repeats twice</text>
+    <text class="mark-on p2t" x="78" y="326" fill="#B48CFF" font-size="13" font-weight="700">✓ error repeats twice</text>
+    <text x="64" y="358" fill="#8A8F98" font-size="11.5">root cause or rabbit hole?</text>
+  </g>
+  <g>
+    <rect class="pill p3" x="60" y="386" width="260" height="34" rx="17" stroke-width="1.5"/>
+    <text class="mark-off p3t" x="78" y="408" fill="#8A8F98" font-size="13">› before calling done</text>
+    <text class="mark-on p3t" x="78" y="408" fill="#B48CFF" font-size="13" font-weight="700">✓ before calling done</text>
+    <text x="64" y="440" fill="#8A8F98" font-size="11.5">did the diff break anything?</text>
+  </g>
+  <text x="60" y="500" fill="#8A8F98" font-size="12">wakes up</text>
+  <text class="c0" x="320" y="500" fill="#B48CFF" font-size="13" text-anchor="end">0 / 3</text>
+  <text class="c1" x="320" y="500" fill="#B48CFF" font-size="13" text-anchor="end">1 / 3</text>
+  <text class="c2" x="320" y="500" fill="#B48CFF" font-size="13" text-anchor="end">2 / 3</text>
+  <text class="c3" x="320" y="500" fill="#B48CFF" font-size="13" text-anchor="end">3 / 3</text>
+  <path d="M340,247 L390,247" stroke="#B48CFF" stroke-width="1.5" stroke-dasharray="4 5" opacity=".7"/>
+
+  <!-- stage -->
+  <text x="390" y="132" fill="#8A8F98" font-size="12">wave 1 · 5 stories</text>
+  <path d="M540,247 C572,247 568,175 600,175" stroke="#2A2D35" stroke-width="1.5" fill="none"/>
+  <path class="dot d1" d="M540,247 C572,247 568,175 600,175" pathLength="100" stroke="#E8826A" stroke-width="8" stroke-linecap="round" fill="none" stroke-dasharray="0.001 200"/>
+  <path d="M540,247 L600,247" stroke="#2A2D35" stroke-width="1.5" fill="none"/>
+  <path class="dot d2" d="M540,247 L600,247" pathLength="100" stroke="#E8826A" stroke-width="8" stroke-linecap="round" fill="none" stroke-dasharray="0.001 200"/>
+  <path d="M540,247 C572,247 568,319 600,319" stroke="#2A2D35" stroke-width="1.5" fill="none"/>
+  <path class="dot d3" d="M540,247 C572,247 568,319 600,319" pathLength="100" stroke="#4FD08A" stroke-width="8" stroke-linecap="round" fill="none" stroke-dasharray="0.001 200"/>
+  <path d="M820,175 C852,175 848,247 880,247" stroke="#2A2D35" stroke-width="1.5" fill="none"/>
+  <path class="dot r1" d="M820,175 C852,175 848,247 880,247" pathLength="100" stroke="#6AA5FF" stroke-width="8" stroke-linecap="round" fill="none" stroke-dasharray="0.001 200"/>
+  <path d="M820,247 L880,247" stroke="#2A2D35" stroke-width="1.5" fill="none"/>
+  <path class="dot r2" d="M820,247 L880,247" pathLength="100" stroke="#6AA5FF" stroke-width="8" stroke-linecap="round" fill="none" stroke-dasharray="0.001 200"/>
+  <path d="M820,319 C852,319 848,247 880,247" stroke="#2A2D35" stroke-width="1.5" fill="none"/>
+  <path class="dot r3" d="M820,319 C852,319 848,247 880,247" pathLength="100" stroke="#6AA5FF" stroke-width="8" stroke-linecap="round" fill="none" stroke-dasharray="0.001 200"/>
+  <path d="M1010,247 L1050,247" stroke="#2A2D35" stroke-width="1.5" fill="none"/>
+  <path class="dot v" d="M1010,247 L1050,247" pathLength="100" stroke="#4FD08A" stroke-width="8" stroke-linecap="round" fill="none" stroke-dasharray="0.001 200"/>
+  <g>
+    <rect x="390" y="222" width="150" height="50" rx="8" fill="#15171C" stroke="#E0A458" stroke-width="1.5"/>
+    <text x="404" y="243" fill="#E0A458" font-size="13" font-weight="700">Task</text>
+    <text x="404" y="261" fill="#8A8F98" font-size="11.5">dispatch stories</text>
+  </g>
+  <g>
+    <rect x="600" y="150" width="220" height="50" rx="8" fill="#15171C" stroke="#E8826A" stroke-width="1.5"/>
+    <text x="614" y="171" fill="#E8826A" font-size="13" font-weight="700">● opus-5.5 · builds</text>
+    <text x="614" y="189" fill="#8A8F98" font-size="11.5">score 76 · auth handlers</text>
+  </g>
+  <g>
+    <rect class="flash" x="600" y="222" width="220" height="50" rx="8" fill="#15171C" stroke="#E8826A" stroke-width="1.5"/>
+    <text x="614" y="243" fill="#E8826A" font-size="13" font-weight="700">● gpt-6.1-sol · builds</text>
+    <text x="614" y="261" fill="#8A8F98" font-size="11.5">score 24 · json helpers</text>
+  </g>
+  <g>
+    <rect x="600" y="294" width="220" height="50" rx="8" fill="#15171C" stroke="#4FD08A" stroke-width="1.5"/>
+    <text x="614" y="315" fill="#4FD08A" font-size="13" font-weight="700">● section · swarms</text>
+    <text x="614" y="333" fill="#8A8F98" font-size="11.5">3 small stories</text>
+  </g>
+  <rect class="cell" x="770" y="304" width="10" height="10" rx="2"/>
+  <rect class="cell s2" x="784" y="304" width="10" height="10" rx="2"/>
+  <rect class="cell s3" x="798" y="304" width="10" height="10" rx="2"/>
+  <g>
+    <rect x="880" y="222" width="130" height="50" rx="8" fill="#15171C" stroke="#6AA5FF" stroke-width="1.5"/>
+    <text x="894" y="243" fill="#6AA5FF" font-size="13" font-weight="700">● critic</text>
+    <text x="894" y="261" fill="#8A8F98" font-size="11.5">sonnet-5.5</text>
+  </g>
+  <text class="check" x="992" y="243" fill="#4FD08A" font-size="14" font-weight="700" text-anchor="end">✓</text>
+  <g>
+    <rect class="verify" x="1050" y="222" width="120" height="50" rx="8" stroke-width="1.5"/>
+    <text x="1110" y="252" fill="#E6E3DC" font-size="13" font-weight="700" text-anchor="middle">verify · ship</text>
+  </g>
+
+  <!-- cost -->
+  <rect x="390" y="380" width="780" height="144" rx="10" fill="#15171C" stroke="#2A2D35" stroke-width="1.5"/>
+  <text x="410" y="410" fill="#8A8F98" font-size="12">same job, same tokens · what it costs</text>
+  <text x="410" y="452" fill="#E6E3DC" font-size="13">conductor alone</text>
+  <rect x="590" y="440" width="560" height="16" rx="3" fill="#23262D"/>
+  <rect class="bar" x="590" y="440" width="560" height="16" rx="3" fill="#F06A6A"/>
+  <text x="410" y="494" fill="#B48CFF" font-size="13" font-weight="700">as the brain</text>
+  <rect x="590" y="482" width="560" height="16" rx="3" fill="#23262D"/>
+  <rect class="bar" x="590" y="482" width="128" height="16" rx="3" fill="#B48CFF"/>
+  <text class="money" x="1150" y="410" text-anchor="end" fill="#B48CFF" font-size="12">wakes 3 times, others do the typing</text>
+</svg>

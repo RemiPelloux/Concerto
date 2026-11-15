@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" role="img" aria-labelledby="t d">
+  <title id="t">How Concerto routes stories</title>
+  <desc id="d">The scorer splits a request into four stories with points and a 0 to 100 score. The UI story and the story scored 76 go to Claude Opus 5.5; the stories scored 24 and 41 go to GPT-6.1 Sol. The UI story is reviewed by GPT-6 Astra, the others by the critic.</desc>
+  <style>
+text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; white-space: pre; }
+.chk { transform-box: fill-box; transform-origin: center; }
+@keyframes scorer { 0%, 4% { stroke: #2A2D35; } 6%, 22% { stroke: #E0B450; } 26%, 100% { stroke: #2A2D35; } }
+.scorer { stroke: #E0B450; animation: scorer 9s linear infinite; }
+@keyframes flow { 0% { stroke-dashoffset: 18; } 100% { stroke-dashoffset: 0; } }
+.flow { animation: flow 1s linear infinite; }
+@keyframes k0 {
+  0%, 12% { opacity: 0; transform: translate(-410px, 154px); }
+  15%, 30% { opacity: 1; transform: translate(-410px, 144px); }
+  40%, 92% { opacity: 1; transform: translate(0, 0); }
+  96%, 100% { opacity: 0; transform: translate(0, 0); }
+}
+.k0 { animation: k0 9s cubic-bezier(.45,0,.2,1) infinite; }
+@keyframes c0 { 0%, 60% { opacity: 0; transform: scale(.4); } 62%, 92% { opacity: 1; transform: scale(1); } 96%, 100% { opacity: 0; transform: scale(1); } }
+.c0 { animation: c0 9s ease-out infinite; }
+@keyframes k1 {
+  0%, 15% { opacity: 0; transform: translate(-410px, 148px); }
+  18%, 35% { opacity: 1; transform: translate(-410px, 138px); }
+  45%, 92% { opacity: 1; transform: translate(0, 0); }
+  96%, 100% { opacity: 0; transform: translate(0, 0); }
+}
+.k1 { animation: k1 9s cubic-bezier(.45,0,.2,1) infinite; }
+@keyframes c1 { 0%, 64% { opacity: 0; transform: scale(.4); } 66%, 92% { opacity: 1; transform: scale(1); } 96%, 100% { opacity: 0; transform: scale(1); } }
+.c1 { animation: c1 9s ease-out infinite; }
+@keyframes k2 {
+  0%, 18% { opacity: 0; transform: translate(-410px, 40px); }
+  21%, 40% { opacity: 1; transform: translate(-410px, 30px); }
+  50%, 92% { opacity: 1; transform: translate(0, 0); }
+  96%, 100% { opacity: 0; transform: translate(0, 0); }
+}
+.k2 { animation: k2 9s cubic-bezier(.45,0,.2,1) infinite; }
+@keyframes c2 { 0%, 68% { opacity: 0; transform: scale(.4); } 70%, 92% { opacity: 1; transform: scale(1); } 96%, 100% { opacity: 0; transform: scale(1); } }
+.c2 { animation: c2 9s ease-out infinite; }
+@keyframes k3 {
+  0%, 21% { opacity: 0; transform: translate(-410px, 34px); }
+  24%, 45% { opacity: 1; transform: translate(-410px, 24px); }
+  55%, 92% { opacity: 1; transform: translate(0, 0); }
+  96%, 100% { opacity: 0; transform: translate(0, 0); }
+}
+.k3 { animation: k3 9s cubic-bezier(.45,0,.2,1) infinite; }
+@keyframes c3 { 0%, 72% { opacity: 0; transform: scale(.4); } 74%, 92% { opacity: 1; transform: scale(1); } 96%, 100% { opacity: 0; transform: scale(1); } }
+.c3 { animation: c3 9s ease-out infinite; }
+@keyframes legend { 0%, 52% { opacity: 0; } 56%, 92% { opacity: 1; } 96%, 100% { opacity: 0; } }
+.legend { animation: legend 9s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+</style>
+  <rect width="1200" height="520" rx="14" fill="#0E0F12"/>
+
+  <rect x="30" y="30" width="300" height="76" rx="8" fill="#15171C" stroke="#E0A458" stroke-width="1.2"/>
+  <text x="46" y="56" fill="#8A8F98" font-size="12">request</text>
+  <text x="46" y="80" fill="#E6E3DC" font-size="13.5">Move the API to Rust.</text>
+  <text x="46" y="97" fill="#8A8F98" font-size="11.5">Done means: every test passes.</text>
+  <path class="flow" d="M180,106 L180,134" stroke="#E0B450" stroke-width="1.5" stroke-dasharray="3 6"/>
+  <rect class="scorer" x="30" y="134" width="300" height="62" rx="8" fill="#15171C" stroke-width="1.5"/>
+  <text x="46" y="160" fill="#E0B450" font-size="13.5" font-weight="700">● scorer</text>
+  <text x="46" y="181" fill="#8A8F98" font-size="11.5">50% complexity + 30% risk + 20% pts</text>
+  <path class="flow" d="M180,196 L180,226" stroke="#E0B450" stroke-width="1.5" stroke-dasharray="3 6"/>
+
+  <g class="legend" font-size="12.5" xml:space="preserve">
+    <text x="30" y="290" fill="#8A8F98">rules, in order</text>
+    <text x="30" y="322" fill="#E6E3DC">ui/ux tag       <tspan fill="#E8826A">→ opus-5.5</tspan></text>
+    <text x="30" y="348" fill="#E6E3DC">score ≥ 55      <tspan fill="#E8826A">→ opus-5.5</tspan></text>
+    <text x="30" y="374" fill="#E6E3DC">anything else   <tspan fill="#E8826A">→ gpt-6.1-sol</tspan></text>
+    <text x="30" y="414" fill="#E6E3DC">ui/ux review    <tspan fill="#57C7C1">→ astra</tspan></text>
+    <text x="30" y="440" fill="#E6E3DC">other reviews   <tspan fill="#6AA5FF">→ critic</tspan></text>
+  </g>
+
+  <rect x="420" y="30" width="760" height="222" rx="10" fill="#15171C"/>
+  <text x="440" y="58" fill="#E8826A" font-size="14" font-weight="700">● claude-opus-5.5 · Claude Code</text>
+  <text x="440" y="78" fill="#8A8F98" font-size="12">UI/UX stories, or score 55 and up</text>
+  <text x="800" y="58" fill="#8A8F98" font-size="12">review</text>
+  <rect x="420" y="284" width="760" height="222" rx="10" fill="#15171C"/>
+  <text x="440" y="312" fill="#E8826A" font-size="14" font-weight="700">● gpt-6.1-sol · Codex</text>
+  <text x="440" y="332" fill="#8A8F98" font-size="12">score under 55</text>
+  <text x="800" y="312" fill="#8A8F98" font-size="12">review</text>
+  <path d="M740,121.0 L800,121.0" stroke="#2A2D35" stroke-width="1.5" stroke-dasharray="4 5"/>
+  <rect x="800" y="104.0" width="230" height="34" rx="17" fill="#15171C" stroke="#57C7C1" stroke-width="1.2"/>
+  <text x="816" y="125.5" fill="#57C7C1" font-size="12.5">gpt-6-astra</text>
+  <g class="chk c0"><circle cx="1060" cy="121.0" r="13" fill="#133325" stroke="#4FD08A" stroke-width="1.2"/>
+  <path d="M1053,121.0 l5,5 l9,-10" stroke="#4FD08A" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <path d="M740,197.0 L800,197.0" stroke="#2A2D35" stroke-width="1.5" stroke-dasharray="4 5"/>
+  <rect x="800" y="180.0" width="230" height="34" rx="17" fill="#15171C" stroke="#6AA5FF" stroke-width="1.2"/>
+  <text x="816" y="201.5" fill="#6AA5FF" font-size="12.5">critic · sonnet-5.5</text>
+  <g class="chk c1"><circle cx="1060" cy="197.0" r="13" fill="#133325" stroke="#4FD08A" stroke-width="1.2"/>
+  <path d="M1053,197.0 l5,5 l9,-10" stroke="#4FD08A" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <path d="M740,375.0 L800,375.0" stroke="#2A2D35" stroke-width="1.5" stroke-dasharray="4 5"/>
+  <rect x="800" y="358.0" width="230" height="34" rx="17" fill="#15171C" stroke="#6AA5FF" stroke-width="1.2"/>
+  <text x="816" y="379.5" fill="#6AA5FF" font-size="12.5">critic · sonnet-5.5</text>
+  <g class="chk c2"><circle cx="1060" cy="375.0" r="13" fill="#133325" stroke="#4FD08A" stroke-width="1.2"/>
+  <path d="M1053,375.0 l5,5 l9,-10" stroke="#4FD08A" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <path d="M740,451.0 L800,451.0" stroke="#2A2D35" stroke-width="1.5" stroke-dasharray="4 5"/>
+  <rect x="800" y="434.0" width="230" height="34" rx="17" fill="#15171C" stroke="#6AA5FF" stroke-width="1.2"/>
+  <text x="816" y="455.5" fill="#6AA5FF" font-size="12.5">critic · sonnet-5.5</text>
+  <g class="chk c3"><circle cx="1060" cy="451.0" r="13" fill="#133325" stroke="#4FD08A" stroke-width="1.2"/>
+  <path d="M1053,451.0 l5,5 l9,-10" stroke="#4FD08A" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g class="card k0">
+    <rect x="440" y="92" width="300" height="58" rx="8" fill="#1B1E24" stroke="#E0B450" stroke-width="1.2"/>
+    <text x="454" y="115" fill="#E6E3DC" font-size="13" font-weight="700">Dark mode for settings</text>
+    <text x="454" y="135" fill="#8A8F98" font-size="11.5">3 pts · complexity 2 · risk 2</text>
+    <rect x="640" y="101" width="34" height="18" rx="9" fill="#3A2A22"/><text x="657" y="114" fill="#E8826A" font-size="11" text-anchor="middle">ui</text>
+    <text x="726" y="130" fill="#E6E3DC" font-size="24" font-weight="700" text-anchor="end">28</text>
+  </g>
+  <g class="card k1">
+    <rect x="440" y="168" width="300" height="58" rx="8" fill="#1B1E24" stroke="#E0B450" stroke-width="1.2"/>
+    <text x="454" y="191" fill="#E6E3DC" font-size="13" font-weight="700">Port auth handlers</text>
+    <text x="454" y="211" fill="#8A8F98" font-size="11.5">8 pts · complexity 4 · risk 4</text>
+    
+    <text x="726" y="206" fill="#E8826A" font-size="24" font-weight="700" text-anchor="end">76</text>
+  </g>
+  <g class="card k2">
+    <rect x="440" y="346" width="300" height="58" rx="8" fill="#1B1E24" stroke="#E0B450" stroke-width="1.2"/>
+    <text x="454" y="369" fill="#E6E3DC" font-size="13" font-weight="700">Port JSON helpers</text>
+    <text x="454" y="389" fill="#8A8F98" font-size="11.5">2 pts · complexity 2 · risk 2</text>
+    
+    <text x="726" y="384" fill="#E6E3DC" font-size="24" font-weight="700" text-anchor="end">24</text>
+  </g>
+  <g class="card k3">
+    <rect x="440" y="422" width="300" height="58" rx="8" fill="#1B1E24" stroke="#E0B450" stroke-width="1.2"/>
+    <text x="454" y="445" fill="#E6E3DC" font-size="13" font-weight="700">Add request logging</text>
+    <text x="454" y="465" fill="#8A8F98" font-size="11.5">3 pts · complexity 3 · risk 2</text>
+    
+    <text x="726" y="460" fill="#E6E3DC" font-size="24" font-weight="700" text-anchor="end">41</text>
+  </g>
+</svg>

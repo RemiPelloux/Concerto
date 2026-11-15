@@ -3,7 +3,7 @@ import tseslint from "typescript-eslint";
 
 // Limits from .pelloux/GUIDELINES.md and the TypeScript profile.
 export default [
-  { ignores: ["dist/**", "node_modules/**", ".pelloux/**", ".concerto/**", "docs/**", "eslint.config.js"] },
+  { ignores: ["dist/**", "out/**", "node_modules/**", ".pelloux/**", ".concerto/**", "docs/**", "eslint.config.js"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

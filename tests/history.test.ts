@@ -1,4 +1,3 @@
-import { statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { listSessions, readSession, resumable, saveSession } from "#src/engine/history.js";
@@ -10,7 +9,7 @@ import type { RunRequest } from "#src/runner/types.js";
 import { Store } from "#src/state/store.js";
 import type { State } from "#src/state/types.js";
 import { runSlash, type Panel, type SlashContext } from "#src/ui/slash.js";
-import { CATALOG, PLAN_REPLY, scriptedRunner, tempDir, testConfig } from "#tests/fixtures.js";
+import { CATALOG, expectOwnerOnly, PLAN_REPLY, scriptedRunner, tempDir, testConfig } from "#tests/fixtures.js";
 
 const is = (role: string) => (r: RunRequest) => r.systemFile.includes(`${role}-`);
 /**
@@ -42,7 +41,7 @@ describe("session history", () => {
     expect(first.store.get().stories.auth?.status).toBe("failed");
     const log = new SessionLog(cwd);
     saveSession(cwd, log.id, first.store.get());
-    expect(statSync(join(cwd, ".concerto", "logs", `${log.id}.json`)).mode & 0o777).toBe(0o600);
+    expectOwnerOnly(join(cwd, ".concerto", "logs", `${log.id}.json`));
     expect(listSessions(cwd)[0]).toMatchObject({ id: log.id, prompt: "add health and auth", passed: 1, total: 2 });
 
     const state = resumable(readSession(cwd, log.id)!);

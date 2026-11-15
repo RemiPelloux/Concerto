@@ -19,10 +19,11 @@ const READ_STDIN = "-";
  * makes it read-only: `git status`, `git stash` and tests that run git then fail with EPERM.
  */
 function gitDataOutside(cwd: string): string | null {
+  // realpathSync.native: both sides in long form, never a Windows 8.3 short name against a long one.
   try {
     const out = execFileSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { cwd, env: gitEnv(), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
-    const dir = realpathSync(out.trim());
-    return relative(realpathSync(cwd), dir).startsWith("..") ? dir : null;
+    const dir = realpathSync.native(out.trim());
+    return relative(realpathSync.native(cwd), dir).startsWith("..") ? dir : null;
   } catch {
     return null;
   }

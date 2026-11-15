@@ -1,4 +1,4 @@
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseRouting } from "#src/commands/setup.js";
@@ -11,7 +11,7 @@ import { isBroken, readHealth, saveHealth } from "#src/models/health.js";
 import type { Runner } from "#src/runner/types.js";
 import { ZERO_USAGE } from "#src/runner/usage.js";
 import { probeModels, redact } from "#src/setup/probe.js";
-import { CATALOG, tempDir } from "#tests/fixtures.js";
+import { CATALOG, expectOwnerOnly, tempDir } from "#tests/fixtures.js";
 
 const DETECTION: Detection = {
   claude: true,
@@ -85,7 +85,7 @@ describe("onboarding", () => {
 
   it("writes an owner-only file that loads back", () => {
     const path = writeUserConfig(buildUserConfig(DETECTION, "api", WORKING), join(tempDir(), "concerto", "config.json"));
-    expect(statSync(path).mode & 0o777).toBe(0o600);
+    expectOwnerOnly(path);
     expect(JSON.parse(readFileSync(path, "utf8")).prefer).toEqual(["anthropic", "openai", "deepseek"]);
   });
 

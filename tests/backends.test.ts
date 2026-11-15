@@ -102,7 +102,7 @@ describe("codex backend", () => {
     const tree = join(tempDir(), "tree");
     git(repo, "worktree", "add", "-q", "--detach", tree);
     const builder = buildCodexArgs(request({ model: "codex/gpt-6.1-sol", tools: ["read", "edit", "bash"], cwd: tree }));
-    expect(builder.slice(builder.indexOf("--add-dir"), builder.indexOf("--add-dir") + 2)).toEqual(["--add-dir", join(realpathSync(repo), ".git")]);
+    expect(builder.slice(builder.indexOf("--add-dir"), builder.indexOf("--add-dir") + 2)).toEqual(["--add-dir", join(realpathSync.native(repo), ".git")]);
     expect(buildCodexArgs(request({ model: "codex/gpt-6.1-sol", tools: ["read", "edit", "bash"], cwd: repo }))).not.toContain("--add-dir");
     expect(buildCodexArgs(request({ model: "codex/gpt-6.1-sol", tools: ["read"], cwd: tree }))).not.toContain("--add-dir");
   });

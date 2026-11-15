@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { readdir } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
@@ -13,11 +13,9 @@ import { Sessions } from "#src/engine/sessions.js";
 import { readStats, saveRun } from "#src/engine/stats.js";
 import { SystemPrompts } from "#src/engine/system-prompts.js";
 import { toolchainNotes } from "#src/engine/toolchain.js";
-import { CATALOG, tempDir } from "#tests/fixtures.js";
+import { CATALOG, expectOwnerOnly, tempDir } from "#tests/fixtures.js";
 
 const RESULT = { text: "hi", usage: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, cost: 0 }, turns: 1 };
-const OWNER_ONLY = 0o600;
-const PERMISSION_BITS = 0o777;
 
 describe("condenser", () => {
   it("strips ANSI and progress noise, collapses repeats, keeps markdown rules", () => {
@@ -67,7 +65,7 @@ describe("response cache", () => {
     const key = cache.key(["model", "prompt"]);
     cache.set(key, RESULT);
     expect(cache.get(key)?.text).toBe("hi");
-    expect(statSync(join(dir, `${key}.json`)).mode & PERMISSION_BITS).toBe(OWNER_ONLY);
+    expectOwnerOnly(join(dir, `${key}.json`));
     expect(new ResponseCache({ dir, ttlHours: 0, maxEntries: 10 }).get(key)).toBeNull();
     writeFileSync(join(dir, `${key}.json`), "{broken");
     expect(cache.get(key)).toBeNull();
@@ -109,7 +107,7 @@ describe("system prompts, toolchain, repo map", () => {
     const body = readFileSync(critic, "utf8");
     expect(body).toMatch(/You are the critic/);
     expect(body.trimEnd()).toMatch(/rtk/);
-    expect(statSync(critic).mode & PERMISSION_BITS).toBe(OWNER_ONLY);
+    expectOwnerOnly(critic);
     expect(toolchainNotes({ packageManager: "", rtk: false, smarttest: false })).toBe("");
   });
 

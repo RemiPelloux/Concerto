@@ -35,7 +35,8 @@ function watchedPaths(files: readonly string[]): string[] {
 async function listFiles(cwd: string, dir = ""): Promise<string[]> {
   const entries = await readdir(join(cwd, dir), { withFileTypes: true });
   const groups = await Promise.all(entries.filter((e) => !IGNORED.has(e.name)).map(async (entry) => {
-    const path = join(dir, entry.name);
+    // Repository paths use "/" on every system, as git prints them.
+    const path = dir ? `${dir}/${entry.name}` : entry.name;
     return entry.isDirectory() ? listFiles(cwd, path) : [path];
   }));
   return groups.flat();

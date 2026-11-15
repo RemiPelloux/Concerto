@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { SessionLog } from "#src/engine/session-log.js";
@@ -7,7 +7,7 @@ import { gitEnv } from "#src/runner/env.js";
 import { Store } from "#src/state/store.js";
 import { savingsLabel } from "#src/ui/CostBar.js";
 import { meter } from "#src/ui/meter.js";
-import { tempDir } from "#tests/fixtures.js";
+import { expectOwnerOnly, tempDir } from "#tests/fixtures.js";
 
 describe("meter", () => {
   it("never draws a negative or oversized bar, whatever the numbers", () => {
@@ -45,7 +45,7 @@ describe("session log", () => {
     expect(text).toMatch(/\[agent soloist:a\] start · x\/m · story a/);
     expect(text).toMatch(/\[agent soloist:a\] ▸ bash npm test/);
     expect(text).toMatch(/\[error crash\] Invalid count value: -9\nError: Invalid count value: -9\n {4}at /);
-    expect(statSync(log.path).mode & 0o777).toBe(0o600);
+    expectOwnerOnly(log.path);
   });
 
   it("keeps Concerto's state out of commits through the local git exclude", () => {

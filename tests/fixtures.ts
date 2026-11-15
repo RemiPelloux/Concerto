@@ -1,6 +1,7 @@
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { expect } from "vitest";
 import type { ConcertoConfig } from "#src/config/types.js";
 import { Catalog } from "#src/models/catalog.js";
 import type { ModelInfo } from "#src/models/types.js";
@@ -22,6 +23,11 @@ export const MODELS: ModelInfo[] = [
   model("c/unpriced", 1, null),
 ];
 export const CATALOG = new Catalog(MODELS);
+
+/** Owner-only (0600). Windows has no Unix permission bits, so there is nothing to check there. */
+export function expectOwnerOnly(path: string): void {
+  if (process.platform !== "win32") expect(statSync(path).mode & 0o777).toBe(0o600);
+}
 
 export function tempDir(): string {
   return mkdtempSync(join(tmpdir(), "concerto-"));

@@ -107,6 +107,17 @@
       ]
     },
     {
+      "name": "small-build",
+      "maxScore": 25,
+      "role": "section",
+      "models": [
+        "claude-code/claude-haiku-5-5",
+        "anthropic/claude-haiku-5-5",
+        "codex/gpt-6-luna",
+        "openai/gpt-6-luna"
+      ]
+    },
+    {
       "name": "light-build",
       "role": "section",
       "models": [

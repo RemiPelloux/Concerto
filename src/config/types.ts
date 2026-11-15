@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const MAX_TIER = 5;
-const MAX_SCORE = 100;
+export const MAX_SCORE = 100;
 const TIER = z.number().int().min(1).max(MAX_TIER);
 const DEFAULT_TIMEOUT_MINUTES = 30;
 const DEFAULT_CACHE_ENTRIES = 500;
@@ -32,6 +32,8 @@ const RouteSchema = z.object({
   name: z.string(),
   tags: z.array(z.string()).default([]),
   minScore: z.number().min(0).max(MAX_SCORE).default(0),
+  /** Exclusive: a route with maxScore 25 takes stories scoring under 25. */
+  maxScore: z.number().min(0).max(MAX_SCORE + 1).default(MAX_SCORE + 1),
   role: z.enum(["soloist", "section"]),
   models: z.array(REF).min(1),
   /** "auto": from the score, low under 25, medium under 50, high under 75, xhigh above. */
@@ -39,7 +41,13 @@ const RouteSchema = z.object({
 });
 export type Route = z.infer<typeof RouteSchema>;
 
-const ReviewSchema = z.object({ tags: z.array(z.string()), models: z.array(REF).min(1) });
+/** No tags: any story in the score band. maxScore is exclusive, as for routes. */
+const ReviewSchema = z.object({
+  tags: z.array(z.string()).default([]),
+  minScore: z.number().min(0).max(MAX_SCORE).default(0),
+  maxScore: z.number().min(0).max(MAX_SCORE + 1).default(MAX_SCORE + 1),
+  models: z.array(REF).min(1),
+});
 export type Review = z.infer<typeof ReviewSchema>;
 
 export const ConfigSchema = z.object({

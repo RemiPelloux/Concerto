@@ -14,7 +14,7 @@
 
 You describe a coding job in your terminal. Concerto splits it into user stories, measures how much
 of your repository each one touches, and sends each story to the model that fits it. Opus 5.5
-builds the hard and UI stories, GPT-6.1 Sol the rest. A critic tries to break every story, and
+builds the hard and UI stories, GPT-6.1 Sol the middle ones, Haiku 5.5 the small ones. A critic tries to break every story, and
 Fable 5.2 checks the plan at three checkpoints.
 
 It runs on your Claude Code and ChatGPT subscriptions, and on any API key pi holds. Concerto never
@@ -156,7 +156,8 @@ The score picks the builder and its effort:
 |---|---|---|
 | UI or UX | Opus 5.5 | GPT-6 Astra |
 | Score 55 or more | Opus 5.5 | Sonnet 5.5 |
-| Anything else | GPT-6.1 Sol | Sonnet 5.5 |
+| Score 25 to 54 | GPT-6.1 Sol | Sonnet 5.5 |
+| Score under 25 | Haiku 5.5 | Sonnet 5.5 |
 
 Effort follows the score: low under 25, medium under 50, high under 75, extra high above. Each
 model has a fallback chain, so a rate limit or an outage moves the call to the next way of reaching

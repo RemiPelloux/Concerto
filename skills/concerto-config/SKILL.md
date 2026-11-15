@@ -23,10 +23,12 @@ Every model used must be listed under `models` with a `tier` (1 bulk work to 5 f
 
 ## What to change
 
-- **Who builds what:** `routes`, tried in order. A route matches on `tags` (any of) and
-  `minScore`, and lists `models` in preference order. `effort` is `auto` (from the score) or a
+- **Who builds what:** `routes`, tried in order. A route matches on `tags` (any of),
+  `minScore` and `maxScore` (exclusive), and lists `models` in preference order. `effort` is `auto` (from the score) or a
   fixed level.
-- **Who reviews UI work:** `reviews`, matched on tags.
+- **Who reviews what:** `reviews`, matched on `tags` and the same score band; the first match
+  with a reachable model wins, the critic role is the fallback. The defaults give UI work to
+  Astra; everything else goes to the critic, Sonnet.
 - **Role defaults:** `roles.<conductor|scorer|soloist|critic|section>.models`, `tools`, `effort`.
 - **Proxy or API keys first:** `"prefer": ["ce-*"]`, or `--prefer 'ce-*'` for one run. It
   changes the provider, never the model.

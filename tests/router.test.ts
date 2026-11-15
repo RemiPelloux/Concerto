@@ -1,18 +1,24 @@
 import { describe, expect, it } from "vitest";
+import { MAX_SCORE } from "#src/config/types.js";
 import { Catalog } from "#src/models/catalog.js";
 import { blendedPrice, preferFirst, requiredTier, reviewChain, roleChain, routeStory, tierChain } from "#src/models/router.js";
 import { CATALOG, MODELS, testConfig } from "#tests/fixtures.js";
 
+const ANY = MAX_SCORE + 1;
 const refs = (models: { ref: string }[]) => models.map((m) => m.ref);
 
 function routedConfig() {
   const config = testConfig();
   config.routes = [
-    { name: "ux-build", tags: ["ui"], minScore: 0, role: "soloist", models: ["x/missing", "a/builder", "proxy/builder"], effort: "high" },
-    { name: "complex-build", tags: [], minScore: 55, role: "soloist", models: ["a/builder"], effort: "high" },
-    { name: "light-build", tags: [], minScore: 0, role: "section", models: ["b/cheap-builder"], effort: "medium" },
+    { name: "ux-build", tags: ["ui"], minScore: 0, maxScore: ANY, role: "soloist", models: ["x/missing", "a/builder", "proxy/builder"], effort: "high" },
+    { name: "complex-build", tags: [], minScore: 55, maxScore: ANY, role: "soloist", models: ["a/builder"], effort: "high" },
+    { name: "small-build", tags: [], minScore: 0, maxScore: 25, role: "section", models: ["a/swarm"], effort: "auto" },
+    { name: "light-build", tags: [], minScore: 0, maxScore: ANY, role: "section", models: ["b/cheap-builder"], effort: "medium" },
   ];
-  config.reviews = [{ tags: ["ui"], models: ["a/brain"] }];
+  config.reviews = [
+    { tags: ["ui"], minScore: 0, maxScore: ANY, models: ["a/brain"] },
+    { tags: [], minScore: 0, maxScore: 25, models: ["x/missing", "a/swarm"] },
+  ];
   return config;
 }
 
@@ -45,8 +51,15 @@ describe("router", () => {
     const config = routedConfig();
     expect(routeStory({ score: 10, tags: ["ui"] }, CATALOG, config)).toMatchObject({ rule: "ux-build", role: "soloist" });
     expect(routeStory({ score: 70, tags: [] }, CATALOG, config).chain[0]?.ref).toBe("a/builder");
-    expect(routeStory({ score: 20, tags: ["api"] }, CATALOG, config)).toMatchObject({ rule: "light-build", effort: "medium" });
+    expect(routeStory({ score: 40, tags: ["api"] }, CATALOG, config)).toMatchObject({ rule: "light-build", effort: "medium" });
     expect(requiredTier(90)).toBe(4);
+  });
+
+  it("sends stories under a route's maxScore to its light model, and stories at the limit past it", () => {
+    const config = routedConfig();
+    expect(routeStory({ score: 24, tags: [] }, CATALOG, config)).toMatchObject({ rule: "small-build", effort: "low" });
+    expect(routeStory({ score: 24, tags: [] }, CATALOG, config).chain[0]?.ref).toBe("a/swarm");
+    expect(routeStory({ score: 25, tags: [] }, CATALOG, config).rule).toBe("light-build");
   });
 
   it("keeps the route's tier for fallbacks and caps the chain", () => {
@@ -57,7 +70,7 @@ describe("router", () => {
 
   it("skips a route whose models are all unreachable", () => {
     const config = routedConfig();
-    config.routes = [{ name: "gone", tags: [], minScore: 0, role: "soloist", models: ["x/missing"], effort: "high" }];
+    config.routes = [{ name: "gone", tags: [], minScore: 0, maxScore: ANY, role: "soloist", models: ["x/missing"], effort: "high" }];
     expect(routeStory({ score: 90, tags: [] }, CATALOG, config).rule).toBe("cheapest-tier");
   });
 
@@ -69,8 +82,11 @@ describe("router", () => {
 
   it("gives UI stories their own reviewer and honours role preferences", () => {
     const config = routedConfig();
-    expect(reviewChain(["ui"], CATALOG, config)[0]?.ref).toBe("a/brain");
-    expect(reviewChain(["api"], CATALOG, config)[0]?.ref).toBe("b/cheap-builder");
+    expect(reviewChain({ score: 10, tags: ["ui"] }, CATALOG, config)[0]?.ref).toBe("a/brain");
+    expect(reviewChain({ score: 40, tags: ["api"] }, CATALOG, config)[0]?.ref).toBe("b/cheap-builder");
+    const small = refs(reviewChain({ score: 10, tags: ["api"] }, CATALOG, config));
+    expect(small[0]).toBe("a/swarm");
+    expect(small).toContain("b/cheap-builder");
     config.roles.critic.models = ["a/builder"];
     expect(roleChain(CATALOG, config, "critic")[0]?.ref).toBe("a/builder");
   });

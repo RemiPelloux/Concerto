@@ -1,6 +1,6 @@
 import { routingLines, statsLines } from "#src/commands/info.js";
 import { configPath } from "#src/config/load.js";
-import { ROLES, type ConcertoConfig } from "#src/config/types.js";
+import { MAX_SCORE, ROLES, type ConcertoConfig, type Route } from "#src/config/types.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { isBroken, readHealth } from "#src/models/health.js";
 import { roleChain } from "#src/models/router.js";
@@ -44,9 +44,15 @@ function updateConfig(ctx: SlashContext, patch: Partial<ConcertoConfig>, note: s
   ctx.show({ title: "Session updated", lines: [note, "Applies to the next request in this session. The config file is unchanged."] });
 }
 
+/** What a route takes, e.g. "tags ui,ux" or "score ≥ 55" or "score < 25". */
+function routeMatch(r: Route): string {
+  const parts = [r.tags.length ? `tags ${r.tags.join(",")}` : "", r.minScore > 0 ? `score ≥ ${r.minScore}` : "", r.maxScore <= MAX_SCORE ? `score < ${r.maxScore}` : ""];
+  return parts.filter(Boolean).join(" · ") || "any story";
+}
+
 function configLines(ctx: SlashContext): string[] {
   const c = ctx.session.config;
-  const routes = c.routes.map((r) => `  ${r.name.padEnd(ROUTE_NAME)} ${r.tags.length ? `tags ${r.tags.join(",")}` : `score ≥ ${r.minScore}`} → ${r.models[0] ?? "-"}`);
+  const routes = c.routes.map((r) => `  ${r.name.padEnd(ROUTE_NAME)} ${routeMatch(r)} → ${r.models[0] ?? "-"}`);
   return [
     `file      ${configPath(ctx.cwd)}`,
     `prefer    ${c.prefer.join(", ") || "(none)"}`,

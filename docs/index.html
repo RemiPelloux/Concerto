@@ -143,7 +143,8 @@ model's four factors are reweighted.</code></pre>
           <tbody>
             <tr><td>Tagged UI or UX, any score</td><td><span class="dot dot-soloist"></span>Claude Opus 5.5</td><td><span class="dot dot-astra"></span>GPT-6 Astra</td></tr>
             <tr><td>Score 55 or higher</td><td><span class="dot dot-soloist"></span>Claude Opus 5.5</td><td><span class="dot dot-critic"></span>Critic, Claude Sonnet 5.5</td></tr>
-            <tr><td>Score under 55</td><td><span class="dot dot-soloist"></span>GPT-6.1 Sol</td><td><span class="dot dot-critic"></span>Critic, Claude Sonnet 5.5</td></tr>
+            <tr><td>Score 25 to 54</td><td><span class="dot dot-soloist"></span>GPT-6.1 Sol</td><td><span class="dot dot-critic"></span>Critic, Claude Sonnet 5.5</td></tr>
+            <tr><td>Score under 25</td><td><span class="dot dot-soloist"></span>Claude Haiku 5.5</td><td><span class="dot dot-critic"></span>Critic, Claude Sonnet 5.5</td></tr>
           </tbody>
         </table>
       </div>
@@ -159,12 +160,12 @@ model's four factors are reweighted.</code></pre>
         <li class="reveal">
           <h3>Claude Code CLI</h3>
           <p class="backend-account">Your Claude subscription</p>
-          <p>Builds UI/UX stories and stories scored 55 and up with Claude Opus 5.5. Concerto starts it without your user settings, plugins or MCP servers, so a call opens with about 600 tokens of context instead of about 131,000.</p>
+          <p>Builds UI/UX stories and stories scored 55 and up with Claude Opus 5.5, small stories (under 25) with Claude Haiku 5.5. Concerto starts it without your user settings, plugins or MCP servers, so a call opens with about 600 tokens of context instead of about 131,000.</p>
         </li>
         <li class="reveal">
           <h3>Codex CLI</h3>
           <p class="backend-account">Your ChatGPT subscription</p>
-          <p>Builds stories scored under 55 with GPT-6.1 Sol. GPT-6 Astra reviews UI/UX work. A Codex profile turns it into a proxy client: <code>codex@ce-gpt/gpt-6.1-sol</code> runs with <code>-p ce-gpt</code>.</p>
+          <p>Builds stories scored 25 to 54 with GPT-6.1 Sol. GPT-6 Astra reviews UI/UX work. A Codex profile turns it into a proxy client: <code>codex@ce-gpt/gpt-6.1-sol</code> runs with <code>-p ce-gpt</code>.</p>
         </li>
         <li class="reveal">
           <h3>pi</h3>
@@ -264,6 +265,9 @@ concerto "Move the API to Rust. Done means: every test passes."</code></pre>
     { <span class="t-k">"name"</span>: <span class="t-s">"complex-build"</span>, <span class="t-k">"minScore"</span>: <span class="t-n">55</span>,
       <span class="t-k">"role"</span>: <span class="t-s">"soloist"</span>, <span class="t-k">"effort"</span>: <span class="t-s">"high"</span>,
       <span class="t-k">"models"</span>: [<span class="t-s">"claude-code/claude-opus-5-5"</span>, <span class="t-s">"anthropic/claude-opus-5-5"</span>] },
+    { <span class="t-k">"name"</span>: <span class="t-s">"small-build"</span>, <span class="t-k">"maxScore"</span>: <span class="t-n">25</span>,
+      <span class="t-k">"role"</span>: <span class="t-s">"section"</span>,
+      <span class="t-k">"models"</span>: [<span class="t-s">"claude-code/claude-haiku-5-5"</span>, <span class="t-s">"codex/gpt-6-luna"</span>] },
     { <span class="t-k">"name"</span>: <span class="t-s">"light-build"</span>,
       <span class="t-k">"role"</span>: <span class="t-s">"section"</span>, <span class="t-k">"effort"</span>: <span class="t-s">"medium"</span>,
       <span class="t-k">"models"</span>: [<span class="t-s">"codex/gpt-6.1-sol"</span>, <span class="t-s">"openai/gpt-6.1-sol"</span>] }

@@ -2,6 +2,7 @@
 (() => {
   const FIBONACCI = [1, 2, 3, 5, 8, 13];
   const OPUS_FROM = 55;
+  const SMALL_UNDER = 25;
 
   // Same formula as scoreStory in src/orchestrator/scoring.ts. Uncertainty uses the scorer's default, 2.
   const WEIGHTS = { complexity: 0.22, risk: 0.16, effort: 0.1, uncertainty: 0.08, reach: 0.14, size: 0.08, coverage: 0.1, tests: 0.04, churn: 0.04, spread: 0.04 };
@@ -42,10 +43,10 @@
 
   function route(value, ui) {
     const opus = ui || value >= OPUS_FROM;
-    return {
-      builder: opus ? ["soloist", "Claude Opus 5.5, through Claude Code"] : ["soloist", "GPT-6.1 Sol, through Codex CLI"],
-      reviewer: ui ? ["astra", "GPT-6 Astra"] : ["critic", "the critic, Claude Sonnet 5.5"],
-    };
+    const small = !ui && value < SMALL_UNDER;
+    const builder = opus ? "Claude Opus 5.5, through Claude Code" : small ? "Claude Haiku 5.5, through Claude Code" : "GPT-6.1 Sol, through Codex CLI";
+    const reviewer = ui ? ["astra", "GPT-6 Astra"] : ["critic", "the critic, Claude Sonnet 5.5"];
+    return { builder: ["soloist", builder], reviewer };
   }
 
   function paint(cell, [kind, text]) {

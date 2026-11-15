@@ -84,14 +84,17 @@ export function roleChain(catalog: Catalog, config: ConcertoConfig, role: Role):
   return chainOf(config, catalog.reachable(cfg.models), tierChain(catalog, cfg.minTier));
 }
 
-function tagged(ruleTags: string[], tags: string[]): boolean {
-  return ruleTags.length === 0 || ruleTags.some((t) => tags.includes(t));
+type Rule = { tags: string[]; minScore: number; maxScore: number };
+
+function matches(rule: Rule, story: StoryShape): boolean {
+  const tagged = rule.tags.length === 0 || rule.tags.some((t) => story.tags.includes(t));
+  return tagged && story.score >= rule.minScore && story.score < rule.maxScore;
 }
 
 /** First matching route with a reachable model wins; otherwise the cheapest able tier. */
 export function routeStory(story: StoryShape, catalog: Catalog, config: ConcertoConfig): Assignment {
   for (const route of config.routes) {
-    if (story.score < route.minScore || !tagged(route.tags, story.tags)) continue;
+    if (!matches(route, story)) continue;
     const wanted = catalog.reachable(route.models);
     if (wanted.length === 0) continue;
     const fallback = tierChain(catalog, Math.min(...wanted.map((m) => m.tier)));
@@ -103,10 +106,12 @@ export function routeStory(story: StoryShape, catalog: Catalog, config: Concerto
   return { role, chain: chainOf(config, [], fallback), effort: effortFor(story.score), rule: "cheapest-tier" };
 }
 
-/** UI stories can get a specialist reviewer; everything else gets the critic role's chain. */
-export function reviewChain(tags: string[], catalog: Catalog, config: ConcertoConfig): ModelInfo[] {
-  const review = config.reviews.find((r) => r.tags.some((t) => tags.includes(t)));
-  const special = review ? catalog.reachable(review.models) : [];
+/**
+ * The first review rule matching the story's tags and score picks its reviewer (a UI specialist,
+ * a light model for small stories); the critic role's chain is the fallback and the default.
+ */
+export function reviewChain(story: StoryShape, catalog: Catalog, config: ConcertoConfig): ModelInfo[] {
+  const special = config.reviews.filter((r) => matches(r, story)).map((r) => catalog.reachable(r.models)).find((m) => m.length > 0) ?? [];
   const critic = roleChain(catalog, config, "critic");
   return special.length > 0 ? chainOf(config, special, critic) : critic;
 }

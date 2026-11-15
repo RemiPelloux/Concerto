@@ -11,7 +11,8 @@ import { promptTokens } from "#src/runner/usage.js";
 const COLUMN = 30;
 const PERCENT = 100;
 const SAMPLES = [
-  { label: "score 20", score: 20, tags: [] },
+  { label: "score 10", score: 10, tags: [] },
+  { label: "score 40", score: 40, tags: [] },
   { label: "score 60", score: 60, tags: [] },
   { label: "score 90", score: 90, tags: [] },
   { label: "ui, score 20", score: 20, tags: ["ui"] },
@@ -29,7 +30,7 @@ export function routingLines(catalog: Catalog, config: ConcertoConfig): string[]
   const roles = ROLES.map((r) => `role   ${r.padEnd(COLUMN)} ${refs(roleChain(catalog, config, r))}`);
   const stories = SAMPLES.map((s) => {
     const a = routeStory(s, catalog, config);
-    return `story  ${s.label.padEnd(COLUMN)} ${a.rule}: ${refs(a.chain)} · review ${refs(reviewChain(s.tags, catalog, config))}`;
+    return `story  ${s.label.padEnd(COLUMN)} ${a.rule}: ${refs(a.chain)} · review ${refs(reviewChain(s, catalog, config))}`;
   });
   return [...roles, ...stories];
 }

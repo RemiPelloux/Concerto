@@ -28,6 +28,7 @@ const WEIGHTS: Record<FactorKey, number> = {
 };
 
 const scale = (n: number) => (n - 1) / SCALE_SPAN;
+const count = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 const logScale = (n: number, saturation: number) => Math.min(1, Math.log2(1 + Math.max(0, n)) / Math.log2(1 + saturation));
 
 type Scored = Pick<Story, "points" | "complexity" | "risk" | "uncertainty" | "tags">;
@@ -39,7 +40,7 @@ function modelFactors(s: Scored, sensitive: string[]): Factor[] {
   return [
     { key: "complexity", weight: WEIGHTS.complexity, value: scale(s.complexity), note: `complexity ${s.complexity}/5` },
     { key: "risk", weight: WEIGHTS.risk, value: risk, note: why },
-    { key: "effort", weight: WEIGHTS.effort, value: FIBONACCI.indexOf(s.points) / (FIBONACCI.length - 1), note: `${s.points} points` },
+    { key: "effort", weight: WEIGHTS.effort, value: FIBONACCI.indexOf(s.points) / (FIBONACCI.length - 1), note: count(s.points, "point") },
     { key: "uncertainty", weight: WEIGHTS.uncertainty, value: scale(s.uncertainty), note: `scope uncertainty ${s.uncertainty}/5` },
   ];
 }
@@ -47,12 +48,12 @@ function modelFactors(s: Scored, sensitive: string[]): Factor[] {
 function measuredFactors(i: Impact): Factor[] {
   const source = i.sourceFiles;
   return [
-    { key: "reach", weight: WEIGHTS.reach, value: logScale(i.files.length + i.direct + i.indirect / 2, SAT.reach), note: `${i.direct} direct and ${i.indirect} indirect importers` },
-    { key: "size", weight: WEIGHTS.size, value: logScale(i.lines, SAT.lines), note: `${i.lines} lines in touched files` },
-    { key: "coverage", weight: WEIGHTS.coverage, value: source === 0 ? 0 : i.untested / source, note: `${i.untested} of ${source} source files untested` },
-    { key: "tests", weight: WEIGHTS.tests, value: logScale(i.tests.length, SAT.tests), note: `${i.tests.length} tests to run` },
-    { key: "churn", weight: WEIGHTS.churn, value: logScale(i.churn, SAT.churn), note: `${i.churn} commits in 90 days` },
-    { key: "spread", weight: WEIGHTS.spread, value: Math.min(1, (i.areas - 1) / (SAT.areas - 1)), note: `${i.areas} areas of the codebase` },
+    { key: "reach", weight: WEIGHTS.reach, value: logScale(i.files.length + i.direct + i.indirect / 2, SAT.reach), note: `${i.direct} direct and ${count(i.indirect, "indirect importer")}` },
+    { key: "size", weight: WEIGHTS.size, value: logScale(i.lines, SAT.lines), note: `${count(i.lines, "line")} in touched files` },
+    { key: "coverage", weight: WEIGHTS.coverage, value: source === 0 ? 0 : i.untested / source, note: `${i.untested} of ${count(source, "source file")} untested` },
+    { key: "tests", weight: WEIGHTS.tests, value: logScale(i.tests.length, SAT.tests), note: `${count(i.tests.length, "test")} to run` },
+    { key: "churn", weight: WEIGHTS.churn, value: logScale(i.churn, SAT.churn), note: `${count(i.churn, "commit")} in 90 days` },
+    { key: "spread", weight: WEIGHTS.spread, value: Math.min(1, (i.areas - 1) / (SAT.areas - 1)), note: `${count(i.areas, "area")} of the codebase` },
   ];
 }
 

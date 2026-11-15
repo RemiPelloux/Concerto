@@ -27,10 +27,10 @@ function Row({ agent, active }: { agent: AgentView; active: boolean }) {
       <Box width={2} flexShrink={0}>
         <Text color={STATUS_COLOR[agent.status]}>{STATUS_ICON[agent.status]}</Text>
       </Box>
-      <Box width={LABEL + 1} flexShrink={0}>
+      <Box width={LABEL} flexShrink={0} marginRight={1}>
         <Text inverse={active} color={ROLE_COLOR[agent.role]} wrap="truncate-end">{agent.label}</Text>
       </Box>
-      <Box width={MODEL + 1} flexShrink={0}>
+      <Box width={MODEL} flexShrink={0} marginRight={1}>
         <Text color="gray" wrap="truncate-end">{shortModel(agent.model)}</Text>
       </Box>
       <Box width={ELAPSED + 1} flexShrink={0}>

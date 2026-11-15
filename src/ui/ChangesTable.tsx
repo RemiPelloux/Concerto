@@ -8,6 +8,9 @@ const FILE = 34;
 const NUM = 5;
 const BAR = 10;
 const ELLIPSIS_TAIL = FILE - "+ …".length;
+/** File, two counts, the bar, the border and padding: the table never wraps. */
+const CHROME = 6;
+const WIDTH = FILE + NUM * 2 + BAR + CHROME;
 
 /** A small proportional bar: green for added lines, red for removed. */
 function Bar({ change, max }: { change: FileChange; max: number }) {
@@ -35,7 +38,7 @@ export function ChangesTable({ state, focused, selected }: { state: State; focus
   const max = Math.max(...state.changes.map((c) => c.added + c.removed));
   const from = windowAround(selected, state.changes.length, ROWS);
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={focused ? COLOR.brass : "gray"} paddingX={1}>
+    <Box flexDirection="column" flexShrink={0} width={WIDTH} borderStyle="round" borderColor={focused ? COLOR.brass : "gray"} paddingX={1}>
       <Text bold>
         Changes <Text color="gray">· {state.changes.length} files </Text>
         <Text color={COLOR.good}>+{added}</Text> <Text color={COLOR.bad}>−{removed}</Text>

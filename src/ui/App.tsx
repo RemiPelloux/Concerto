@@ -1,4 +1,4 @@
-import { Box, Text } from "ink";
+import { Box, Text, useStdout } from "ink";
 import { useSyncExternalStore } from "react";
 import type { ConcertoConfig } from "#src/config/types.js";
 import type { Catalog } from "#src/models/catalog.js";
@@ -23,6 +23,9 @@ import { StoryBoard } from "#src/ui/StoryBoard.js";
 import { ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 import { useConcert } from "#src/ui/useConcert.js";
 import { useNavigation, type Navigation } from "#src/ui/useNavigation.js";
+
+/** Below this many rows the decorative diagram is left out, so the useful parts fit. */
+const ROOMY_ROWS = 72;
 
 export type AppDeps = {
   config: ConcertoConfig;
@@ -83,8 +86,22 @@ function OverlayScreen({ state, nav }: { state: State; nav: Navigation }) {
   );
 }
 
+/** The conductor and stage diagram: shown when the terminal has room for it. */
+function Diagram({ state, swarmSize }: { state: State; swarmSize: number }) {
+  return (
+    <Box flexDirection="column">
+      <Box marginTop={1}>
+        <ConductorPanel state={state} />
+        <Stage state={state} swarmSize={swarmSize} />
+      </Box>
+      <Tagline />
+    </Box>
+  );
+}
+
 export function App(deps: AppDeps) {
   const state = useSyncExternalStore(deps.store.subscribe, deps.store.get);
+  const roomy = (useStdout().stdout.rows ?? ROOMY_ROWS) >= ROOMY_ROWS;
   const nav = useNavigation(state, deps.cwd, deps.showTour);
   const { panel, submit } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }) });
   const brain = shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? "");
@@ -94,11 +111,7 @@ export function App(deps: AppDeps) {
     <Box flexDirection="column" paddingX={1}>
       <Header state={state} />
       <CostBar ledger={state.ledger} brain={brain} />
-      <Box marginTop={1}>
-        <ConductorPanel state={state} />
-        <Stage state={state} swarmSize={deps.config.swarm.maxParallel} />
-      </Box>
-      <Tagline />
+      {roomy ? <Diagram state={state} swarmSize={deps.config.swarm.maxParallel} /> : null}
       <Work state={state} nav={nav} />
       <LogView log={state.log} />
       <PanelView panel={panel} />

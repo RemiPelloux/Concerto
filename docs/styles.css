@@ -296,3 +296,7 @@ th { color: var(--muted); font-weight: 500; font-size: var(--step-small); }
 .lede-sm a { color: inherit; text-underline-offset: 3px; }
 .affiliate { margin-top: 1.25rem; padding: 0.9rem 1rem; border-left: 2px solid var(--muted); color: var(--muted); }
 .affiliate a { color: inherit; text-underline-offset: 3px; }
+
+.shot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+.shot-grid img { width: 100%; height: auto; border-radius: 12px; background: #0E0F12; }
+.shot-grid figure { margin: 0; }

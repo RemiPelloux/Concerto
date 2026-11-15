@@ -20,6 +20,17 @@ Fable 5.2 checks the plan at three checkpoints.
 It runs on your Claude Code and ChatGPT subscriptions, and on any API key pi holds. Concerto never
 sees a key. Full documentation: [remipelloux.github.io/Concerto](https://remipelloux.github.io/Concerto/)
 
+## Screenshots
+
+<p align="center"><img src="docs/assets/screenshots/building.png" width="100%" alt="Concerto building two stories: the conductor's plan-lock asked for a revision, two GPT-6.1 Sol builders are working, the story table shows each story's reach, score, cost estimate, model and reviewer."></p>
+
+| | |
+|---|---|
+| <img src="docs/assets/screenshots/agent.png" alt="An agent's live view: every file it reads, command it runs and line it writes, as it happens."> | <img src="docs/assets/screenshots/story.png" alt="Why a story got its score: ten factors with their values and weights, the files, the covering tests and the model chain."> |
+| An agent's live output | Why a story got its score |
+| <img src="docs/assets/screenshots/diff.png" alt="The diff of one changed file, colored, from the changes table."> | <img src="docs/assets/screenshots/tour.png" alt="The animated tour: stories travel to the model that fits them."> |
+| A changed file's diff | The animated tour (`/onboarding`) |
+
 ## Install
 
 You need git, Node 22+, and at least one of these logged in: `claude` (Claude Code), `codex`

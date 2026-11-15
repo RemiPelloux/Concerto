@@ -49,6 +49,8 @@
     <section class="shots wrap" aria-labelledby="shots-title">
       <h2 id="shots-title" class="head reveal">What it looks like</h2>
       <div class="shot-grid">
+        <figure class="reveal"><a class="zoom" href="assets/screenshots/live.png"><img src="assets/screenshots/live.png" loading="lazy" alt="A build in progress: agents with ticking clocks and a live preview of the builder's last lines."></a><figcaption>While a story builds: clocks tick every second, and a preview shows what the agent last printed and how long ago.</figcaption></figure>
+        <figure class="reveal"><a class="zoom" href="assets/screenshots/finished.png"><img src="assets/screenshots/finished.png" loading="lazy" alt="A finished run: a box says how many stories passed and what to do next."></a><figcaption>When the run ends: what passed, why the rest failed, and what to do next. Enter retries only what did not pass.</figcaption></figure>
         <figure class="reveal"><a class="zoom" href="assets/screenshots/agent.png"><img src="assets/screenshots/agent.png" loading="lazy" alt="An agent's live view: what it reads, runs and writes, as it happens."></a><figcaption>Enter on an agent: its live output.</figcaption></figure>
         <figure class="reveal"><a class="zoom" href="assets/screenshots/story.png"><img src="assets/screenshots/story.png" loading="lazy" alt="A story's score breakdown: ten factors, files, tests and model chain."></a><figcaption>Enter on a story: why it got its score.</figcaption></figure>
         <figure class="reveal"><a class="zoom" href="assets/screenshots/diff.png"><img src="assets/screenshots/diff.png" loading="lazy" alt="The colored diff of a changed file."></a><figcaption>Enter on a changed file: its diff.</figcaption></figure>
@@ -249,7 +251,7 @@ concerto "Move the API to Rust. Done means: every test passes."</code></pre>
         </dl>
         <h3 class="reveal">In the terminal</h3>
         <p class="reveal">Enter scores the request and shows the stories. Enter again runs the plan, Esc throws it away. While a run is going, Esc stops it.</p>
-        <p class="reveal">Tab moves between the prompt, the agents, the stories and the changed files. Arrows pick one and Enter opens it: an agent's live output, why a story got its score, or a file's diff. Type <code>/</code> for commands such as <code>/history</code>, which reopens an earlier session, <code>/setup</code>, <code>/config</code>, <code>/budget</code>, <code>/prefer</code> and <code>/onboarding</code>, which replays the animated tour.</p>
+        <p class="reveal">Tab moves between the prompt, the agents, the stories and the changed files. Arrows pick one and Enter opens it: an agent's live output, why a story got its score, or a file's diff. While agents work, their clocks tick every second and a preview shows the last lines of one of them; a long silence usually means it is running tests. When a run ends, a box says how many stories passed and why the others did not, and Enter on the empty prompt builds those again. Type <code>/</code> for commands such as <code>/history</code>, which reopens an earlier session, <code>/setup</code>, <code>/config</code>, <code>/budget</code>, <code>/prefer</code> and <code>/onboarding</code>, which replays the animated tour.</p>
       </div>
     </section>
 

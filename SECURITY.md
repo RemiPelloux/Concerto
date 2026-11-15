@@ -13,7 +13,10 @@ branch, and review the diff before you commit it. Concerto never commits.
   `CODEX_HOME`, `PI_*`, `DEEPSEEK_*`, `XAI_*`, `CE_*`). Everything else, such as cloud credentials
   or other tools' tokens, is dropped. Add names with `CONCERTO_ENV_PASSTHROUGH=NAME1,NAME2`.
 - **Prompts on stdin.** Prompts never appear in process arguments, so other users on the machine
-  cannot read them with `ps`.
+  cannot read them with `ps`. On Windows the agent CLIs are `.cmd` shims started through
+  `cmd.exe`; every argument is quoted by cross-spawn, so a model id or path cannot inject a command.
+- **Codex in a git worktree.** Builders get write access to the repository's git data with
+  `--add-dir`, and nothing else outside the folder.
 - **Least privilege per role.** The conductor reads and the scorer has no tools. The critic reads
   and runs commands but cannot edit. Only builders edit. Codex runs reviewers in a `read-only`
   sandbox and builders in `workspace-write`. Claude Code starts without your user settings,
@@ -21,14 +24,19 @@ branch, and review the diff before you commit it. Concerto never commits.
 - **Validated model output.** The scorer's plan is parsed with a strict schema. Story ids must be
   lowercase slugs, because they end up in session ids and file names. A plan has 24 stories at
   most, with unique ids.
-- **Private local state.** `.concerto/` (prompts, response cache, stats, session logs) is created
-  with `0700` directories and `0600` files, and is added to the repository's local git exclude so
-  it never lands in a commit. Session logs hold agent output, so the 30 newest are kept. Cache entries are validated when read, and a corrupt entry is
-  treated as a miss.
+- **Private local state.** `.concerto/` (prompts, response cache, stats, session logs and saved
+  sessions) is created with `0700` directories and `0600` files, and is added to the repository's
+  local git exclude so it never lands in a commit. Session logs and saved sessions hold agent
+  output, so only the 30 newest are kept. Cache entries are validated when read, and a corrupt
+  entry is treated as a miss. On Windows these permission bits do not exist; the files inherit the
+  folder's access rules, which by default allow only your user under your profile.
 - **Timeouts.** Every call stops after `timeoutMinutes` (30 by default), and Esc in the TUI stops
   the whole run.
 - **Supply chain.** CI pins every GitHub Action to a commit SHA, installs with
   `--frozen-lockfile`, runs `pnpm audit`, and pnpm does not run dependency install scripts.
+  Release packages are built in CI from the tagged commit and installed and run on Linux, macOS
+  and Windows before they are attached. The installers only ever replace a folder that holds a
+  Concerto install.
 
 ## What it cannot do
 

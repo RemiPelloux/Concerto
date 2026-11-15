@@ -19,7 +19,10 @@ the config in use, what each role runs on, and every skipped model with its erro
 | `No configured model is reachable` | nothing installed or logged in | install and log into `claude`, `codex` or `pi`, then `concerto --init` |
 | `Fallback` lines in the log | a model failed mid-run; the next one took over | usually fine; `--doctor` shows if it persists |
 | `budget of $X reached` | `--budget` or `budgetUsd` hit | raise it or split the request |
-| `N stories failed review` | the critic rejected the work twice, plus one guided retry | read `.concerto/runs/*.md` for the critique |
+| `N stories failed review` | the critic rejected the work twice, plus one guided retry | read `.concerto/runs/*.md` for the critique; `concerto --resume <id>` builds only those stories again |
+| a run was interrupted (crash, Esc, closed terminal) | nothing is lost | `concerto --resume <session id>`; `/history` lists the ids |
+| an agent shows no output for minutes | it is usually running tests; the preview says how long since it last printed | wait, or Tab to the agent and Enter for its live output |
+| on Windows: `claude`, `codex` or `pi` not found | not on PATH in this terminal | open a new terminal after installing, check `where codex` |
 | a crash or any other error | see the session log | open `.concerto/logs/<session id>.log`; the id is in the error message and the status line |
 
 Notes:

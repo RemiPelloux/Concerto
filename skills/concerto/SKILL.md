@@ -16,6 +16,7 @@ edit files in the directory Concerto runs in.
 | To know how a request splits, how hard each part is, which model gets it | `concerto --plan "<request>"` | No |
 | It built, watchable, without touching their branch | `concerto --orca "<request>"` | In a new worktree |
 | It built here, unattended, with a cap | `concerto --run --budget 5 "<request>"` | Yes, here |
+| To finish a run that crashed, was stopped or failed review | `concerto --resume <session id>` (opens the TUI; the user presses Enter to build) | Yes, here |
 | To check which models work | `concerto --doctor` | No |
 
 Rules:
@@ -41,6 +42,11 @@ JSON with `summary`, `stories` and `routing`. For each routing entry, tell the u
 review, the budget ran out, or the conductor stopped the plan. The full report is the newest
 `.concerto/runs/*.md`. Relay what changed, what failed and the cost. Do not commit for the user
 unless asked; suggest reviewing the diff.
+
+Every run prints its session id first (`session s-… · log .concerto/logs/s-….log`). The log has
+every phase, agent line and error. The session is saved too: `concerto --resume <id>` reopens it
+with the stories that passed kept, and builds the rest. In the TUI, the user can press Enter
+after a run to retry what did not pass, or type `/history` to list earlier sessions.
 
 If models fail or nothing is reachable, use the `concerto-doctor` skill. To change models,
 routing or the budget, use the `concerto-config` skill.

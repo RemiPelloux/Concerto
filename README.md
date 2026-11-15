@@ -231,11 +231,16 @@ pnpm dev                           # run from source
 pnpm check                         # types, lint, tests, Pelloux audit
 ```
 
-Imports use the `#src/...` alias (package.json `imports`), never `../..` paths: the `source`
-condition points them at TypeScript in development and tests, and at `dist/` once built. The code
+Imports use the `#src/...`, `#tests/...` and `#scripts/...` aliases (package.json `imports`),
+never `../..` paths: the `source` condition points `#src` at TypeScript in development and tests,
+and at `dist/` once built. The code
 follows the [Pelloux Guidelines](https://github.com/RemiPelloux/pelloux-guidelines). The
 pre-commit hook runs the tests your change can reach, through SmartTest. Security notes are in
 [SECURITY.md](SECURITY.md).
+
+`sh scripts/package.sh` builds the release packages in `out/`. Publishing a GitHub release runs
+the same script in CI, installs both packages with their installers on Linux, macOS and Windows,
+and attaches them only when all three pass.
 
 ## License
 

@@ -5,7 +5,7 @@ import { keepSessions } from "#src/engine/history.js";
 import { SessionLog } from "#src/engine/session-log.js";
 import { ROLES, type ConcertoConfig } from "#src/config/types.js";
 import { loadCatalog, type Catalog } from "#src/models/catalog.js";
-import { roleChain } from "#src/models/router.js";
+import { firstOf } from "#src/models/router.js";
 import { Store } from "#src/state/store.js";
 
 export type Setup = { config: ConcertoConfig; catalog: Catalog; store: Store; cwd: string; log: SessionLog };
@@ -23,7 +23,7 @@ async function setup(values: Values): Promise<Setup> {
   const catalog = await loadCatalog(config);
   const log = SessionLog.current ?? new SessionLog(cwd);
   const store = new Store((kind, text) => log.write(kind, text));
-  ROLES.forEach((role) => store.role(role, { model: roleChain(catalog, config, role)[0]?.ref ?? "" }));
+  ROLES.forEach((role) => store.role(role, { model: firstOf(catalog, config, role)?.ref ?? "" }));
   keepSessions(store, { cwd, id: log.id });
   log.write("start", `concerto in ${cwd} · config ${configPath(cwd)} · ${catalog.models.length} models reachable`);
   log.write("start", `prefer ${config.prefer.join(",") || "-"} · budget ${config.budgetUsd ?? "-"} · roles ${ROLES.map((r) => `${r}=${store.get().roles[r].model}`).join(" ")}`);

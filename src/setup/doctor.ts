@@ -1,7 +1,7 @@
 import { configPath, userConfigPath } from "#src/config/load.js";
 import type { ConcertoConfig } from "#src/config/types.js";
 import type { Catalog } from "#src/models/catalog.js";
-import { roleChain } from "#src/models/router.js";
+import { firstOf } from "#src/models/router.js";
 import { ROLES } from "#src/config/types.js";
 import { isBroken, readHealth } from "#src/models/health.js";
 import type { Detection } from "#src/setup/detect.js";
@@ -33,7 +33,7 @@ export function printDoctor(cwd: string, d: Detection, setup: { config: Concerto
   if (configPath(cwd) !== userConfigPath()) out(`          (personal config: ${userConfigPath()}, written by --init)`);
   out(`reachable ${setup.catalog.models.length} of ${Object.keys(setup.config.models).length} configured models`);
   ROLES.forEach((r) => {
-    const first = roleChain(setup.catalog, setup.config, r)[0];
+    const first = firstOf(setup.catalog, setup.config, r);
     out(`${r.padEnd(ROLE_WIDTH)}${first?.ref ?? "nothing reachable"}`);
   });
   const health = readHealth();

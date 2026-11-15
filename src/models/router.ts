@@ -79,6 +79,15 @@ function chainOf(config: ConcertoConfig, wanted: ModelInfo[], fallback: ModelInf
   return chain;
 }
 
+/** The model a role would run first, or undefined when none is reachable: for display, never throws. */
+export function firstOf(catalog: Catalog, config: ConcertoConfig, role: Role): ModelInfo | undefined {
+  try {
+    return roleChain(catalog, config, role)[0];
+  } catch {
+    return undefined;
+  }
+}
+
 export function roleChain(catalog: Catalog, config: ConcertoConfig, role: Role): ModelInfo[] {
   const cfg = config.roles[role];
   return chainOf(config, catalog.reachable(cfg.models), tierChain(catalog, cfg.minTier));

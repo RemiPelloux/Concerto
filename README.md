@@ -30,6 +30,8 @@ sees a key. Full documentation: [remipelloux.github.io/Concerto](https://remipel
 | An agent's live output | Why a story got its score |
 | <img src="docs/assets/screenshots/diff.png" alt="The diff of one changed file, colored, from the changes table."> | <img src="docs/assets/screenshots/tour.png" alt="The animated tour: stories travel to the model that fits them."> |
 | A changed file's diff | The animated tour (`/onboarding`) |
+| <img src="docs/assets/screenshots/live.png" alt="A build in progress: the agent list with ticking clocks and a live preview of the builder's last lines, with how long ago it last printed."> | <img src="docs/assets/screenshots/finished.png" alt="A finished run: a box says how many stories passed and what to do next."> |
+| A build in progress, with the live preview | The end of a run and what to do next |
 
 ## Install
 

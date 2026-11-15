@@ -208,13 +208,12 @@ model's four factors are reweighted.</code></pre>
     <section class="install wrap" id="install" aria-labelledby="install-title">
       <div class="install-main">
         <h2 id="install-title" class="head reveal">Install and run</h2>
-        <p class="reveal">You need Node 22 or newer, pnpm 10, and at least one of <code>claude</code>, <code>codex</code> or <code>pi</code> on your PATH and logged in.</p>
+        <p class="reveal">You need git, Node 22 or newer, and at least one of <code>claude</code>, <code>codex</code> or <code>pi</code> on your PATH and logged in.</p>
         <div class="code-block reveal">
           <div class="code-bar"><button class="copy" type="button" data-copy="install-cmd">Copy</button></div>
-          <pre><code id="install-cmd">git clone https://github.com/RemiPelloux/Concerto
-cd Concerto
-pnpm install
-pnpm dev "Move the API to Rust. Done means: every test passes."</code></pre>
+          <pre><code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.sh | sh
+cd ~/code/my-app
+concerto "Move the API to Rust. Done means: every test passes."</code></pre>
         </div>
         <p class="reveal">On first launch Concerto looks for Claude Code, Codex and its profiles, pi and rtk, sends every model it can reach one tiny prompt, keeps only the ones that answer, asks which way calls go first, and writes <code>~/.config/concerto/config.json</code> with all of them. Rerun it with <code>--init</code>.</p>
         <p class="reveal">Concerto's agents edit files in the directory you start it from. Run it in a git worktree or on a clean branch. After a run, <code>.concerto/runs/</code> holds a report you can paste into a pull request.</p>
@@ -230,6 +229,7 @@ pnpm dev "Move the API to Rust. Done means: every test passes."</code></pre>
           <div class="reveal"><dt><code>--probe</code></dt><dd>Send every configured model one tiny prompt. Models that fail are skipped for a day.</dd></div>
           <div class="reveal"><dt><code>--models</code></dt><dd>Show every reachable model and the chain each role and route gets.</dd></div>
           <div class="reveal"><dt><code>--yes</code></dt><dd>Skip the confirm step and start building after scoring.</dd></div>
+          <div class="reveal"><dt><code>--orca</code></dt><dd>Start the run in a new Orca worktree, in its own terminal tab.</dd></div>
           <div class="reveal"><dt><code>--run</code></dt><dd>Score and build without the TUI, printing the log. For scripts and CI.</dd></div>
           <div class="reveal"><dt><code>--prefer ce-*</code></dt><dd>Try these providers first for every model, for example your proxy.</dd></div>
           <div class="reveal"><dt><code>--stats</code></dt><dd>Tokens, cache reads, savings and fallbacks for this repository.</dd></div>

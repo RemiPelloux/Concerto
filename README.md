@@ -20,41 +20,59 @@ Fable 5.2 checks the plan at three checkpoints.
 It runs on your Claude Code and ChatGPT subscriptions, and on any API key pi holds. Concerto never
 sees a key. Full documentation: [remipelloux.github.io/Concerto](https://remipelloux.github.io/Concerto/)
 
-## Quick start
+## Install
 
-You need Node 22+, pnpm 10, and at least one of these logged in: `claude` (Claude Code), `codex`
+You need git, Node 22+, and at least one of these logged in: `claude` (Claude Code), `codex`
 (Codex), `pi`.
 
 ```sh
-git clone https://github.com/RemiPelloux/Concerto && cd Concerto
-pnpm install
-pnpm dev
+curl -fsSL https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.sh | sh
+```
+
+This puts a checkout in `~/.local/share/concerto`, a `concerto` command in `~/.local/bin`, and a
+Concerto skill in the agents it finds (Claude Code, Codex, pi). Run it again to update. Read the
+[script](scripts/install.sh) first if you prefer; it needs no sudo.
+
+## Quick start
+
+Go to a project, ideally on a clean branch or a git worktree, because agents edit the files there:
+
+```sh
+cd ~/code/my-app
+concerto
 ```
 
 The first launch tests every model you have with one tiny prompt, keeps the ones that answer, and
 asks whether calls go through your subscriptions, your proxy or your API keys first. Then type a
 request, for example `Add CSV export to invoices. Done means: the tests pass.`, press Enter to see
-the scored stories, and Enter again to build them.
-
-Agents edit files in the folder you start Concerto from. Use a git worktree or a clean branch.
+the scored stories, and Enter again to build them. Esc throws a plan away or stops a build.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
-| `pnpm dev` | Start the terminal UI |
-| `pnpm dev "request"` | Start with a request already typed |
-| `pnpm dev --plan "request"` | Show the scored stories as JSON, build nothing |
-| `pnpm dev --run "request"` | Score and build without the UI, for scripts and CI |
-| `pnpm dev --budget 5 ...` | Stop starting stories after $5 of API-equivalent spend |
-| `pnpm dev --prefer 'ce-*' ...` | Try your proxy first for every model |
-| `pnpm dev --init` | Detect and test your models again, rewrite your config |
-| `pnpm dev --probe` | Retest the configured models |
-| `pnpm dev --doctor` | What is installed, linked, skipped, and why |
-| `pnpm dev --stats` | Tokens, cache hits and savings for this repository |
+| `concerto` | Start the terminal UI |
+| `concerto "request"` | Start with a request already typed |
+| `concerto --plan "request"` | Show the scored stories as JSON, build nothing |
+| `concerto --run "request"` | Score and build without the UI, for scripts and CI |
+| `concerto --orca "request"` | Start the run in a new Orca worktree, in its own tab |
+| `concerto --budget 5 ...` | Stop starting stories after $5 of API-equivalent spend |
+| `concerto --prefer 'ce-*' ...` | Try your proxy first for every model |
+| `concerto --init` | Detect and test your models again, rewrite your config |
+| `concerto --probe` | Retest the configured models |
+| `concerto --doctor` | What is installed, linked, skipped, and why |
+| `concerto --stats` | Tokens, cache hits and savings for this repository |
 
-In the UI, Esc throws a plan away or stops a running build. After a build, the report is in
-`.concerto/runs/`, ready to paste into a pull request.
+After a build, the report is in `.concerto/runs/`, ready to paste into a pull request.
+
+## Use with Orca
+
+- **From any Orca terminal:** `concerto --orca "request"` creates a fresh worktree of the current
+  repository and starts Concerto in a new tab there, so the run never touches your branch.
+- **One click:** in Orca, open Settings, then the terminal quick commands, and add a command with
+  the label `Concerto` and the command `concerto`. It opens the TUI in the current worktree.
+- **From your agents:** the install adds a Concerto skill, so Claude Code, Codex or pi running in
+  Orca can call `concerto --plan` or `concerto --orca` when you ask them to.
 
 ## How a story is scored
 
@@ -118,11 +136,17 @@ Add it to pi or as a Codex profile with providers named `ce-gpt`, `ce-claude`, `
 *Affiliate link: I get a commission if you sign up through it, at no cost to you. Any
 OpenAI-compatible provider works the same way.*
 
+## Roadmap
+
+What is missing and what comes next: [ROADMAP.md](ROADMAP.md).
+
 ## Development
 
 ```sh
+git clone https://github.com/RemiPelloux/Concerto && cd Concerto
+pnpm install && git config core.hooksPath .githooks
+pnpm dev                           # run from source
 pnpm check                         # types, lint, tests, Pelloux audit
-git config core.hooksPath .githooks
 ```
 
 The code follows the [Pelloux Guidelines](https://github.com/RemiPelloux/pelloux-guidelines). The

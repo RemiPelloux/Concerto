@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createConcert } from "#src/orchestrator/concert.js";
 import { perform } from "#src/orchestrator/perform.js";
@@ -79,7 +80,8 @@ describe("concert", () => {
     await scoreRequest(concert, "add health and auth");
     await perform(concert);
     const entry = store.get().log.find((e) => e.label === "Report");
-    const report = readFileSync(entry?.detail ?? "", "utf8");
+    expect(entry?.detail).toMatch(/^\.concerto\/runs\/run-\w+\.md$/);
+    const report = readFileSync(join(init.cwd, entry?.detail ?? ""), "utf8");
     expect(report).toContain("# Add a health endpoint");
     expect(report).toMatch(/\| Protect admin routes \| 8 \| 0 files, 0 importers, 0 tests \| 76 \(complexity 4\/5; sensitive area; 8 points\) \| b\/cheap-builder \| .* \| passed \|/);
     expect(report).toContain("## Totals");

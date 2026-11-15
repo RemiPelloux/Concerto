@@ -1,3 +1,4 @@
+import { relative } from "node:path";
 import { writeReport } from "#src/engine/report.js";
 import { saveRun } from "#src/engine/stats.js";
 import { runOutcome } from "#src/orchestrator/budget.js";
@@ -54,6 +55,6 @@ export async function perform(c: Concert): Promise<void> {
   } finally {
     saveRun(c.cwd, c.store.get().ledger);
     const report = writeReport(c.store.get(), { cwd: c.cwd, runId: c.runId });
-    c.store.log({ role: "conductor", label: "Report", detail: report, result: "written" });
+    c.store.log({ role: "conductor", label: "Report", detail: relative(c.cwd, report), result: "written" });
   }
 }

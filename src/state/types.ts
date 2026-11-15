@@ -1,5 +1,5 @@
 import type { Effort, Role } from "../config/types.js";
-import type { Ledger } from "../cache/ledger.js";
+import type { Ledger } from "../engine/ledger.js";
 import type { Plan } from "../orchestrator/plan.js";
 
 export type Phase = "idle" | "scoring" | "planned" | "running" | "done" | "failed";
@@ -12,12 +12,14 @@ export type StoryView = {
   id: string;
   score: number;
   role: Role;
-  model: string;
   effort: Effort;
-  /** Name of the routing rule that picked the model. */
+  /** Name of the routing rule that picked the chain. */
   rule: string;
-  /** Model that reviews this story. */
-  critic: string;
+  /** Builder models in order; `model` is the one that ran last. */
+  chain: string[];
+  model: string;
+  /** Reviewer models in order. */
+  critics: string[];
   status: StoryStatus;
 };
 
@@ -30,10 +32,14 @@ export type State = {
   phase: Phase;
   prompt: string;
   plan: Plan | null;
-  stories: StoryView[];
+  /** Stories by id for O(1) updates; `order` keeps the plan order for display. */
+  stories: Record<string, StoryView>;
+  order: string[];
   roles: Record<Role, RoleView>;
   swarm: string[];
   checkpoints: Record<Checkpoint, string>;
+  /** Conductor guidance every builder and critic sees for the rest of the run. */
+  notes: string[];
   log: LogEntry[];
   ledger: Ledger;
   error: string;

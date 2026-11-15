@@ -1,15 +1,11 @@
 import { runClaude } from "./claude.js";
 import { runCodex } from "./codex.js";
 import { runPi } from "./pi.js";
-import { splitRef, type Runner } from "./types.js";
+import { parseRef, type Backend, type Runner } from "./types.js";
 
-export const CLAUDE_CODE = "claude-code";
-export const CODEX = "codex";
+const BACKENDS: Record<Backend, Runner> = { "claude-code": runClaude, codex: runCodex, pi: runPi };
 
-/** Subscription CLIs by prefix; every other prefix is a pi provider. */
-export const runModel: Runner = (req, onEvent) => {
-  const { prefix } = splitRef(req.model);
-  if (prefix === CLAUDE_CODE) return runClaude(req, onEvent);
-  if (prefix === CODEX) return runCodex(req, onEvent);
-  return runPi(req, onEvent);
-};
+/** Only pi and Claude Code keep sessions Concerto can resume; Codex calls are stateless here. */
+export const RESUMABLE: ReadonlySet<Backend> = new Set<Backend>(["claude-code", "pi"]);
+
+export const runModel: Runner = (req, onEvent) => BACKENDS[parseRef(req.model).backend](req, onEvent);

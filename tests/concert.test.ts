@@ -1,56 +1,90 @@
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createConcert } from "../src/orchestrator/concert.js";
 import { perform } from "../src/orchestrator/perform.js";
 import { scoreRequest } from "../src/orchestrator/score.js";
-import type { RunRequest } from "../src/runner/types.js";
+import type { Runner, RunRequest } from "../src/runner/types.js";
 import { Store } from "../src/state/store.js";
-import { CATALOG, PLAN_REPLY, scriptedRunner, testConfig } from "./fixtures.js";
+import { CATALOG, PLAN_REPLY, scriptedRunner, tempDir, testConfig } from "./fixtures.js";
 
-const isScorer = (r: RunRequest) => r.systemFile.includes("scorer");
-const isCritic = (r: RunRequest) => r.systemFile.includes("critic");
+const is = (role: string) => (r: RunRequest) => r.systemFile.includes(`${role}-`);
 
-function setup(criticVerdict: string) {
-  const scripted = scriptedRunner((r) =>
-    isScorer(r) ? PLAN_REPLY : isCritic(r) ? `VERDICT: ${criticVerdict}\nchecked` : "VERDICT: ok\nlooks fine\nSTATUS: done",
-  );
+type Script = { critic?: (n: number) => string; conductor?: string };
+
+function setup(script: Script = {}, wrap: (r: Runner) => Runner = (r) => r) {
+  let critiques = 0;
+  const scripted = scriptedRunner((r) => {
+    if (is("scorer")(r)) return PLAN_REPLY;
+    if (is("critic")(r)) return script.critic?.(++critiques) ?? "VERDICT: pass\nchecked";
+    if (is("conductor")(r)) return script.conductor ?? "VERDICT: ok\nlooks fine";
+    return "STATUS: done\nchanged it";
+  });
   const store = new Store();
-  const cwd = mkdtempSync(join(tmpdir(), "concerto-"));
-  const concert = createConcert({ config: testConfig(), catalog: CATALOG, store, runner: scripted.runner, cwd });
-  return { ...scripted, store, concert };
+  const init = { config: testConfig(), catalog: CATALOG, store, runner: wrap(scripted.runner), cwd: tempDir() };
+  return { ...scripted, store, init };
 }
 
 describe("concert", () => {
-  it("scores, routes by difficulty and answers a repeat request from the local cache", async () => {
-    const { concert, store, calls } = setup("pass");
-    await scoreRequest(concert, "add health and auth");
-    expect(store.get().stories.map((s) => [s.id, s.role, s.model])).toEqual([
-      ["route", "section", "a/swarm"],
-      ["auth", "soloist", "b/cheap-builder"],
-    ]);
-    await scoreRequest(concert, "add health and auth");
-    expect(calls.filter(isScorer)).toHaveLength(1);
+  it("scores, routes by difficulty and answers a repeated request from the local cache", async () => {
+    const { init, store, calls } = setup();
+    await scoreRequest(await createConcert(init), "add health and auth");
+    const { stories } = store.get();
+    expect([stories.route?.role, stories.route?.model]).toEqual(["section", "a/swarm"]);
+    expect([stories.auth?.role, stories.auth?.model]).toEqual(["soloist", "b/cheap-builder"]);
+    await scoreRequest(await createConcert(init), "add   health and auth");
+    expect(calls.filter(is("scorer"))).toHaveLength(1);
     expect(store.get().ledger.localHits).toBe(1);
   });
 
-  it("performs the plan with three conductor checkpoints at most", async () => {
-    const { concert, store, calls } = setup("pass");
+  it("performs the plan, saves the stats and only sends the conductor what is new", async () => {
+    const { init, store, calls } = setup();
+    const concert = await createConcert(init);
     await scoreRequest(concert, "add health and auth");
     await perform(concert);
     expect(store.get().phase).toBe("done");
-    expect(store.get().stories.every((s) => s.status === "passed")).toBe(true);
-    expect(calls.filter((c) => c.model === "a/brain")).toHaveLength(2);
-    expect(store.get().ledger.soloCost).toBeGreaterThan(store.get().ledger.usage.cost);
+    expect(Object.values(store.get().stories).every((s) => s.status === "passed")).toBe(true);
+    const consults = calls.filter(is("conductor"));
+    expect(consults).toHaveLength(2);
+    expect(consults[1]?.session?.resume).toBe(true);
+    expect(consults[1]?.prompt).toMatch(/still applies: plan/);
+    expect(store.get().ledger.dedupedTokens).toBeGreaterThan(0);
   });
 
-  it("retries once, then wakes the conductor and reports the failure", async () => {
-    const { concert, store, calls } = setup("fail");
+  it("hands plan-lock guidance to every builder", async () => {
+    const { init, calls } = setup({ conductor: "VERDICT: revise\nmissing check\nAdd a test for the 401 path." });
+    const concert = await createConcert(init);
     await scoreRequest(concert, "add health and auth");
     await perform(concert);
-    expect(store.get().phase).toBe("failed");
-    expect(calls.filter(isCritic)).toHaveLength(4);
+    const builds = calls.filter((r) => is("builder")(r) || is("section")(r));
+    expect(builds.length).toBeGreaterThan(0);
+    expect(builds.every((r) => r.prompt.includes("Add a test for the 401 path."))).toBe(true);
+  });
+
+  it("after two failed reviews, retries once with the conductor's guidance", async () => {
+    const { init, store, calls } = setup({ critic: (n) => (n <= 2 ? "VERDICT: fail\nbroken\n\x1b[31mERR\x1b[0m\nERR\nERR" : "VERDICT: pass\nok") });
+    const concert = await createConcert(init);
+    await scoreRequest(concert, "add health and auth");
+    await perform(concert);
     expect(store.get().checkpoints["repeat-error"]).toBe("ok");
+    expect(store.get().stories.route?.status).toBe("passed");
+    const third = calls.filter((r) => is("section")(r) && r.prompt.includes("Conductor guidance"));
+    expect(third).toHaveLength(1);
+    expect(third[0]?.prompt).toContain("ERR  (×3)");
+    expect(store.get().ledger.condensedTokens).toBeGreaterThan(0);
+  });
+
+  it("falls back to the next model in the chain when a call fails", async () => {
+    const failFirstBuilder: (r: Runner) => Runner = (runner) => async (req, onEvent) => {
+      if (req.model === "a/swarm") throw new Error("429 rate limited");
+      return runner(req, onEvent);
+    };
+    const { init, store, calls } = setup({}, failFirstBuilder);
+    const concert = await createConcert(init);
+    await scoreRequest(concert, "add health and auth");
+    await perform(concert);
+    expect(store.get().stories.route?.status).toBe("passed");
+    expect(store.get().stories.route?.model).not.toBe("a/swarm");
+    expect(store.get().ledger.fallbacks).toBeGreaterThan(0);
+    expect(store.get().log.some((e) => e.label === "Fallback" && e.detail.includes("429"))).toBe(true);
+    expect(calls.some((r) => r.model === "a/swarm")).toBe(false);
   });
 });

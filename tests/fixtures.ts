@@ -1,28 +1,44 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { ConcertoConfig } from "../src/config/types.js";
+import { Catalog } from "../src/models/catalog.js";
 import type { ModelInfo } from "../src/models/types.js";
-import type { Runner, RunRequest } from "../src/runner/types.js";
+import { parseRef, type Runner, type RunRequest } from "../src/runner/types.js";
 
 const price = (input: number, output: number) => ({ input, output, cacheRead: input / 10, cacheWrite: input * 1.25 });
 
-export const CATALOG: ModelInfo[] = [
-  { ref: "a/brain", contextK: 1000, tier: 5, price: price(8, 40), costFactor: 1 },
-  { ref: "a/builder", contextK: 1000, tier: 4, price: price(4, 20), costFactor: 1 },
-  { ref: "b/cheap-builder", contextK: 272, tier: 4, price: price(2, 10), costFactor: 1 },
-  { ref: "a/checker", contextK: 1000, tier: 3, price: price(2, 10), costFactor: 1 },
-  { ref: "a/swarm", contextK: 1000, tier: 2, price: price(0.1, 0.5), costFactor: 1 },
-  { ref: "c/unpriced", contextK: 128, tier: 1, price: null, costFactor: 1 },
+function model(ref: string, tier: number, p: ReturnType<typeof price> | null): ModelInfo {
+  return { ref, parsed: parseRef(ref), tier, price: p, costFactor: 1 };
+}
+
+export const MODELS: ModelInfo[] = [
+  model("a/brain", 5, price(8, 40)),
+  model("a/builder", 4, price(4, 20)),
+  model("proxy/builder", 4, price(4, 20)),
+  model("b/cheap-builder", 4, price(2, 10)),
+  model("a/checker", 3, price(2, 10)),
+  model("a/swarm", 2, price(0.1, 0.5)),
+  model("c/unpriced", 1, null),
 ];
+export const CATALOG = new Catalog(MODELS);
+
+export function tempDir(): string {
+  return mkdtempSync(join(tmpdir(), "concerto-"));
+}
 
 export function testConfig(): ConcertoConfig {
   const role = (minTier: number) => ({ minTier, effort: "medium" as const, tools: [], models: [] });
   return {
-    models: Object.fromEntries(CATALOG.map((m) => [m.ref, { tier: m.tier }])),
+    models: Object.fromEntries(MODELS.map((m) => [m.ref, { tier: m.tier }])),
     roles: { conductor: role(5), scorer: role(3), soloist: role(4), critic: role(3), section: role(1) },
     routes: [],
     reviews: [],
+    prefer: [],
+    timeoutMinutes: 1,
     skills: [],
     swarm: { maxParallel: 3 },
-    cache: { dir: ".concerto/cache", ttlHours: 1 },
+    cache: { dir: ".concerto/cache", ttlHours: 1, maxEntries: 50 },
   };
 }
 
@@ -36,7 +52,7 @@ export const PLAN_REPLY = JSON.stringify({
 
 export type Scripted = { calls: RunRequest[]; runner: Runner };
 
-/** Stands in for the pi subprocess, the third-party boundary, and records each request. */
+/** Stands in for the agent CLIs, the third-party boundary, and records every request. */
 export function scriptedRunner(reply: (req: RunRequest) => string): Scripted {
   const calls: RunRequest[] = [];
   const runner: Runner = async (req, onEvent) => {

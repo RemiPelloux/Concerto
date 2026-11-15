@@ -1,9 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import type { ModelRef } from "../runner/types.js";
 import type { Price } from "./types.js";
 
-type PriceIndex = { byRef: Map<string, Price>; byId: Map<string, Price> };
+export type PriceIndex = { byRef: Map<string, Price>; byId: Map<string, Price> };
 
 export function piAgentDir(): string {
   return process.env.PI_AGENT_DIR ?? join(homedir(), ".pi", "agent");
@@ -40,7 +41,8 @@ export function loadPriceIndex(dir = piAgentDir()): PriceIndex {
   return index;
 }
 
-export function priceFor(index: PriceIndex, ref: string): Price | null {
-  const id = ref.slice(ref.indexOf("/") + 1).replace(/\[.*\]$/, "");
-  return index.byRef.get(ref) ?? index.byId.get(id) ?? null;
+/** Exact ref first, then the provider behind a profile (codex@ce-gpt -> ce-gpt), then the bare id. */
+export function priceFor(index: PriceIndex, ref: ModelRef): Price | null {
+  const id = ref.id.replace(/\[.*\]$/, "");
+  return index.byRef.get(`${ref.prefix}/${ref.id}`) ?? index.byRef.get(`${ref.provider}/${id}`) ?? index.byId.get(id) ?? null;
 }

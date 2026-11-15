@@ -1,12 +1,12 @@
-import { EMPTY_LEDGER } from "../cache/ledger.js";
+import { EMPTY_LEDGER } from "../engine/ledger.js";
 import { ROLES, type Role } from "../config/types.js";
 import type { LogEntry, RoleView, State, StoryView } from "./types.js";
 
 const LOG_LIMIT = 200;
+const SWARM_TRAIL = 6;
 
 function idleRoles(): Record<Role, RoleView> {
-  const entries = ROLES.map((r) => [r, { model: "", activity: "idle", note: "" }] as const);
-  return Object.fromEntries(entries) as Record<Role, RoleView>;
+  return Object.fromEntries(ROLES.map((r) => [r, { model: "", activity: "idle", note: "" }])) as Record<Role, RoleView>;
 }
 
 export function initialState(): State {
@@ -14,10 +14,12 @@ export function initialState(): State {
     phase: "idle",
     prompt: "",
     plan: null,
-    stories: [],
+    stories: {},
+    order: [],
     roles: idleRoles(),
     swarm: [],
     checkpoints: { "plan-lock": "", "repeat-error": "", "before-done": "" },
+    notes: [],
     log: [],
     ledger: EMPTY_LEDGER,
     error: "",
@@ -48,10 +50,23 @@ export class Store {
   }
 
   story(id: string, patch: Partial<StoryView>): void {
-    this.update((s) => ({ stories: s.stories.map((v) => (v.id === id ? { ...v, ...patch } : v)) }));
+    this.update((s) => {
+      const current = s.stories[id];
+      return current ? { stories: { ...s.stories, [id]: { ...current, ...patch } } } : {};
+    });
+  }
+
+  view(id: string): StoryView {
+    const v = this.state.stories[id];
+    if (!v) throw new Error(`Unknown story "${id}".`);
+    return v;
   }
 
   log(entry: LogEntry): void {
     this.update((s) => ({ log: [...s.log, entry].slice(-LOG_LIMIT) }));
+  }
+
+  tool(name: string): void {
+    this.update((s) => ({ swarm: [...s.swarm, name].slice(-SWARM_TRAIL) }));
   }
 }

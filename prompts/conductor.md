@@ -15,4 +15,5 @@ VERDICT: <ok | revise | stop>
 <up to five short lines of specifics, file paths when you have them>
 ```
 
-Be concrete. No praise, no restating the plan, no hedging.
+With `revise`, the lines under the finding go to the builders as instructions: write them as
+instructions. Be concrete. No praise, no restating the plan, no hedging.

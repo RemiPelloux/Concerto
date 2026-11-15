@@ -1,5 +1,5 @@
 import { Box, Text } from "ink";
-import { cacheHitRatio, type Ledger } from "../cache/ledger.js";
+import { cacheHitRatio, type Ledger } from "../engine/ledger.js";
 import { promptTokens } from "../runner/usage.js";
 import { COLOR, ROLE_COLOR } from "./theme.js";
 
@@ -36,7 +36,10 @@ export function CostBar({ ledger, brain }: { ledger: Ledger; brain: string }) {
       </Box>
       <Text>{`${brain} alone`.padEnd(LABEL)}{bar(ledger.soloCost, ledger.soloCost, COLOR.bad)} ${ledger.soloCost.toFixed(2)}</Text>
       <Text color={ROLE_COLOR.conductor}>{`${brain} as the brain`.padEnd(LABEL)}{bar(actual, ledger.soloCost, ROLE_COLOR.conductor)} ${actual.toFixed(2)}</Text>
-      <Text color="gray">prompt cache saved ${ledger.cacheSaved.toFixed(2)}</Text>
+      <Text color="gray">
+        engine · provider cache saved ${ledger.cacheSaved.toFixed(2)} · condensed {tokens(ledger.condensedTokens)} · not resent{" "}
+        {tokens(ledger.dedupedTokens)} · fallbacks {ledger.fallbacks}
+      </Text>
     </Box>
   );
 }

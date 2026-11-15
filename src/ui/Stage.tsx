@@ -12,7 +12,7 @@ function dot(state: State, role: Role): string {
 
 function SoloistBox({ state }: { state: State }) {
   const solo = state.roles.soloist;
-  const running = state.stories.find((s) => s.status === "building" && s.role === "soloist");
+  const running = Object.values(state.stories).find((s) => s.status === "building" && s.role === "soloist");
   const fill = EFFORT_FILL[running?.effort ?? "high"] ?? 0;
   return (
     <Box flexDirection="column" alignItems="center" borderStyle="round" borderColor={ROLE_COLOR.soloist} paddingX={1}>

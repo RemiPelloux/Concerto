@@ -5,55 +5,61 @@ import { delimiter, join } from "node:path";
 import { promisify } from "node:util";
 import { claudeBin } from "../runner/claude.js";
 import { codexBin } from "../runner/codex.js";
-import { CLAUDE_CODE, CODEX } from "../runner/index.js";
+import { childEnv } from "../runner/env.js";
 import { piBin } from "../runner/pi.js";
-import type { ListedModel } from "./types.js";
+import type { ModelRef } from "../runner/types.js";
 
 const run = promisify(execFile);
-const KILO = 1000;
-const UNIT_SCALE: Record<string, number> = { K: 1, M: KILO };
 const LIST_TIMEOUT_MS = 30_000;
-const CLAUDE_CONTEXT_K = 1000;
-const CODEX_CONTEXT_K = 272;
-const CLAUDE_MODELS = ["claude-fable-5-2", "claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"];
 
 export function onPath(bin: string): boolean {
   if (bin.includes("/")) return existsSync(bin);
-  return (process.env.PATH ?? "").split(delimiter).some((dir) => existsSync(join(dir, bin)));
+  return (process.env.PATH ?? "").split(delimiter).some((dir) => dir && existsSync(join(dir, bin)));
 }
 
-function parseContext(token: string): number {
-  const match = /^([\d.]+)([KM])$/.exec(token);
-  if (!match) return 0;
-  return Number(match[1]) * (UNIT_SCALE[match[2] ?? "K"] ?? 1);
+function codexHome(): string {
+  return process.env.CODEX_HOME ?? join(homedir(), ".codex");
 }
 
-/** Parses the table printed by `pi --list-models`. */
-export function parseListModels(text: string): ListedModel[] {
-  const rows = text.split("\n").slice(1);
-  return rows.flatMap((row) => {
-    const [provider, id, context] = row.trim().split(/\s+/);
-    if (!provider || !id || !context) return [];
-    return [{ ref: `${provider}/${id}`, contextK: parseContext(context) }];
-  });
+/** Model slugs the ChatGPT subscription offers, from Codex's own cache. Empty when unknown. */
+function codexSlugs(): Set<string> {
+  const file = join(codexHome(), "models_cache.json");
+  if (!existsSync(file)) return new Set();
+  const data = JSON.parse(readFileSync(file, "utf8")) as { models?: { slug?: unknown }[] };
+  return new Set((data.models ?? []).flatMap((m) => (typeof m.slug === "string" ? [m.slug] : [])));
 }
 
-function codexSlugs(): string[] {
-  const file = join(process.env.CODEX_HOME ?? join(homedir(), ".codex"), "models_cache.json");
-  if (!existsSync(file)) return [];
-  const data = JSON.parse(readFileSync(file, "utf8")) as { models?: { slug?: string }[] };
-  return (data.models ?? []).flatMap((m) => (m.slug ? [m.slug] : []));
+/** Parses the table printed by `pi --list-models` into "provider/id" refs. */
+export function parseListModels(text: string): string[] {
+  return text
+    .split("\n")
+    .slice(1)
+    .flatMap((row) => {
+      const [provider, id] = row.trim().split(/\s+/);
+      return provider && id ? [`${provider}/${id}`] : [];
+    });
 }
 
-async function piModels(): Promise<ListedModel[]> {
-  if (!onPath(piBin())) return [];
-  const { stdout } = await run(piBin(), ["--list-models", "--offline"], { timeout: LIST_TIMEOUT_MS });
-  return parseListModels(stdout);
+async function piRefs(): Promise<Set<string>> {
+  if (!onPath(piBin())) return new Set();
+  const { stdout } = await run(piBin(), ["--list-models", "--offline"], { timeout: LIST_TIMEOUT_MS, env: childEnv() });
+  return new Set(parseListModels(stdout));
 }
 
-/** Every model Concerto can reach right now: Claude Code, Codex and pi. */
-export async function discoverModels(): Promise<ListedModel[]> {
-  const claude = onPath(claudeBin()) ? CLAUDE_MODELS.map((id) => ({ ref: `${CLAUDE_CODE}/${id}`, contextK: CLAUDE_CONTEXT_K })) : [];
-  const codex = onPath(codexBin()) ? codexSlugs().map((id) => ({ ref: `${CODEX}/${id}`, contextK: CODEX_CONTEXT_K })) : [];
-  return [...claude, ...codex, ...(await piModels())];
+/**
+ * Which configured refs can run right now. Each source is checked once, and pi is only
+ * started when the config uses pi models at all.
+ */
+export async function reachableRefs(refs: ModelRef[]): Promise<Set<string>> {
+  const usesPi = refs.some((r) => r.backend === "pi");
+  const [pi, slugs] = [usesPi ? await piRefs() : new Set<string>(), codexSlugs()];
+  const hasClaude = onPath(claudeBin());
+  const hasCodex = onPath(codexBin());
+  const ok = (r: ModelRef): boolean => {
+    if (r.backend === "claude-code") return hasClaude;
+    if (r.backend === "pi") return pi.has(`${r.prefix}/${r.id}`);
+    if (!hasCodex) return false;
+    return r.profile ? existsSync(join(codexHome(), `${r.profile}.config.toml`)) : slugs.size === 0 || slugs.has(r.id);
+  };
+  return new Set(refs.filter(ok).map((r) => `${r.prefix}/${r.id}`));
 }

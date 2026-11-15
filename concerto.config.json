@@ -1,5 +1,5 @@
 {
-  "$comment": "Model refs are <backend>/<id>. claude-code/* runs on your Claude Code subscription, codex/* on your ChatGPT subscription through Codex, anything else through pi. Routes are tried in order; the first one with a reachable model wins.",
+  "$comment": "Model refs are <prefix>/<model>. claude-code/* runs on your Claude Code subscription, codex/* on your ChatGPT subscription, codex@<profile>/* through a Codex profile (e.g. a proxy), anything else through pi (anthropic, openai, deepseek, or a proxy provider such as ce-gpt). Unreachable models are skipped. Chains are tried in order; a failed call moves to the next model.",
   "models": {
     "claude-code/claude-fable-5-2": {
       "tier": 5
@@ -22,6 +22,12 @@
     "codex/gpt-6-luna": {
       "tier": 2
     },
+    "codex@ce-gpt/gpt-6-astra": {
+      "tier": 5
+    },
+    "codex@ce-gpt/gpt-6.1-sol": {
+      "tier": 4
+    },
     "anthropic/claude-fable-5-2": {
       "tier": 5
     },
@@ -43,6 +49,30 @@
     "openai/gpt-6-luna": {
       "tier": 2
     },
+    "ce-claude/claude-opus-5-5": {
+      "tier": 4
+    },
+    "ce-claude/claude-sonnet-5": {
+      "tier": 3
+    },
+    "ce-gpt/gpt-6-astra": {
+      "tier": 5
+    },
+    "ce-gpt/gpt-6.1-sol": {
+      "tier": 4
+    },
+    "ce-gpt/gpt-6-luna": {
+      "tier": 2
+    },
+    "ce-grok/grok-4.7": {
+      "tier": 3
+    },
+    "ce-deepseek/deepseek-v4-pro": {
+      "tier": 3
+    },
+    "ce-deepseek/deepseek-v4-flash": {
+      "tier": 1
+    },
     "deepseek/deepseek-v4-pro": {
       "tier": 3
     },
@@ -62,7 +92,8 @@
       "role": "soloist",
       "models": [
         "claude-code/claude-opus-5-5",
-        "anthropic/claude-opus-5-5"
+        "anthropic/claude-opus-5-5",
+        "ce-claude/claude-opus-5-5"
       ],
       "effort": "high"
     },
@@ -72,7 +103,8 @@
       "role": "soloist",
       "models": [
         "claude-code/claude-opus-5-5",
-        "anthropic/claude-opus-5-5"
+        "anthropic/claude-opus-5-5",
+        "ce-claude/claude-opus-5-5"
       ],
       "effort": "high"
     },
@@ -81,7 +113,9 @@
       "role": "section",
       "models": [
         "codex/gpt-6.1-sol",
-        "openai/gpt-6.1-sol"
+        "codex@ce-gpt/gpt-6.1-sol",
+        "openai/gpt-6.1-sol",
+        "ce-gpt/gpt-6.1-sol"
       ],
       "effort": "medium"
     }
@@ -96,7 +130,9 @@
       ],
       "models": [
         "codex/gpt-6-astra",
-        "openai/gpt-6-astra"
+        "codex@ce-gpt/gpt-6-astra",
+        "openai/gpt-6-astra",
+        "ce-gpt/gpt-6-astra"
       ]
     }
   ],
@@ -118,7 +154,8 @@
       "tools": [],
       "models": [
         "claude-code/claude-sonnet-5-5",
-        "anthropic/claude-sonnet-5-5"
+        "anthropic/claude-sonnet-5-5",
+        "ce-claude/claude-sonnet-5"
       ]
     },
     "soloist": {
@@ -132,7 +169,8 @@
       ],
       "models": [
         "claude-code/claude-opus-5-5",
-        "anthropic/claude-opus-5-5"
+        "anthropic/claude-opus-5-5",
+        "ce-claude/claude-opus-5-5"
       ]
     },
     "critic": {
@@ -144,7 +182,8 @@
       ],
       "models": [
         "claude-code/claude-sonnet-5-5",
-        "anthropic/claude-sonnet-5-5"
+        "anthropic/claude-sonnet-5-5",
+        "ce-claude/claude-sonnet-5"
       ]
     },
     "section": {
@@ -158,10 +197,14 @@
       ],
       "models": [
         "codex/gpt-6.1-sol",
-        "openai/gpt-6.1-sol"
+        "codex@ce-gpt/gpt-6.1-sol",
+        "openai/gpt-6.1-sol",
+        "ce-gpt/gpt-6.1-sol"
       ]
     }
   },
+  "prefer": [],
+  "timeoutMinutes": 30,
   "skills": [
     {
       "tags": [
@@ -207,6 +250,7 @@
   },
   "cache": {
     "dir": ".concerto/cache",
-    "ttlHours": 72
+    "ttlHours": 72,
+    "maxEntries": 500
   }
 }

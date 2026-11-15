@@ -7,15 +7,16 @@ import type { Store } from "../state/store.js";
 import type { State } from "../state/types.js";
 import type { AppDeps } from "./App.js";
 
-type Run = { concert: Concert; abort: AbortController };
+type Run = { concert: Concert | null; abort: AbortController };
 type Controls = { state: State; submit: (text: string) => void };
 type KeyContext = { store: Store; state: State; run: RefObject<Run | null>; fail: (e: unknown) => void };
 
 function useKeys({ store, state, run, fail }: KeyContext): void {
   useInput((_input, key) => {
-    if (key.escape && state.phase === "planned") return store.update(() => ({ phase: "idle", plan: null, stories: [] }));
+    const concert = run.current?.concert;
+    if (key.escape && state.phase === "planned") return store.update(() => ({ phase: "idle", plan: null, stories: {}, order: [] }));
     if (key.escape) return run.current?.abort.abort();
-    if (key.return && state.phase === "planned" && run.current) perform(run.current.concert).catch(fail);
+    if (key.return && state.phase === "planned" && concert) perform(concert).catch(fail);
   });
 }
 
@@ -37,11 +38,15 @@ export function useConcert(deps: AppDeps): Controls {
     deps.store.update(() => ({ phase: "failed", error }));
   }, [deps.store]);
   const submit = useCallback((text: string) => {
-    const abort = new AbortController();
-    run.current = { concert: createConcert({ ...deps, signal: abort.signal }), abort };
-    const concert = run.current.concert;
-    scoreRequest(concert, text)
-      .then(() => (deps.autoPerform ? perform(concert) : undefined))
+    const current: Run = { concert: null, abort: new AbortController() };
+    run.current = current;
+    deps.store.update(() => ({ phase: "scoring", prompt: text, error: "" }));
+    createConcert({ ...deps, signal: current.abort.signal })
+      .then(async (concert) => {
+        current.concert = concert;
+        await scoreRequest(concert, text);
+        if (deps.autoPerform) await perform(concert);
+      })
       .catch(fail);
   }, [deps, fail]);
   useKeys({ store: deps.store, state, run, fail });

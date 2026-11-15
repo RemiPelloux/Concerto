@@ -1,16 +1,16 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildClaudeArgs, parseClaudeLine, sessionUuid } from "../src/runner/claude.js";
-import { buildCodexArgs, codexParser } from "../src/runner/codex.js";
+import { buildCodexArgs, codexInput, codexParser } from "../src/runner/codex.js";
 import type { RunRequest } from "../src/runner/types.js";
+import { tempDir } from "./fixtures.js";
 
 function request(patch: Partial<RunRequest> = {}): RunRequest {
-  const dir = mkdtempSync(join(tmpdir(), "concerto-"));
+  const dir = tempDir();
   const systemFile = join(dir, "system.md");
   writeFileSync(systemFile, "You are the critic.");
-  return { model: "claude-code/claude-opus-5-5", prompt: "go", systemFile, tools: ["read", "bash"], effort: "off", skills: [], cwd: dir, ...patch };
+  return { model: "claude-code/claude-opus-5-5", prompt: "secret prompt", systemFile, tools: ["read", "bash"], effort: "off", skills: [], cwd: dir, ...patch };
 }
 
 describe("claude code backend", () => {
@@ -19,14 +19,15 @@ describe("claude code backend", () => {
     expect(args).toEqual(expect.arrayContaining(["--model", "claude-opus-5-5", "--setting-sources", "", "--strict-mcp-config"]));
     expect(args).toEqual(expect.arrayContaining(["--tools", "Read,Grep,Glob,Bash", "--allowedTools", "Read,Grep,Glob,Bash", "--effort", "low"]));
     expect(args).toContain("--no-session-persistence");
+    expect(args.join(" ")).not.toContain("secret prompt");
   });
 
-  it("creates a session once, then resumes it", () => {
-    const session = { dir: "/tmp/s", id: `story-${Date.now()}` };
-    const first = buildClaudeArgs(request({ session }));
-    const second = buildClaudeArgs(request({ session }));
+  it("creates a session, then resumes it", () => {
+    const first = buildClaudeArgs(request({ session: { dir: "/s", id: "story", resume: false } }));
+    const second = buildClaudeArgs(request({ session: { dir: "/s", id: "story", resume: true } }));
     expect(first).toContain("--session-id");
     expect(second).toContain("--resume");
+    expect(first[first.indexOf("--session-id") + 1]).toBe(second[second.indexOf("--resume") + 1]);
     expect(sessionUuid("k")).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
   });
 
@@ -39,12 +40,21 @@ describe("claude code backend", () => {
 });
 
 describe("codex backend", () => {
-  it("puts the role prompt first and picks the sandbox from the tools", () => {
+  it("reads the prompt from stdin and picks the sandbox from the tools", () => {
     const readOnly = buildCodexArgs(request({ model: "codex/gpt-6-astra", tools: ["read"] }));
     expect(readOnly).toEqual(expect.arrayContaining(["--model", "gpt-6-astra", "--sandbox", "read-only"]));
-    expect(readOnly.at(-1)).toMatch(/^You are the critic\.\n\n---\n\ngo/);
+    expect(readOnly.at(-1)).toBe("-");
     const writer = buildCodexArgs(request({ model: "codex/gpt-6.1-sol", tools: ["edit"], effort: "max" }));
     expect(writer).toEqual(expect.arrayContaining(["--sandbox", "workspace-write", 'model_reasoning_effort="xhigh"']));
+  });
+
+  it("runs a proxy through its Codex profile", () => {
+    const args = buildCodexArgs(request({ model: "codex@ce-gpt/gpt-6.1-sol" }));
+    expect(args).toEqual(expect.arrayContaining(["--profile", "ce-gpt", "--model", "gpt-6.1-sol"]));
+  });
+
+  it("puts the role prompt first in the message: a stable cached prefix", () => {
+    expect(codexInput(request({ model: "codex/gpt-6-astra" }))).toMatch(/^You are the critic\.\n\n---\n\nsecret prompt$/);
   });
 
   it("reports the last agent message with usage, cached tokens split out", () => {
@@ -52,6 +62,7 @@ describe("codex backend", () => {
     parse(JSON.stringify({ type: "item.completed", item: { type: "agent_message", text: "STATUS: done" } }));
     const turn = parse(JSON.stringify({ type: "turn.completed", usage: { input_tokens: 1000, cached_input_tokens: 800, output_tokens: 40 } }));
     expect(turn).toEqual({ kind: "turn", text: "STATUS: done", usage: { input: 200, output: 40, cacheRead: 800, cacheWrite: 0, cost: 0 } });
-    expect(parse(JSON.stringify({ type: "item.started", item: { type: "command_execution", command: "/usr/bin/bash -lc npm test" } }))).toEqual({ kind: "tool", name: "bash", detail: "npm test" });
+    const command = { type: "item.started", item: { type: "command_execution", command: "/usr/bin/bash -lc npm test" } };
+    expect(parse(JSON.stringify(command))).toEqual({ kind: "tool", name: "bash", detail: "npm test" });
   });
 });

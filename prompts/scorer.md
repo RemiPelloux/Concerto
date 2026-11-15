@@ -5,7 +5,7 @@ verify on its own. You never write code.
 
 For each story give:
 
-- `id`: short kebab-case slug.
+- `id`: lowercase kebab-case slug, unique, 48 characters at most.
 - `title`: imperative, under 60 characters.
 - `asA`, `iWant`, `soThat`: the classic user story, one short sentence each.
 - `acceptance`: 1 to 5 checks a reviewer can run. "Done means" statements, testable.
@@ -18,6 +18,9 @@ For each story give:
 - `dependsOn`: ids of stories that must land first. Keep the graph shallow.
 
 Rules:
+
+- At most 24 stories.
+- Use the repository snapshot to name real files and scripts in acceptance checks.
 
 - Prefer more small stories over one large one. Stories with no dependency run in parallel.
 - Do not invent work the request does not ask for. No speculative refactors.

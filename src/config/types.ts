@@ -3,6 +3,11 @@ import { z } from "zod";
 export const MAX_TIER = 5;
 const MAX_SCORE = 100;
 const TIER = z.number().int().min(1).max(MAX_TIER);
+const DEFAULT_TIMEOUT_MINUTES = 30;
+const DEFAULT_CACHE_ENTRIES = 500;
+/** Model refs are checked by parseRef at load; this only keeps obvious garbage out. */
+const REF = z.string().regex(/^[\w.@-]+\/[\w.:[\]-]+$/, "model refs look like <backend>/<model>");
+const PREFER = z.string().regex(/^[\w.@-]+\*?$/, "prefer entries are provider names, optionally ending in *");
 
 export const ROLES = ["conductor", "scorer", "soloist", "critic", "section"] as const;
 export type Role = (typeof ROLES)[number];
@@ -15,7 +20,7 @@ const RoleConfigSchema = z.object({
   effort: EffortSchema,
   tools: z.array(z.string()),
   /** Preferred models, first reachable wins. Empty: cheapest model at minTier. */
-  models: z.array(z.string()).default([]),
+  models: z.array(REF).default([]),
 });
 export type RoleConfig = z.infer<typeof RoleConfigSchema>;
 
@@ -27,16 +32,19 @@ const RouteSchema = z.object({
   tags: z.array(z.string()).default([]),
   minScore: z.number().min(0).max(MAX_SCORE).default(0),
   role: z.enum(["soloist", "section"]),
-  models: z.array(z.string()).min(1),
+  models: z.array(REF).min(1),
   effort: EffortSchema,
 });
 export type Route = z.infer<typeof RouteSchema>;
 
-const ReviewSchema = z.object({ tags: z.array(z.string()), models: z.array(z.string()).min(1) });
+const ReviewSchema = z.object({ tags: z.array(z.string()), models: z.array(REF).min(1) });
 export type Review = z.infer<typeof ReviewSchema>;
 
 export const ConfigSchema = z.object({
-  models: z.record(z.string(), z.object({ tier: TIER, costFactor: z.number().min(0).optional() })),
+  models: z.record(REF, z.object({ tier: TIER, costFactor: z.number().min(0).optional() })),
+  /** Providers tried first in every chain, e.g. ["ce-*"] to send everything through a proxy. */
+  prefer: z.array(PREFER).default([]),
+  timeoutMinutes: z.number().positive().default(DEFAULT_TIMEOUT_MINUTES),
   roles: z.object({
     conductor: RoleConfigSchema,
     scorer: RoleConfigSchema,
@@ -48,6 +56,10 @@ export const ConfigSchema = z.object({
   reviews: z.array(ReviewSchema).default([]),
   skills: z.array(SkillRuleSchema),
   swarm: z.object({ maxParallel: z.number().int().min(1) }),
-  cache: z.object({ dir: z.string(), ttlHours: z.number().positive() }),
+  cache: z.object({
+    dir: z.string(),
+    ttlHours: z.number().positive(),
+    maxEntries: z.number().int().positive().default(DEFAULT_CACHE_ENTRIES),
+  }),
 });
 export type ConcertoConfig = z.infer<typeof ConfigSchema>;

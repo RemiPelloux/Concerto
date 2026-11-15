@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
 import type { ConcertoConfig } from "../config/types.js";
-import { modelForRole } from "../models/router.js";
-import type { ModelInfo } from "../models/types.js";
+import type { Catalog } from "../models/catalog.js";
+import { roleChain } from "../models/router.js";
 import type { Runner } from "../runner/types.js";
 import type { Store } from "../state/store.js";
 import { AgentTree } from "./AgentTree.js";
@@ -18,7 +18,7 @@ import { useConcert } from "./useConcert.js";
 
 export type AppDeps = {
   config: ConcertoConfig;
-  catalog: ModelInfo[];
+  catalog: Catalog;
   store: Store;
   runner: Runner;
   cwd: string;
@@ -41,7 +41,7 @@ function Tagline() {
 
 export function App(deps: AppDeps) {
   const { state, submit } = useConcert(deps);
-  const brain = shortModel(modelForRole(deps.catalog, deps.config, "conductor").ref);
+    const brain = shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? "");
   const idle = ["idle", "done", "failed"].includes(state.phase);
   return (
     <Box flexDirection="column" paddingX={1}>

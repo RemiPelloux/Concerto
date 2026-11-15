@@ -1,10 +1,13 @@
-export type Usage = {
-  input: number;
-  output: number;
-  cacheRead: number;
-  cacheWrite: number;
-  cost: number;
-};
+import { z } from "zod";
+
+export const UsageSchema = z.object({
+  input: z.number(),
+  output: z.number(),
+  cacheRead: z.number(),
+  cacheWrite: z.number(),
+  cost: z.number(),
+});
+export type Usage = z.infer<typeof UsageSchema>;
 
 export const ZERO_USAGE: Usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0 };
 

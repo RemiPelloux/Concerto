@@ -7,8 +7,8 @@ import type { Zone } from "#src/ui/useNavigation.js";
 const HINT: Record<State["phase"], string> = {
   idle: "enter to score · / for commands · tab to look around",
   scoring: "✻ Scoring… (esc to interrupt)",
-  planned: "enter to build · esc to discard the plan · tab to inspect the stories",
-  running: "✻ Working… tab to watch the agents · esc to interrupt",
+  planned: "enter to build · type a change to re-plan · esc to discard the plan · tab to inspect the stories",
+  running: "✻ Working… type a note for the agents · tab to watch them · esc to interrupt",
   done: "done · tab to review the changes · type a new request",
   failed: "stopped · tab to see what happened · type a new request",
 };

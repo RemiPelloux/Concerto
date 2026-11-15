@@ -1,10 +1,12 @@
 import { Box, Text, useInput } from "ink";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { State } from "#src/state/types.js";
+import { unfinished } from "#src/ui/RunSummary.js";
 import { completeSlash } from "#src/ui/slash.js";
 import { COLOR } from "#src/ui/theme.js";
 
-/** `onEmpty`: Enter on an empty prompt, which retries what did not pass after a run. */
-type Props = { enabled: boolean; onSubmit: (text: string) => void; onTab: () => void; onEmpty: () => void };
+/** `onEmpty`: Enter on an empty prompt (build the plan, or retry what did not pass). `hint`: what typing does now. */
+type Props = { enabled: boolean; hint: string; onSubmit: (text: string) => void; onTab: () => void; onEmpty: () => void };
 
 const SUGGESTIONS = 6;
 const NAME_WIDTH = 22;
@@ -25,31 +27,60 @@ function Suggestions({ value }: { value: string }) {
   );
 }
 
+const NEWLINE = /\r\n|\r|\n/;
+
+/**
+ * Text that arrives in one chunk can carry its own Enter: a paste ending in a newline, or keys
+ * typed while the app was busy. Everything before the last newline is submitted (null: nothing
+ * to submit yet); what follows stays in the prompt.
+ */
+export function splitTyped(current: string, chunk: string): { keep: string; submit: string | null } {
+  const lines = (current + chunk).split(NEWLINE);
+  const keep = lines.pop() ?? "";
+  return { keep, submit: lines.length > 0 ? lines.join(" ").trim() : null };
+}
+
+/**
+ * The typed text lives in a ref as well as in state: keys that arrive together must see each
+ * other's edits before the next render, or Enter would read an empty prompt and build instead of
+ * sending the text.
+ */
 function usePromptInput({ enabled, onSubmit, onTab, onEmpty }: Props): string {
   const [value, setValue] = useState("");
+  const text = useRef("");
+  const set = (next: string) => setValue((text.current = next));
   useInput(
     (input, key) => {
-      if (key.return) {
-        if (value.trim()) onSubmit(value.trim());
-        else onEmpty();
-        return setValue("");
-      }
+      const current = text.current;
       if (key.tab) {
-        const first = completeSlash(value)[0];
-        if (!value.startsWith("/") || !first) return onTab();
-        return setValue(`/${first.name}${first.args ? " " : ""}`);
+        const first = completeSlash(current)[0];
+        if (!current.startsWith("/") || !first) return onTab();
+        return set(`/${first.name}${first.args ? " " : ""}`);
       }
-      if (key.backspace || key.delete) return setValue((v) => v.slice(0, -1));
-      if (!key.ctrl && !key.meta && !key.escape) setValue((v) => v + input);
+      if (key.backspace || key.delete) return set(current.slice(0, -1));
+      if (key.ctrl || key.meta || key.escape) return;
+      const { keep, submit } = splitTyped(current, key.return ? "\n" : input);
+      set(keep);
+      if (submit !== null) return submit ? onSubmit(submit) : onEmpty();
     },
     { isActive: enabled },
   );
   return value;
 }
 
+/** What typing does in each phase, shown in the empty prompt. */
+export function promptHint(state: State): string {
+  if (state.phase === "scoring") return "Scoring… type / for commands; a change to the request waits for the plan.";
+  if (state.phase === "planned") return "Enter builds the plan · or type a change and Enter to re-plan · / for commands";
+  if (state.phase === "running") return "Type a note for the agents: they read it from their next step · / for commands";
+  const left = state.phase === "idle" ? 0 : unfinished(state).length;
+  if (left) return `Enter retries the ${left} that did not pass · or type a new request · / for commands`;
+  return "Describe the job and what done means, or type / for commands.";
+}
+
 /** The request line. A leading "/" turns it into a command, with suggestions and tab completion. */
 export function PromptBar(props: Props) {
-  const { enabled } = props;
+  const { enabled, hint } = props;
   const value = usePromptInput(props);
   return (
     <Box flexDirection="column">
@@ -57,7 +88,7 @@ export function PromptBar(props: Props) {
       <Box borderStyle="round" borderColor="gray" paddingX={1}>
         <Text>
           {"> "}
-          {value || <Text color="gray">{enabled ? "Describe the job and what done means, or type / for commands." : ""}</Text>}
+          {value || <Text color="gray">{enabled ? hint : ""}</Text>}
           {enabled ? <Text inverse> </Text> : null}
         </Text>
       </Box>

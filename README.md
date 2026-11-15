@@ -104,6 +104,9 @@ stories that passed stay passed, and Enter builds the rest.
 | Key | What it does |
 |---|---|
 | Enter | Score the request; Enter again builds the plan |
+| Type, then Enter, while a plan waits | Re-plan with that change ("keep the routes public") |
+| Type, then Enter, while agents build | A note every builder and critic reads from their next step |
+| Enter on an empty prompt after a run | Build again only the stories that did not pass |
 | Tab | Move between the prompt, the agents, the stories and the changed files |
 | ↑ ↓ | Pick an agent, a story or a file |
 | Enter on an agent | Its live output: what it reads, runs and says, as it happens |

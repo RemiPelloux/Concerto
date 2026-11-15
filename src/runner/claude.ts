@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { claudeBin } from "#src/runner/bins.js";
 import type { Effort } from "#src/config/types.js";
 import type { RunEvent } from "#src/runner/events.js";
 import { asArray, asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
@@ -15,10 +16,6 @@ const TOOL_NAMES: Record<string, string[]> = {
 const EFFORT: Partial<Record<Effort, string>> = { off: "low", minimal: "low" };
 // eslint-disable-next-line no-magic-numbers -- the RFC 4122 group lengths are the data itself
 const UUID_GROUPS = [8, 4, 4, 4, 12];
-
-export function claudeBin(): string {
-  return process.env.CONCERTO_CLAUDE_BIN || "claude";
-}
 
 /** Claude Code wants UUID session ids; derive a stable one from Concerto's session id. */
 export function sessionUuid(key: string): string {

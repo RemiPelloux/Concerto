@@ -3,10 +3,8 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSy
 import { homedir } from "node:os";
 import { delimiter, dirname, join } from "node:path";
 import { promisify } from "node:util";
-import { claudeBin } from "#src/runner/claude.js";
-import { codexBin } from "#src/runner/codex.js";
+import { claudeBin, codexBin, piBin } from "#src/runner/bins.js";
 import { childEnv } from "#src/runner/env.js";
-import { piBin } from "#src/runner/pi.js";
 import type { ModelRef } from "#src/runner/types.js";
 
 const run = promisify(execFile);

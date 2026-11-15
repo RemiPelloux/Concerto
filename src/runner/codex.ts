@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { codexBin } from "#src/runner/bins.js";
 import type { Effort } from "#src/config/types.js";
 import type { RunEvent } from "#src/runner/events.js";
 import { asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
@@ -9,10 +10,6 @@ import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
 const EFFORT: Partial<Record<Effort, string>> = { off: "minimal", max: "xhigh" };
 const WRITE_TOOLS = new Set(["edit", "write", "bash"]);
 const READ_STDIN = "-";
-
-export function codexBin(): string {
-  return process.env.CONCERTO_CODEX_BIN || "codex";
-}
 
 /**
  * `codex exec` on the ChatGPT subscription, or through a profile such as a proxy

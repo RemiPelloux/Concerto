@@ -1,10 +1,7 @@
+import { piBin } from "#src/runner/bins.js";
 import { parseLine } from "#src/runner/events.js";
 import { runJsonl } from "#src/runner/spawn.js";
 import type { Runner, RunRequest } from "#src/runner/types.js";
-
-export function piBin(): string {
-  return process.env.CONCERTO_PI_BIN || "pi";
-}
 
 /** The prompt is not an argument: pi reads it from stdin in print mode. */
 export function buildPiArgs(req: RunRequest): string[] {

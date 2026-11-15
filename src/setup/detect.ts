@@ -1,9 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { claudeBin, codexBin, piBin } from "#src/runner/bins.js";
 import { codexHome, codexProfiles, codexSlugs, onPath, piRefs } from "#src/models/discover.js";
-import { claudeBin } from "#src/runner/claude.js";
-import { codexBin } from "#src/runner/codex.js";
-import { piBin } from "#src/runner/pi.js";
 import { inferTier } from "#src/setup/tiers.js";
 
 /** Claude Code accepts these ids; it has no command that lists them. */

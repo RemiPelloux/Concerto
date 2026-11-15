@@ -1,0 +1,37 @@
+---
+name: concerto-config
+description: Change how Concerto routes work between models - which model builds or reviews which stories, provider preference (subscriptions, a proxy such as ce-*, API keys), budget, tiers, timeouts and skills. Use when the user asks to "use Opus for X", "prefer my proxy", "make Concerto cheaper", "change the reviewer", "add a model to Concerto" or edits concerto.config.json.
+---
+
+# Configuring Concerto
+
+Concerto reads the first of: `$CONCERTO_CONFIG`, `./concerto.config.json` (per project),
+`~/.config/concerto/config.json` (personal, written by `concerto --init`), the bundled default.
+Edit the file that is in use (`concerto --doctor` prints which), then run `concerto --models` to
+see the result. Invalid configs fail with the file and field named.
+
+## Model names
+
+`<prefix>/<model id>`:
+
+- `claude-code/claude-opus-5-5`: Claude Code, on the Claude subscription.
+- `codex/gpt-6.1-sol`: Codex, on the ChatGPT subscription.
+- `codex@ce-gpt/gpt-6.1-sol`: Codex through the profile `~/.codex/ce-gpt.config.toml`.
+- anything else is a pi provider: `anthropic/...`, `openai/...`, `ce-claude/...`.
+
+Every model used must be listed under `models` with a `tier` (1 bulk work to 5 frontier).
+
+## What to change
+
+- **Who builds what:** `routes`, tried in order. A route matches on `tags` (any of) and
+  `minScore`, and lists `models` in preference order. `effort` is `auto` (from the score) or a
+  fixed level.
+- **Who reviews UI work:** `reviews`, matched on tags.
+- **Role defaults:** `roles.<conductor|scorer|soloist|critic|section>.models`, `tools`, `effort`.
+- **Proxy or API keys first:** `"prefer": ["ce-*"]`, or `--prefer 'ce-*'` for one run. It
+  changes the provider, never the model.
+- **Spending:** `"budgetUsd": 5`, or `--budget 5` for one run. `"swarm": {"maxParallel": 1}`
+  stops parallel builds.
+- **Prepaid models:** `costFactor` (default 0.25 for subscriptions) makes routing favor them.
+
+After editing, run `concerto --probe` if you added models, so failing ones are skipped.

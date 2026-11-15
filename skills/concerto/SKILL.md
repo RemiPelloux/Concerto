@@ -1,30 +1,46 @@
 ---
 name: concerto
-description: Hand a multi-step coding job to Concerto, which splits it into scored user stories, routes each to the best-fit model (Claude Code, Codex, pi), has a critic review every story, and writes a report. Use when the user says "concerto", "orchestrate this", "split this into stories", "score this request", or asks to run a large change through several models. Not for one-line edits.
+description: Run a multi-step coding job through Concerto, which splits it into scored user stories, sends each story to the model that fits it (Claude Code, Codex, pi), has a critic review every story, and writes a report. Use when the user says "concerto", "orchestrate this", "split this into stories", "score this request", "how hard is this change", or wants a large change built by several models. Not for one-line edits you can make directly.
 ---
 
 # Concerto
 
-Concerto is installed as the `concerto` command. It runs other coding agents, so start it in its
-own checkout, never in a tree with uncommitted work you care about.
+`concerto` is a command on this machine. It starts other coding agents (Claude Code, Codex, pi)
+as background processes, one per story, so the user's own session is not involved. Builders
+edit files in the directory Concerto runs in.
 
 ## Pick the command
 
-| The user wants | Run |
-|---|---|
-| To see how a request would be split, scored and routed, without building | `concerto --plan "<request>"` |
-| Concerto to build it in a fresh Orca worktree they can watch | `concerto --orca "<request>"` |
-| Concerto to build it here, headless, with a spending cap | `concerto --run --budget 5 "<request>"` |
-| To check which models work | `concerto --doctor` |
+| The user wants | Run | Edits files? |
+|---|---|---|
+| To know how a request splits, how hard each part is, which model gets it | `concerto --plan "<request>"` | No |
+| It built, watchable, without touching their branch | `concerto --orca "<request>"` | In a new worktree |
+| It built here, unattended, with a cap | `concerto --run --budget 5 "<request>"` | Yes, here |
+| To check which models work | `concerto --doctor` | No |
 
-Write the request the way the user gave it, plus what done means, for example
-`Add CSV export to invoices. Done means: the tests pass.`
+Rules:
 
-## After a run
+- Write the request as the user gave it, plus what done means:
+  `Add CSV export to invoices. Done means: the tests pass.`
+- Never `--run` in a tree with uncommitted work the user cares about. Check `git status`
+  first; if it is dirty, use `--orca` or ask.
+- Always pass `--budget` with `--run` unless the user gave a budget or said not to.
+- `--run` can take many minutes. Run it in the background if your harness allows it.
 
-- `--plan` prints JSON: each story has `score`, `reasons`, `impact` (files, importers, tests) and
-  the model chain. Summarize the stories, their scores and their models for the user.
-- `--run` prints a log and ends with `done` or `failed: <reason>`. Exit code 1 means a story
-  failed review, the budget ran out, or the conductor stopped the plan.
-- The report is the newest file in `.concerto/runs/`. Read it and relay what changed, what
-  failed and the cost. Do not commit for the user unless they ask.
+## Reading `--plan` output
+
+JSON with `summary`, `stories` and `routing`. For each routing entry, tell the user:
+
+- `score` (0 to 100) and `reasons`: why it is hard.
+- `impact`: `files`, `direct` and `indirect` importers, `tests` that cover it, `untested` files.
+- `model` and `critics[0]`: who builds and who reviews. `estimate`: rough dollars.
+
+## Reading a run
+
+`--run` prints a log and ends with `done` or `failed: <reason>`; exit code 1 means a story failed
+review, the budget ran out, or the conductor stopped the plan. The full report is the newest
+`.concerto/runs/*.md`. Relay what changed, what failed and the cost. Do not commit for the user
+unless asked; suggest reviewing the diff.
+
+If models fail or nothing is reachable, use the `concerto-doctor` skill. To change models,
+routing or the budget, use the `concerto-config` skill.

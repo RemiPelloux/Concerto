@@ -1,7 +1,7 @@
 #!/bin/sh
 # Installs or updates Concerto for the current user:
 #   a clean checkout in ~/.local/share/concerto, a `concerto` command in ~/.local/bin,
-#   and the Concerto skill for the agents found on this machine (Claude Code, Codex, pi).
+#   and the Concerto skills for the agents found on this machine (Claude Code, Codex, pi).
 # Rerun it to update. Nothing is installed system-wide and no sudo is needed.
 set -eu
 
@@ -38,13 +38,8 @@ EOF
 chmod 755 "$BIN_DIR/concerto"
 say "Installed $BIN_DIR/concerto"
 
-for skills in "$HOME/.claude/skills" "$HOME/.codex/skills" "$HOME/.pi/agent/skills"; do
-  if [ -d "$skills" ]; then
-    mkdir -p "$skills/concerto"
-    cp "$DIR/skills/concerto/SKILL.md" "$skills/concerto/SKILL.md"
-    say "Added the Concerto skill to $skills"
-  fi
-done
+say "Teaching your agents to use Concerto:"
+node "$DIR/dist/cli.js" --install-skills
 
 case ":$PATH:" in
   *":$BIN_DIR:"*) say "Done. Run: concerto --doctor" ;;

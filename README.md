@@ -77,6 +77,11 @@ pass.`, press Enter to see the scored stories, and Enter again to build them.
 
 After a build, the report is in `.concerto/runs/`, ready to paste into a pull request.
 
+Every launch has a session id, shown in the status line and in any error. Its log,
+`.concerto/logs/<id>.log`, records the models in use, each phase, every agent's output and each
+error with its stack: attach it when you report a bug. `.concerto/` is kept out of commits through
+the repository's local git exclude.
+
 ## Inside the TUI
 
 | Key | What it does |
@@ -99,6 +104,7 @@ Type `/` for commands, with suggestions as you type and Tab to complete:
 | `/models` | Each role's model chain and how stories route |
 | `/doctor` | Models skipped after a failed probe, and why |
 | `/probe` | Test every installed model again |
+| `/session` | This session's id and the path of its log |
 | `/budget 5`, `/prefer ce-*` | Change the budget or the provider order for this session |
 | `/reload`, `/stats`, `/orca <request>`, `/clear`, `/quit`, `/help` | The rest |
 

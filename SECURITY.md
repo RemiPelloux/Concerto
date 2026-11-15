@@ -21,8 +21,9 @@ branch, and review the diff before you commit it. Concerto never commits.
 - **Validated model output.** The scorer's plan is parsed with a strict schema. Story ids must be
   lowercase slugs, because they end up in session ids and file names. A plan has 24 stories at
   most, with unique ids.
-- **Private local state.** `.concerto/` (prompts, response cache, stats) is created with `0700`
-  directories and `0600` files. Cache entries are validated when read, and a corrupt entry is
+- **Private local state.** `.concerto/` (prompts, response cache, stats, session logs) is created
+  with `0700` directories and `0600` files, and is added to the repository's local git exclude so
+  it never lands in a commit. Session logs hold agent output, so the 30 newest are kept. Cache entries are validated when read, and a corrupt entry is
   treated as a miss.
 - **Timeouts.** Every call stops after `timeoutMinutes` (30 by default), and Esc in the TUI stops
   the whole run.

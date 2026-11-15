@@ -20,6 +20,7 @@ the config in use, what each role runs on, and every skipped model with its erro
 | `Fallback` lines in the log | a model failed mid-run; the next one took over | usually fine; `--doctor` shows if it persists |
 | `budget of $X reached` | `--budget` or `budgetUsd` hit | raise it or split the request |
 | `N stories failed review` | the critic rejected the work twice, plus one guided retry | read `.concerto/runs/*.md` for the critique |
+| a crash or any other error | see the session log | open `.concerto/logs/<session id>.log`; the id is in the error message and the status line |
 
 Notes:
 

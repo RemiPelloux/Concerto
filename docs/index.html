@@ -199,12 +199,17 @@ cd Concerto
 pnpm install
 pnpm dev "Move the API to Rust. Done means: every test passes."</code></pre>
         </div>
-        <p class="reveal">Concerto's agents edit files in the directory you start it from. Run it in a git worktree or on a clean branch.</p>
+        <p class="reveal">On first launch Concerto looks for Claude Code, Codex and its profiles, pi and rtk, lists every model it can reach, asks which way calls go first, and writes <code>~/.config/concerto/config.json</code> with all of them. Rerun it with <code>--init</code>.</p>
+        <p class="reveal">Concerto's agents edit files in the directory you start it from. Run it in a git worktree or on a clean branch. After a run, <code>.concerto/runs/</code> holds a report you can paste into a pull request.</p>
+        <p class="reveal affiliate">Need cheaper API access when your subscriptions run out? I use <a href="https://codex-everywhere.com/home?aff=H9TB6LJQJMEU">CodexEverywhere</a>, an AI API gateway for GPT, Claude, DeepSeek and Grok behind one key. Name its providers <code>ce-*</code> and Concerto picks them up. <em>Affiliate link: I get a commission if you sign up, at no cost to you.</em></p>
       </div>
       <div class="install-side">
         <h3 class="reveal">Flags</h3>
         <dl class="flags">
-          <div class="reveal"><dt><code>--plan</code></dt><dd>Print the scored stories as JSON and stop. Nothing is built.</dd></div>
+          <div class="reveal"><dt><code>--plan</code></dt><dd>Print the scored stories, their models and a cost estimate as JSON. Nothing is built.</dd></div>
+          <div class="reveal"><dt><code>--budget 5</code></dt><dd>Stop starting stories once the run has spent $5, API-equivalent.</dd></div>
+          <div class="reveal"><dt><code>--init</code></dt><dd>Detect every linked AI again and rewrite your personal config.</dd></div>
+          <div class="reveal"><dt><code>--doctor</code></dt><dd>What is installed, linked and reachable, and what each role runs on.</dd></div>
           <div class="reveal"><dt><code>--models</code></dt><dd>Show every reachable model and the chain each role and route gets.</dd></div>
           <div class="reveal"><dt><code>--yes</code></dt><dd>Skip the confirm step and start building after scoring.</dd></div>
           <div class="reveal"><dt><code>--run</code></dt><dd>Score and build without the TUI, printing the log. For scripts and CI.</dd></div>

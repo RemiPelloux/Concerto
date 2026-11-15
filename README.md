@@ -38,23 +38,45 @@ Documentation: [remipelloux.github.io/Concerto](https://remipelloux.github.io/Co
 git clone https://github.com/RemiPelloux/Concerto && cd Concerto
 pnpm install
 
-pnpm dev                                        # the TUI
+pnpm dev                                        # first launch: onboarding, then the TUI
 pnpm dev "Move the API to Rust. Done means: every test passes."
-pnpm dev --plan "Add dark mode to settings"     # scored stories as JSON, nothing is built
-pnpm dev --run "Add a CSV export"               # score and build without the TUI (scripts, CI)
+pnpm dev --plan "Add dark mode to settings"     # scored stories and cost estimate as JSON
+pnpm dev --run --budget 5 "Add a CSV export"    # build without the TUI, stop at $5
 pnpm dev --prefer 'ce-*' "..."                  # same models, through your proxy first
-pnpm dev --models                               # reachable models and every chain
+pnpm dev --doctor                               # what is installed, linked and reachable
+pnpm dev --models                               # every reachable model and chain
 pnpm dev --stats                                # tokens, cache and savings for this repository
 ```
 
 Needs Node 22+, pnpm 10, Python 3.10+ for the audit, and at least one of `claude` (logged in),
-`codex` (logged in) or `pi` (with a provider) on your PATH. `--models` shows what Concerto can
-reach.
+`codex` (logged in) or `pi` (with a provider) on your PATH.
 
-In the TUI, Enter scores the request and shows the stories with their model. Enter again performs
-the plan, and Esc discards it. During a run, Esc interrupts it. Builders edit files in the
-directory you start Concerto from, so start it in a git worktree or on a clean branch. See
-[SECURITY.md](SECURITY.md).
+**First launch.** Concerto looks for Claude Code, Codex and its profiles, pi and rtk. It lists every
+model it can reach, asks which way calls go first when a model is reachable several ways
+(subscriptions, proxy or API keys), and writes `~/.config/concerto/config.json` with all of
+them. Rerun it with `--init`, or in scripts with `--init --routing proxy`.
+[examples/concerto.config.full.json](examples/concerto.config.full.json) is what that file looks
+like on a machine with all three backends and four proxy profiles: 68 models.
+
+**In the TUI**, Enter scores the request and shows the stories with their model, their reviewer
+and a rough cost. Enter again performs the plan, and Esc discards it. During a run, Esc
+interrupts it. Builders edit files in the directory you start Concerto from, so start it in a git
+worktree or on a clean branch. See [SECURITY.md](SECURITY.md).
+
+**After a run**, `.concerto/runs/<run>.md` has the request, who built and reviewed each story, the
+verdicts, the conductor's notes and the cost. It is ready to paste into a pull request.
+
+## Cheaper API access
+
+Concerto runs fine on subscriptions alone. When you hit their limits, or want models your
+subscriptions do not cover, a gateway that serves GPT, Claude, DeepSeek and Grok behind one key
+is the simplest fallback. I use [CodexEverywhere](https://codex-everywhere.com/home?aff=H9TB6LJQJMEU),
+an AI API gateway. Add it to pi or as a Codex profile, name the providers `ce-gpt`, `ce-claude`,
+`ce-deepseek` and `ce-grok`, and the bundled config picks them up. `--prefer 'ce-*'` then sends
+calls through it first.
+
+*Affiliate link: I get a commission if you sign up through it. It costs you nothing extra, and
+Concerto works the same with any OpenAI-compatible provider.*
 
 ## From request to stories
 
@@ -150,13 +172,16 @@ Concerto reads the first file it finds: `$CONCERTO_CONFIG`, `./concerto.config.j
   "reviews": [{ "tags": ["ui", "ux"], "models": ["codex/gpt-6-astra", "ce-gpt/gpt-6-astra"] }],
   "roles": { "conductor": { "minTier": 5, "effort": "high", "tools": ["read"], "models": ["claude-code/claude-fable-5-2"] } },
   "prefer": [],
+  "budgetUsd": 10,
   "timeoutMinutes": 30,
   "skills": [{ "tags": ["ui"], "paths": ["~/.claude/skills/impeccable"] }],
   "cache": { "dir": ".concerto/cache", "ttlHours": 72, "maxEntries": 500 }
 }
 ```
 
-`tier` runs from 1 (bulk work) to 5 (frontier reasoning). When a chain needs more models than the
+`budgetUsd` (or `--budget`) caps a run in API-equivalent dollars: once it is spent, no new story or
+attempt starts, the rest are marked skipped, and the run says so. `tier` runs from 1 (bulk work)
+to 5 (frontier reasoning). When a chain needs more models than the
 config lists, Concerto adds the cheapest reachable ones at the right tier. Prepaid subscription
 models count at a quarter of their list price when it compares costs (`costFactor`).
 
@@ -184,7 +209,8 @@ users.
 ```
 src/
   cli.tsx, headless.ts   entry points
-  commands/              --models, --stats, --clear-cache
+  commands/              --init, --models, --stats, --clear-cache
+  setup/                 onboarding: detection, model tiers, the personal config, --doctor
   config/                config schema and lookup
   models/                discovery (claude, codex, profiles, pi), prices, catalog, router
   engine/                system prompts, segments, sessions, repo map, condenser, cache, ledger, stats

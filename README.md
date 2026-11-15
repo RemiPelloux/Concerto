@@ -42,10 +42,10 @@ cd ~/code/my-app
 concerto
 ```
 
-The first launch tests every model you have with one tiny prompt, keeps the ones that answer, and
-asks whether calls go through your subscriptions, your proxy or your API keys first. Then type a
-request, for example `Add CSV export to invoices. Done means: the tests pass.`, press Enter to see
-the scored stories, and Enter again to build them. Esc throws a plan away or stops a build.
+The first launch tests every model you have with one tiny prompt, keeps the ones that answer, asks
+whether calls go through your subscriptions, your proxy or your API keys first, then plays a short
+animated tour. Type a request, for example `Add CSV export to invoices. Done means: the tests
+pass.`, press Enter to see the scored stories, and Enter again to build them.
 
 ## Commands
 
@@ -65,6 +65,31 @@ the scored stories, and Enter again to build them. Esc throws a plan away or sto
 | `concerto --install-skills` | Teach the agents on this machine to use Concerto |
 
 After a build, the report is in `.concerto/runs/`, ready to paste into a pull request.
+
+## Inside the TUI
+
+| Key | What it does |
+|---|---|
+| Enter | Score the request; Enter again builds the plan |
+| Tab | Move between the prompt, the agents, the stories and the changed files |
+| ↑ ↓ | Pick an agent, a story or a file |
+| Enter on an agent | Its live output: what it reads, runs and says, as it happens |
+| Enter on a story | Why it got its score: every factor, the files, the covering tests |
+| Enter on a file | Its diff |
+| Esc | Close, go back to the prompt, discard a plan, or stop a build |
+
+Type `/` for commands, with suggestions as you type and Tab to complete:
+
+| Command | What it does |
+|---|---|
+| `/onboarding` | Replay the animated tour |
+| `/setup` | Detect and test your models again, then pick the routing |
+| `/config` | The config in use: file, provider preference, budget, routes |
+| `/models` | Each role's model chain and how stories route |
+| `/doctor` | Models skipped after a failed probe, and why |
+| `/probe` | Test every installed model again |
+| `/budget 5`, `/prefer ce-*` | Change the budget or the provider order for this session |
+| `/reload`, `/stats`, `/orca <request>`, `/clear`, `/quit`, `/help` | The rest |
 
 ## Who does the work
 

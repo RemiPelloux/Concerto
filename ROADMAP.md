@@ -13,7 +13,7 @@ one goal, the work that serves it, and a test that says when it is done.
 | 0.1.1 | Session id and log, Haiku 5.5 for small stories, faster rendering and scoring |
 | 0.1.2 | Tab works in every phase, a visible "enter to build" |
 | 0.1.3 | Windows support, release packages and installers, `/history` and `--resume`, a live agent panel, an end-of-run summary with retry |
-| next | The prompt works in every phase: type a change to re-plan, a note for running agents, any command |
+| 0.1.4 | The prompt works in every phase: type a change to re-plan, a note for running agents, any command |
 
 ---
 

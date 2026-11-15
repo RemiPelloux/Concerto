@@ -1,0 +1,33 @@
+import { Box, Text } from "ink";
+import { COLOR } from "./theme.js";
+
+const GLYPHS: Record<string, string[]> = {
+  C: [" ████", "██   ", "██   ", "██   ", " ████"],
+  O: [" ███ ", "██ ██", "██ ██", "██ ██", " ███ "],
+  N: ["██  ██", "███ ██", "██████", "██ ███", "██  ██"],
+  E: ["█████", "██   ", "████ ", "██   ", "█████"],
+  R: ["████ ", "██ ██", "████ ", "██ ██", "██  █"],
+  T: ["██████", "  ██  ", "  ██  ", "  ██  ", "  ██  "],
+};
+const WORD = "CONCERTO";
+const ROWS = 5;
+
+function row(index: number): string {
+  return [...WORD].map((ch) => GLYPHS[ch]?.[index] ?? "").join(" ");
+}
+
+export function Banner() {
+  const rows = Array.from({ length: ROWS }, (_, i) => row(i));
+  return (
+    <Box flexDirection="column">
+      <Box borderStyle="round" borderColor={COLOR.brassDeep} paddingX={1} alignSelf="flex-start">
+        <Text color={COLOR.brass}>♪ Welcome to Concerto</Text>
+      </Box>
+      {rows.map((line, i) => (
+        <Text key={i} color={i < 2 ? COLOR.brass : COLOR.brassDeep} bold>
+          {line}
+        </Text>
+      ))}
+    </Box>
+  );
+}

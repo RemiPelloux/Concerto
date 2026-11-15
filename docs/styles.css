@@ -88,7 +88,9 @@ code, pre { font-family: var(--font-code); }
 
 /* bar */
 .bar { display: flex; align-items: center; gap: 2rem; padding-block: 1.1rem; }
-.mark { font-weight: 600; font-size: 1.25rem; letter-spacing: -0.02em; text-decoration: none; color: var(--brass); }
+.mark { display: inline-flex; align-items: center; text-decoration: none; }
+.mark img { display: block; height: 24px; width: auto; image-rendering: pixelated; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .bar nav { display: flex; gap: 1.6rem; margin-left: auto; }
 .bar nav a { text-decoration: none; color: var(--muted); transition: color 180ms var(--ease-out); }
 .bar nav a:hover { color: var(--ink); }
@@ -116,8 +118,8 @@ code, pre { font-family: var(--font-code); }
 .zoom:hover { opacity: 0.92; }
 figcaption { margin-top: 0.9rem; color: var(--muted); font-size: var(--step-small); max-width: 70ch; }
 @media (min-width: 60em) {
-  .hero-text { grid-template-columns: 1.1fr 1fr; align-items: end; column-gap: var(--gutter); }
-  .hero h1 { grid-row: span 2; }
+  .hero-text { grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: var(--gutter); }
+  .hero .lead { max-width: 46ch; }
   .lead { align-self: end; }
 }
 

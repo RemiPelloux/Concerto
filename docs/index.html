@@ -20,7 +20,7 @@
   <a class="skip" href="#main">Skip to content</a>
 
   <header class="bar wrap">
-    <a class="mark" href="#top" aria-label="Concerto, back to top">Concerto</a>
+    <a class="mark" href="#top" aria-label="Concerto, back to top"><img src="assets/wordmark.svg" width="196" height="40" alt="Concerto"></a>
     <nav aria-label="Sections">
       <a href="#scoring">Scoring</a>
       <a href="#backends">Backends</a>
@@ -33,7 +33,7 @@
   <main id="main">
     <section class="hero wrap" id="top" aria-labelledby="hero-title">
       <div class="hero-text">
-        <h1 id="hero-title" class="display reveal">Concerto</h1>
+        <h1 id="hero-title" class="sr-only">Concerto</h1>
         <p class="lead reveal">A terminal orchestrator for coding agents. You give it one request. It splits the work into scored user stories and sends each story to the model that fits it.</p>
         <div class="hero-actions reveal">
           <a class="button" href="#install">Install and run</a>
@@ -51,12 +51,16 @@
         <div class="split-text">
           <h2 id="scoring-title" class="head reveal">How a story is scored</h2>
           <p class="reveal">A scorer model reads your request and writes user stories. Each story gets Fibonacci points (1, 2, 3, 5, 8 or 13), complexity, risk and value on a 1 to 5 scale, tags, and the stories it depends on.</p>
-          <p class="reveal">Concerto then works out a difficulty score from 0 to 100 in code. No model is asked for it, so the same story always gets the same number.</p>
-          <pre class="reveal"><code>score = 50% complexity
-      + 30% risk
-      + 20% points
+          <p class="reveal">It also names the files each story will touch. Concerto checks them against the repository, matches misremembered paths to the real files, then measures the story's reach: those files, every file that imports them, and the tests that cover them, from SmartTest or from its own import graph.</p>
+          <p class="reveal">The difficulty score from 0 to 100 is computed in code. No model is asked for it, so the same story always gets the same number.</p>
+          <pre class="reveal"><code>score = 40% complexity
+      + 25% risk
+      + 15% points
+      + 20% reach
 
-each one scaled to 0..1 first</code></pre>
+reach is files + importers + tests,
+on a log scale that tops out at 64.
+No file named: 50 / 30 / 20.</code></pre>
         </div>
 
         <form class="calc reveal" data-ui aria-labelledby="calc-title" onsubmit="return false">
@@ -92,9 +96,19 @@ each one scaled to 0..1 first</code></pre>
               <label><input type="radio" name="risk" value="5"><span>5</span></label>
             </div>
           </fieldset>
+          <fieldset>
+            <legend>Reach: files, importers and tests</legend>
+            <div class="seg">
+              <label><input type="radio" name="reach" value="0"><span>none</span></label>
+              <label><input type="radio" name="reach" value="2"><span>2</span></label>
+              <label><input type="radio" name="reach" value="8" checked><span>8</span></label>
+              <label><input type="radio" name="reach" value="24"><span>24</span></label>
+              <label><input type="radio" name="reach" value="64"><span>64+</span></label>
+            </div>
+          </fieldset>
           <label class="check"><input type="checkbox" name="ui"> Tagged UI/UX</label>
           <div class="calc-out" aria-live="polite">
-            <output name="score" class="calc-score">41</output>
+            <output name="score" class="calc-score">43</output>
             <dl>
               <div><dt>Built by</dt><dd data-out="builder"><span class="dot dot-soloist"></span>GPT-6.1 Sol, through Codex CLI</dd></div>
               <div><dt>Reviewed by</dt><dd data-out="reviewer"><span class="dot dot-critic"></span>the critic, Claude Sonnet 5.5</dd></div>
@@ -199,7 +213,7 @@ cd Concerto
 pnpm install
 pnpm dev "Move the API to Rust. Done means: every test passes."</code></pre>
         </div>
-        <p class="reveal">On first launch Concerto looks for Claude Code, Codex and its profiles, pi and rtk, lists every model it can reach, asks which way calls go first, and writes <code>~/.config/concerto/config.json</code> with all of them. Rerun it with <code>--init</code>.</p>
+        <p class="reveal">On first launch Concerto looks for Claude Code, Codex and its profiles, pi and rtk, sends every model it can reach one tiny prompt, keeps only the ones that answer, asks which way calls go first, and writes <code>~/.config/concerto/config.json</code> with all of them. Rerun it with <code>--init</code>.</p>
         <p class="reveal">Concerto's agents edit files in the directory you start it from. Run it in a git worktree or on a clean branch. After a run, <code>.concerto/runs/</code> holds a report you can paste into a pull request.</p>
         <p class="reveal affiliate">Need cheaper API access when your subscriptions run out? I use <a href="https://codex-everywhere.com/home?aff=H9TB6LJQJMEU">CodexEverywhere</a>, an AI API gateway for GPT, Claude, DeepSeek and Grok behind one key. Name its providers <code>ce-*</code> and Concerto picks them up. <em>Affiliate link: I get a commission if you sign up, at no cost to you.</em></p>
       </div>
@@ -209,7 +223,8 @@ pnpm dev "Move the API to Rust. Done means: every test passes."</code></pre>
           <div class="reveal"><dt><code>--plan</code></dt><dd>Print the scored stories, their models and a cost estimate as JSON. Nothing is built.</dd></div>
           <div class="reveal"><dt><code>--budget 5</code></dt><dd>Stop starting stories once the run has spent $5, API-equivalent.</dd></div>
           <div class="reveal"><dt><code>--init</code></dt><dd>Detect every linked AI again and rewrite your personal config.</dd></div>
-          <div class="reveal"><dt><code>--doctor</code></dt><dd>What is installed, linked and reachable, and what each role runs on.</dd></div>
+          <div class="reveal"><dt><code>--doctor</code></dt><dd>What is installed, linked, reachable or skipped, and what each role runs on.</dd></div>
+          <div class="reveal"><dt><code>--probe</code></dt><dd>Send every configured model one tiny prompt. Models that fail are skipped for a day.</dd></div>
           <div class="reveal"><dt><code>--models</code></dt><dd>Show every reachable model and the chain each role and route gets.</dd></div>
           <div class="reveal"><dt><code>--yes</code></dt><dd>Skip the confirm step and start building after scoring.</dd></div>
           <div class="reveal"><dt><code>--run</code></dt><dd>Score and build without the TUI, printing the log. For scripts and CI.</dd></div>

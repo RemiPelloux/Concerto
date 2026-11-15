@@ -43,7 +43,8 @@ pnpm dev "Move the API to Rust. Done means: every test passes."
 pnpm dev --plan "Add dark mode to settings"     # scored stories and cost estimate as JSON
 pnpm dev --run --budget 5 "Add a CSV export"    # build without the TUI, stop at $5
 pnpm dev --prefer 'ce-*' "..."                  # same models, through your proxy first
-pnpm dev --doctor                               # what is installed, linked and reachable
+pnpm dev --doctor                               # what is installed, linked, reachable and skipped
+pnpm dev --probe                                # test every configured model with one tiny prompt
 pnpm dev --models                               # every reachable model and chain
 pnpm dev --stats                                # tokens, cache and savings for this repository
 ```
@@ -55,8 +56,12 @@ Needs Node 22+, pnpm 10, Python 3.10+ for the audit, and at least one of `claude
 model it can reach, asks which way calls go first when a model is reachable several ways
 (subscriptions, proxy or API keys), and writes `~/.config/concerto/config.json` with all of
 them. Rerun it with `--init`, or in scripts with `--init --routing proxy`.
-[examples/concerto.config.full.json](examples/concerto.config.full.json) is what that file looks
-like on a machine with all three backends and four proxy profiles: 68 models.
+Before writing anything, it sends each model one tiny prompt ("Reply with exactly: ok") through
+its real backend, and only the models that answer go into the file. A model that fails a probe
+is also skipped at run time for 24 hours, then gets another chance. Run `--probe` to test the
+configured models again. `--doctor` lists the skipped ones and why.
+[examples/concerto.config.full.json](examples/concerto.config.full.json) is that file for a
+machine with all three backends and four proxy profiles.
 
 **In the TUI**, Enter scores the request and shows the stories with their model, their reviewer
 and a rough cost. Enter again performs the plan, and Esc discards it. During a run, Esc
@@ -85,12 +90,28 @@ Concerto works the same with any OpenAI-compatible provider.*
 </p>
 
 The scorer reads a snapshot of the repository and returns each story with Fibonacci `points`
-(1, 2, 3, 5, 8, 13), `complexity`, `risk` and `value` from 1 to 5, `tags` and `dependsOn`.
-Concerto computes the difficulty itself, so the number does not depend on a model's mood:
+(1, 2, 3, 5, 8, 13), `complexity`, `risk` and `value` from 1 to 5, `tags`, `dependsOn`, and the
+`files` it will touch. Concerto then measures each story's **reach** in the repository itself:
+
+- **Files.** The scorer's paths, checked against the repository. A misremembered path
+  (`src/runner/condenser.ts`) is matched to the real file (`src/engine/condense.ts`). Paths that
+  match nothing count as new files.
+- **Importers.** Every file that imports those files, up to four hops away, from an import graph
+  of the TypeScript, JavaScript and Python sources built once per run.
+- **Tests.** The tests that cover those files, from `smarttest explain` when the repository has
+  [SmartTest](https://github.com/RemiPelloux/SmarttyTest), otherwise from the import graph.
+
+The difficulty score is computed in code, so it does not depend on a model's mood. The reach
+counts on a log scale that saturates at 64 files, importers and tests:
 
 ```
-score = 50% complexity + 30% risk + 20% points        0 to 100
+score = 40% complexity + 25% risk + 15% points + 20% reach        0 to 100
+        (50% / 30% / 20% when a story names no file)
 ```
+
+The TUI shows the reach as `files·importers·tests` next to each story, so `1·11·2` means one file,
+imported by 11 others, covered by 2 test files. Builders and critics get the list of covering
+tests and are told to run those first.
 
 Then the first matching route in `concerto.config.json` wins:
 
@@ -210,10 +231,10 @@ users.
 src/
   cli.tsx, headless.ts   entry points
   commands/              --init, --models, --stats, --clear-cache
-  setup/                 onboarding: detection, model tiers, the personal config, --doctor
+  setup/                 onboarding: detection, probes, model tiers, the personal config, --doctor
   config/                config schema and lookup
   models/                discovery (claude, codex, profiles, pi), prices, catalog, router
-  engine/                system prompts, segments, sessions, repo map, condenser, cache, ledger, stats
+  engine/                system prompts, segments, sessions, repo map, import graph, impact, condenser, cache, ledger, stats, reports
   orchestrator/          score, build, review, consult, perform
   runner/                one adapter per backend over a shared JSONL spawner
   state/, ui/            the store and the Ink components

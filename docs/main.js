@@ -3,10 +3,14 @@
   const FIBONACCI = [1, 2, 3, 5, 8, 13];
   const OPUS_FROM = 55;
 
-  function score(points, complexity, risk) {
-    const pointsRank = FIBONACCI.indexOf(points) / (FIBONACCI.length - 1);
-    const raw = 0.5 * ((complexity - 1) / 4) + 0.3 * ((risk - 1) / 4) + 0.2 * pointsRank;
-    return Math.round(raw * 100);
+  // Same formula as scoreStory and blastRadius in src/orchestrator/plan.ts.
+  const BLAST_SATURATION = 64;
+
+  function score({ points, complexity, risk, reach }) {
+    const parts = [(complexity - 1) / 4, (risk - 1) / 4, FIBONACCI.indexOf(points) / (FIBONACCI.length - 1)];
+    if (reach === 0) return Math.round((0.5 * parts[0] + 0.3 * parts[1] + 0.2 * parts[2]) * 100);
+    const blast = Math.min(1, Math.log2(1 + reach) / Math.log2(1 + BLAST_SATURATION));
+    return Math.round((0.4 * parts[0] + 0.25 * parts[1] + 0.15 * parts[2] + 0.2 * blast) * 100);
   }
 
   function route(value, ui) {
@@ -27,7 +31,8 @@
   function setUpCalc(form) {
     const update = () => {
       const data = new FormData(form);
-      const value = score(Number(data.get("points")), Number(data.get("complexity")), Number(data.get("risk")));
+      const pick = (name) => Number(data.get(name));
+      const value = score({ points: pick("points"), complexity: pick("complexity"), risk: pick("risk"), reach: pick("reach") });
       const result = route(value, data.has("ui"));
       form.elements.score.value = String(value);
       form.elements.score.classList.toggle("is-high", value >= OPUS_FROM);

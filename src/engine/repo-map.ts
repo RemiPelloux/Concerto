@@ -9,7 +9,8 @@ const MAX_FILES_LISTED = 120;
 const MAX_DIRS_LISTED = 40;
 const GIT_MAX_BUFFER = 67_108_864; // 64 MiB of `git ls-files` output
 
-export type RepoMap = { text: string; key: string };
+/** `files` is every tracked and untracked, non-ignored path: the input for impact analysis. */
+export type RepoMap = { text: string; key: string; files: string[] };
 
 async function git(cwd: string, args: string[]): Promise<string> {
   const { stdout } = await run("git", args, { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: GIT_MAX_BUFFER });
@@ -58,8 +59,8 @@ export async function buildRepoMap(cwd: string): Promise<RepoMap> {
       git(cwd, ["ls-files", "--cached", "--others", "--exclude-standard"]),
     ]);
     const files = listed.split("\n").filter(Boolean);
-    return { text: render(files, cwd), key: `${tree}:${status}` };
+    return { text: render(files, cwd), key: `${tree}:${status}`, files };
   } catch {
-    return { text: "", key: "no-git" };
+    return { text: "", key: "no-git", files: [] };
   }
 }

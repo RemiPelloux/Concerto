@@ -16,6 +16,10 @@ For each story give:
 - `tags`: domain tags from this list when they apply: ui, ux, frontend, backend, api, data,
   infra, test, docs, copy, perf, security, design-system.
 - `dependsOn`: ids of stories that must land first. Keep the graph shallow.
+- `files`: repository-relative paths the story will most likely change or create, taken from the
+  repository snapshot. Up to 20. Concerto measures their importers and covering tests and folds
+  that blast radius into the score, so list real files, not guesses. Every story touches at least
+  one file: never leave `files` empty. Include the test files the story should add or change.
 
 Rules:
 

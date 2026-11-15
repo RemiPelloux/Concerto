@@ -12,9 +12,10 @@ function storyRows(s: State): string[] {
   const rows = (s.plan?.stories ?? []).flatMap((story) => {
     const v = s.stories[story.id];
     if (!v) return [];
-    return [`| ${story.title} | ${story.points} | ${v.score} | ${v.model} | ${v.critics[0] ?? "-"} | ${v.status} |`];
+    const reach = `${v.impact.files.length} files, ${v.impact.dependents} importers, ${v.impact.tests.length} tests`;
+    return [`| ${story.title} | ${story.points} | ${reach} | ${v.score} | ${v.model} | ${v.critics[0] ?? "-"} | ${v.status} |`];
   });
-  return ["| Story | Points | Score | Built by | Reviewed by | Status |", "|---|---|---|---|---|---|", ...rows];
+  return ["| Story | Points | Reach | Score | Built by | Reviewed by | Status |", "|---|---|---|---|---|---|---|", ...rows];
 }
 
 function totals(s: State): string[] {

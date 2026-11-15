@@ -81,7 +81,7 @@ describe("concert", () => {
     const entry = store.get().log.find((e) => e.label === "Report");
     const report = readFileSync(entry?.detail ?? "", "utf8");
     expect(report).toContain("# Add a health endpoint");
-    expect(report).toMatch(/\| Protect admin routes \| 8 \| 84 \| b\/cheap-builder \| .* \| passed \|/);
+    expect(report).toMatch(/\| Protect admin routes \| 8 \| 0 files, 0 importers, 0 tests \| 84 \| b\/cheap-builder \| .* \| passed \|/);
     expect(report).toContain("## Totals");
   });
 

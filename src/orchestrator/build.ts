@@ -1,5 +1,6 @@
 import { approxTokens, condense } from "../engine/condense.js";
 import { bump } from "../engine/ledger.js";
+import { impactBrief } from "../engine/impact.js";
 import { headline, readTag, runSegments, storyBrief } from "./briefs.js";
 import { overBudget } from "./budget.js";
 import { callRole } from "./call.js";
@@ -22,6 +23,7 @@ async function play(c: Concert, story: Story, feedback: string): Promise<void> {
   const segments = [
     ...runSegments(c.store.get(), c.repo.text),
     { name: "story", text: storyBrief(story) },
+    { name: "blast radius", text: impactBrief(view.impact) },
     { name: "feedback", text: feedback ? `## Fix this before anything else\n${feedback}` : "" },
   ];
   const chain = c.catalog.reachable(view.chain);
@@ -33,8 +35,13 @@ async function play(c: Concert, story: Story, feedback: string): Promise<void> {
 
 async function review(c: Concert, story: Story): Promise<{ pass: boolean; text: string }> {
   c.store.story(story.id, { status: "checking" });
-  const segments = [...runSegments(c.store.get(), c.repo.text), { name: "story", text: storyBrief(story) }];
-  const chain = c.catalog.reachable(c.store.view(story.id).critics);
+  const view = c.store.view(story.id);
+  const segments = [
+    ...runSegments(c.store.get(), c.repo.text),
+    { name: "story", text: storyBrief(story) },
+    { name: "blast radius", text: impactBrief(view.impact) },
+  ];
+  const chain = c.catalog.reachable(view.critics);
   const out = await callRole(c, { role: "critic", chain, segments, tags: story.tags, sessionKey: `${story.id}-critic` });
   const pass = readTag(out.text, "VERDICT") === "pass";
   c.store.role("critic", { activity: "waiting", note: "waiting" });

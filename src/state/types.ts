@@ -1,4 +1,5 @@
 import type { Effort, Role } from "../config/types.js";
+import type { Impact } from "../engine/impact.js";
 import type { Ledger } from "../engine/ledger.js";
 import type { Plan } from "../orchestrator/plan.js";
 
@@ -22,6 +23,8 @@ export type StoryView = {
   critics: string[];
   /** Rough API-equivalent dollars for one build and one review. */
   estimate: number;
+  /** Files, importers and covering tests, measured after scoring. */
+  impact: Impact;
   status: StoryStatus;
 };
 

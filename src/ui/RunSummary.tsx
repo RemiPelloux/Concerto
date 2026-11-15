@@ -13,7 +13,7 @@ export function unfinished(state: State): StoryView[] {
 function headline(state: State, left: number): string {
   const total = state.order.length;
   const cost = `$${state.ledger.usage.cost.toFixed(CENTS)}`;
-  if (left === 0) return `Run finished · all ${total} stories passed · ${cost}`;
+  if (left === 0) return `Run finished · ${total === 1 ? "the story" : `all ${total} stories`} passed · ${cost}`;
   return `Run finished · ${total - left} of ${total} stories passed · ${left} did not · ${cost}`;
 }
 

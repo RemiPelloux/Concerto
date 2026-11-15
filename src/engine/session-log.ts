@@ -23,10 +23,11 @@ function excludeLocally(cwd: string): void {
   }
 }
 
-/** The newest `KEEP` logs stay; older ones go. */
+/** The newest `KEEP` logs stay; older ones go, with their saved session. */
 function prune(dir: string): void {
   const logs = readdirSync(dir).filter((f) => f.endsWith(".log")).map((f) => join(dir, f));
-  logs.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs).slice(KEEP).forEach((f) => rmSync(f, { force: true }));
+  const old = logs.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs).slice(KEEP);
+  old.forEach((f) => [f, f.replace(/\.log$/, ".json")].forEach((path) => rmSync(path, { force: true })));
 }
 
 /**

@@ -4,6 +4,7 @@ import { createConcert, type Concert } from "#src/orchestrator/concert.js";
 import { perform } from "#src/orchestrator/perform.js";
 import { scoreRequest } from "#src/orchestrator/score.js";
 import type { Store } from "#src/state/store.js";
+import type { State } from "#src/state/types.js";
 import type { AppDeps } from "#src/ui/App.js";
 import { runSlash, type ExitReason, type Panel, type Session } from "#src/ui/slash.js";
 
@@ -34,6 +35,18 @@ function useStartOnce(request: string, submit: (text: string) => void): void {
   }, [request, submit]);
 }
 
+/** A saved session goes back on screen; its concert is ready by the time Enter is pressed. */
+type ResumeContext = { deps: AppDeps; session: Session; run: RefObject<Run | null>; fail: (e: unknown) => void };
+
+function useResume({ deps, session, run, fail }: ResumeContext) {
+  return useCallback((state: State) => {
+    const current: Run = { concert: null, abort: new AbortController() };
+    run.current = current;
+    deps.store.update(() => state);
+    createConcert({ ...deps, ...session, signal: current.abort.signal }).then((concert) => void (current.concert = concert)).catch(fail);
+  }, [deps, session, fail, run]);
+}
+
 function useRequest(deps: AppDeps, session: Session, run: RefObject<Run | null>) {
   const fail = useCallback((e: unknown) => {
     deps.log.error(e, "run");
@@ -52,7 +65,7 @@ function useRequest(deps: AppDeps, session: Session, run: RefObject<Run | null>)
       })
       .catch(fail);
   }, [deps, session, fail, run]);
-  return { fail, request };
+  return { fail, request, resume: useResume({ deps, session, run, fail }) };
 }
 
 /** Wires keyboard, prompt and slash commands to the orchestrator for one interactive session. */
@@ -61,7 +74,7 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const [panel, setPanel] = useState<Panel | null>(null);
   const run = useRef<Run | null>(null);
   const { exit } = useApp();
-  const { fail, request } = useRequest(deps, session, run);
+  const { fail, request, resume } = useRequest(deps, session, run);
   const leave = useCallback((reason: ExitReason) => {
     deps.onExit(reason);
     exit();
@@ -69,8 +82,8 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const submit = useCallback((text: string) => {
     if (!text.startsWith("/")) return request(text);
     deps.log.write("command", text);
-    void runSlash(text, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, log: deps.log });
-  }, [deps.cwd, deps.store, session, request, leave, nav.tour]);
+    void runSlash(text, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, log: deps.log, resume });
+  }, [deps.cwd, deps.store, deps.log, session, request, resume, leave, nav.tour]);
   const closePanel = () => (panel ? (setPanel(null), true) : false);
   useKeys({ store: deps.store, run, fail, closePanel, active: nav.active });
   useStartOnce(deps.initialRequest, submit);

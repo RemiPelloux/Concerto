@@ -1,6 +1,7 @@
 import { clearCache, printModels, printStats } from "#src/commands/info.js";
 import type { Values } from "#src/commands/options.js";
 import { configPath, isFirstLaunch, loadConfig } from "#src/config/load.js";
+import { keepSessions } from "#src/engine/history.js";
 import { SessionLog } from "#src/engine/session-log.js";
 import { ROLES, type ConcertoConfig } from "#src/config/types.js";
 import { loadCatalog, type Catalog } from "#src/models/catalog.js";
@@ -23,6 +24,7 @@ async function setup(values: Values): Promise<Setup> {
   const log = SessionLog.current ?? new SessionLog(cwd);
   const store = new Store((kind, text) => log.write(kind, text));
   ROLES.forEach((role) => store.role(role, { model: roleChain(catalog, config, role)[0]?.ref ?? "" }));
+  keepSessions(store, { cwd, id: log.id });
   log.write("start", `concerto in ${cwd} · config ${configPath(cwd)} · ${catalog.models.length} models reachable`);
   log.write("start", `prefer ${config.prefer.join(",") || "-"} · budget ${config.budgetUsd ?? "-"} · roles ${ROLES.map((r) => `${r}=${store.get().roles[r].model}`).join(" ")}`);
   return { config, catalog, store, cwd, log };
@@ -67,7 +69,7 @@ export async function run(values: Values, request: string): Promise<void> {
   if ((values.plan || values.run) && !request) throw new Error("--plan and --run need a request.");
   if (values.plan) return printPlan(s, request);
   if (values.run) return headless(s, request);
-  return interactive(values, s, { request, tour: firstLaunch });
+  return interactive(values, s, { request: values.resume ? `/history ${values.resume}` : request, tour: firstLaunch });
 }
 
 /** The TUI; `/setup` closes it, reruns onboarding with fresh detection, and opens it again. */

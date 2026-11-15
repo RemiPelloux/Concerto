@@ -8,6 +8,7 @@ export const USAGE = `concerto [options] [request]
   --orca              start the run in a new Orca worktree, in its own terminal tab
   --budget <usd>      stop starting stories once a run has spent this (API-equivalent)
   --prefer <list>     providers to try first, e.g. ce-* or ce-gpt,openai
+  --resume <id>       reopen a saved session (see /history) and build what did not pass
   --init              detect every linked AI and write your personal config
   --routing <choice>  with --init outside a terminal: subscriptions, proxy or api
   --probe             send each configured model a tiny prompt; failures are skipped for a day
@@ -19,7 +20,7 @@ export const USAGE = `concerto [options] [request]
   -v, --version       print the version
   -h, --help          this help
 
-In the TUI, type / for commands: /setup /config /models /budget /prefer /onboarding /help.
+In the TUI, type / for commands: /history /setup /config /models /budget /prefer /onboarding /help.
 Docs: https://remipelloux.github.io/Concerto/ · built by tkmremi
 Cheaper API access for GPT, Claude, DeepSeek and Grok behind one key (affiliate link):
 https://codex-everywhere.com/home?aff=H9TB6LJQJMEU`;
@@ -30,6 +31,7 @@ export const OPTIONS = {
   yes: { type: "boolean" },
   orca: { type: "boolean" },
   budget: { type: "string" },
+  resume: { type: "string" },
   prefer: { type: "string" },
   init: { type: "boolean" },
   routing: { type: "string" },

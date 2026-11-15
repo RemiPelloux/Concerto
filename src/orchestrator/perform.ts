@@ -24,7 +24,8 @@ async function playWave(c: Concert, wave: Story[]): Promise<boolean[]> {
   const byModel = (a: Story, b: Story) => view(a).model.localeCompare(view(b).model);
   const solo = wave.filter((s) => view(s).role === "soloist").sort(byModel);
   const section = wave.filter((s) => view(s).role !== "soloist").sort(byModel);
-  const build = (s: Story) => buildStory(c, s);
+  // A resumed session keeps what passed: only the rest is built again.
+  const build = (s: Story) => (view(s).status === "passed" ? Promise.resolve(true) : buildStory(c, s));
   const swarm = inBatches(section, c.config.swarm.maxParallel, build);
   const soloResults = await inBatches(solo, 1, build);
   return [...soloResults, ...(await swarm)];

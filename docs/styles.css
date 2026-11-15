@@ -289,3 +289,6 @@ th { color: var(--muted); font-weight: 500; font-size: var(--step-small); }
   .js .reveal { opacity: 0; transform: translateY(22px); transition: opacity 700ms var(--ease-out), transform 800ms var(--ease-out); transition-delay: var(--d, 0ms); }
   .js .reveal.is-in { opacity: 1; transform: none; }
 }
+
+.lede-sm { max-width: 62ch; margin: 0 0 2rem; color: var(--muted); }
+.lede-sm a { color: inherit; text-underline-offset: 3px; }

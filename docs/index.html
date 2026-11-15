@@ -24,7 +24,7 @@
     <nav aria-label="Sections">
       <a href="#scoring">Scoring</a>
       <a href="#backends">Backends</a>
-      <a href="#cache">Cache</a>
+      <a href="#cache">Engine</a>
       <a href="#config">Config</a>
     </nav>
     <a class="button button-small" href="#install">Install</a>
@@ -120,7 +120,7 @@ each one scaled to 0..1 first</code></pre>
           </tbody>
         </table>
       </div>
-      <p class="note reveal">Stories that depend on nothing run in the same wave. If a builder's CLI is missing or fails, the story falls back to the same kind of model through pi.</p>
+      <p class="note reveal">Stories that depend on nothing run in the same wave. Each route lists the same model through several backends: if one fails or hits a rate limit, the call moves to the next. A story that fails review twice wakes the conductor, and its guidance goes into one last attempt.</p>
     </section>
 
     <section class="backends wrap" id="backends" aria-labelledby="backends-title">
@@ -137,12 +137,12 @@ each one scaled to 0..1 first</code></pre>
         <li class="reveal">
           <h3>Codex CLI</h3>
           <p class="backend-account">Your ChatGPT subscription</p>
-          <p>Builds stories scored under 55 with GPT-6.1 Sol. GPT-6 Astra reviews UI/UX work.</p>
+          <p>Builds stories scored under 55 with GPT-6.1 Sol. GPT-6 Astra reviews UI/UX work. A Codex profile turns it into a proxy client: <code>codex@ce-gpt/gpt-6.1-sol</code> runs with <code>-p ce-gpt</code>.</p>
         </li>
         <li class="reveal">
           <h3>pi</h3>
           <p class="backend-account">Any API provider you log into</p>
-          <p>Anthropic, OpenAI, DeepSeek, Grok or a custom endpoint. It is the fallback for both CLIs, and it runs any model you add to the config by hand.</p>
+          <p>Anthropic, OpenAI, DeepSeek, Grok, or a proxy that serves all of them, such as <code>ce-gpt/</code> or <code>ce-claude/</code>. It is the fallback for both CLIs. <code>--prefer 'ce-*'</code> sends every model through the proxy first without changing which model runs.</p>
         </li>
       </ul>
     </section>
@@ -151,7 +151,7 @@ each one scaled to 0..1 first</code></pre>
       <div class="wrap conductor-inner">
         <div class="conductor-text">
           <h2 id="conductor-title" class="head reveal">The conductor wakes three times</h2>
-          <p class="reveal">Claude Fable 5.2 is the conductor. It can read the whole session and has no tool that writes. It stays asleep while the builders work and is called at three fixed moments, each with one question.</p>
+          <p class="reveal">Claude Fable 5.2 is the conductor. It can read the whole session and has no tool that writes. It stays asleep while the builders work and is called at three fixed moments, each with one question. When it asks for changes, its notes go into every builder's and critic's prompt for the rest of the run.</p>
         </div>
         <ol class="gates">
           <li class="reveal"><h3>Before a plan locks</h3><p>What did the plan miss?</p></li>
@@ -163,18 +163,23 @@ each one scaled to 0..1 first</code></pre>
     </section>
 
     <section class="cache wrap" id="cache" aria-labelledby="cache-title">
-      <h2 id="cache-title" class="head reveal">Three layers of cache</h2>
+      <h2 id="cache-title" class="head reveal">The token engine</h2>
+      <p class="reveal lede-sm"><a href="https://github.com/rtk-ai/rtk">rtk</a> condenses what shell commands print inside an agent. Concerto works on the prompts themselves, and tells the agents to use rtk when it is installed.</p>
       <figure class="wide-figure reveal">
         <a class="zoom" href="assets/cache.svg"><img src="assets/cache.svg" width="1200" height="340" loading="lazy" alt="Three panels. Stable prefix: the first call writes the role prompt, later calls read it from the provider cache. Warm session: each turn reuses the earlier turns. Local response cache: scoring a request takes 21 seconds the first time and 0.9 seconds with no tokens the second time. A counter shows five cache hits."></a>
       </figure>
       <div class="cache-grid">
         <div class="cache-copy">
-          <h3 class="reveal">Stable prefix</h3>
-          <p class="reveal">Each role's system prompt is the same bytes on every call: the Pelloux guidelines first, then the role brief, with no dates, paths or story text. The provider's prompt cache matches it each time.</p>
-          <h3 class="reveal">Warm sessions</h3>
-          <p class="reveal">Each story keeps one session for its retries, and the conductor keeps one for the whole run. Later turns reuse the cached start of earlier ones.</p>
+          <h3 class="reveal">Stable system prompt</h3>
+          <p class="reveal">One file per role, the same bytes on every call: the Pelloux guidelines, the role brief, then this repository's toolchain notes (package manager, SmartTest, rtk). The provider's prompt cache matches it each time.</p>
+          <h3 class="reveal">Ordered segments and a repository snapshot</h3>
+          <p class="reveal">Every message is built most stable first: a map of the repository taken when the run starts, the plan, the conductor's notes, then the story and the feedback. Consecutive calls share the longest possible prefix, and agents spend fewer tool calls finding their way around.</p>
+          <h3 class="reveal">Session dedupe</h3>
+          <p class="reveal">The conductor keeps one warm session per run and each story keeps its own. A resumed turn leaves out what the session already has and names it in one line.</p>
+          <h3 class="reveal">Condenser</h3>
+          <p class="reveal">Critiques, logs and guidance lose ANSI codes, spinners, progress bars and repeated lines before they go back into a prompt. Code blocks pass through untouched.</p>
           <h3 class="reveal">Local response cache</h3>
-          <p class="reveal">Read-only calls, such as scoring, are saved on disk keyed on model, role, prompt file and prompt. Build calls change your files and are never cached.</p>
+          <p class="reveal">Read-only calls such as scoring are keyed on model, role, system prompt, repository state and the normalized prompt. A hit costs no tokens, and identical calls in flight share one request. <code>--stats</code> prints the totals.</p>
         </div>
         <div class="figures">
           <p class="reveal"><span class="big">0.9 s</span> <span class="was">to score the same request a second time, down from 21 s, with 0 tokens used</span></p>
@@ -186,13 +191,13 @@ each one scaled to 0..1 first</code></pre>
     <section class="install wrap" id="install" aria-labelledby="install-title">
       <div class="install-main">
         <h2 id="install-title" class="head reveal">Install and run</h2>
-        <p class="reveal">You need Node 22 or newer, and at least one of <code>claude</code>, <code>codex</code> or <code>pi</code> on your PATH and logged in.</p>
+        <p class="reveal">You need Node 22 or newer, pnpm 10, and at least one of <code>claude</code>, <code>codex</code> or <code>pi</code> on your PATH and logged in.</p>
         <div class="code-block reveal">
           <div class="code-bar"><button class="copy" type="button" data-copy="install-cmd">Copy</button></div>
           <pre><code id="install-cmd">git clone https://github.com/RemiPelloux/Concerto
 cd Concerto
-npm install
-npm run dev -- "Move the API to Rust. Done means: every test passes."</code></pre>
+pnpm install
+pnpm dev "Move the API to Rust. Done means: every test passes."</code></pre>
         </div>
         <p class="reveal">Concerto's agents edit files in the directory you start it from. Run it in a git worktree or on a clean branch.</p>
       </div>
@@ -200,9 +205,11 @@ npm run dev -- "Move the API to Rust. Done means: every test passes."</code></pr
         <h3 class="reveal">Flags</h3>
         <dl class="flags">
           <div class="reveal"><dt><code>--plan</code></dt><dd>Print the scored stories as JSON and stop. Nothing is built.</dd></div>
-          <div class="reveal"><dt><code>--models</code></dt><dd>Show which model each role and each score range gets.</dd></div>
+          <div class="reveal"><dt><code>--models</code></dt><dd>Show every reachable model and the chain each role and route gets.</dd></div>
           <div class="reveal"><dt><code>--yes</code></dt><dd>Skip the confirm step and start building after scoring.</dd></div>
           <div class="reveal"><dt><code>--run</code></dt><dd>Score and build without the TUI, printing the log. For scripts and CI.</dd></div>
+          <div class="reveal"><dt><code>--prefer ce-*</code></dt><dd>Try these providers first for every model, for example your proxy.</dd></div>
+          <div class="reveal"><dt><code>--stats</code></dt><dd>Tokens, cache reads, savings and fallbacks for this repository.</dd></div>
         </dl>
         <h3 class="reveal">In the terminal</h3>
         <p class="reveal">Enter scores the request and shows the stories. Enter again runs the plan, Esc throws it away. While a run is going, Esc stops it.</p>
@@ -213,7 +220,7 @@ npm run dev -- "Move the API to Rust. Done means: every test passes."</code></pr
       <div class="config-text">
         <h2 id="config-title" class="head reveal">Change who does what</h2>
         <p class="reveal">Routing lives in <code>concerto.config.json</code> at the root of the repository. <code>routes</code> picks the builder for a story and <code>reviews</code> picks who checks it. Each model is written as backend, slash, model id. A route lists models in order of preference and the first reachable one wins. A story with no review match goes to the critic role.</p>
-        <p class="reveal">Run <code>npm run dev -- --models</code> after an edit to see the result.</p>
+        <p class="reveal">Run <code>pnpm dev --models</code> after an edit to see the result.</p>
       </div>
       <pre class="config-code reveal"><code><span class="t-p">{</span>
   <span class="t-k">"routes"</span>: [

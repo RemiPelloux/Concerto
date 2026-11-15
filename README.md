@@ -36,13 +36,23 @@ sees a key. Full documentation: [remipelloux.github.io/Concerto](https://remipel
 You need git, Node 22+, and at least one of these logged in: `claude` (Claude Code), `codex`
 (Codex), `pi`.
 
+Linux and macOS:
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.sh | sh
 ```
 
-This puts a checkout in `~/.local/share/concerto`, a `concerto` command in `~/.local/bin`, and
-Concerto's skills in the agents it finds (Claude Code, Codex, pi). Run it again to update. Read the
-[script](scripts/install.sh) first if you prefer; it needs no sudo.
+Windows (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.ps1 | iex
+```
+
+Both download the latest [release](https://github.com/RemiPelloux/Concerto/releases/latest),
+install it for your user only (`~/.local/share/concerto`, or `%LOCALAPPDATA%\Concerto` on
+Windows), add a `concerto` command, and give Concerto's skills to the agents they find. Run them
+again to update. Nothing is built on your machine and no admin rights are needed. Read
+[install.sh](scripts/install.sh) or [install.ps1](scripts/install.ps1) first if you prefer.
 
 ## Quick start
 
@@ -67,6 +77,7 @@ pass.`, press Enter to see the scored stories, and Enter again to build them.
 | `concerto --plan "request"` | Show the scored stories as JSON, build nothing |
 | `concerto --run "request"` | Score and build without the UI, for scripts and CI |
 | `concerto --orca "request"` | Start the run in a new Orca worktree, in its own tab |
+| `concerto --resume <id>` | Reopen a saved session and build what did not pass |
 | `concerto --budget 5 ...` | Stop starting stories after $5 of API-equivalent spend |
 | `concerto --prefer 'ce-*' ...` | Try your proxy first for every model |
 | `concerto --init` | Detect and test your models again, rewrite your config |
@@ -82,6 +93,10 @@ Every launch has a session id, shown in the status line and in any error. Its lo
 error with its stack: attach it when you report a bug. `.concerto/` is kept out of commits through
 the repository's local git exclude.
 
+Each session is also saved next to its log. `/history` lists them; `/history 2`, or
+`concerto --resume <id>` from the shell, reopens one after a crash, an Esc or a failed review:
+stories that passed stay passed, and Enter builds the rest.
+
 ## Inside the TUI
 
 | Key | What it does |
@@ -94,10 +109,14 @@ the repository's local git exclude.
 | Enter on a file | Its diff |
 | Esc | Close, go back to the prompt, discard a plan, or stop a build |
 
+While agents work, their clocks tick every second and a preview shows the last lines of one of them
+with how long ago it last printed. A minute of silence usually means it is running tests.
+
 Type `/` for commands, with suggestions as you type and Tab to complete:
 
 | Command | What it does |
 |---|---|
+| `/history`, `/history 2` | Saved sessions of this project; reopen one and build what did not pass |
 | `/onboarding` | Replay the animated tour |
 | `/setup` | Detect and test your models again, then pick the routing |
 | `/config` | The config in use: file, provider preference, budget, routes |

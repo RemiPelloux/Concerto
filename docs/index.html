@@ -226,6 +226,7 @@ model's four factors are reweighted.</code></pre>
 cd ~/code/my-app
 concerto "Move the API to Rust. Done means: every test passes."</code></pre>
         </div>
+        <p class="reveal">On Windows, in PowerShell: <code>irm https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.ps1 | iex</code>. Both installers fetch the latest release and need no admin rights.</p>
         <p class="reveal">On first launch Concerto looks for Claude Code, Codex and its profiles, pi and rtk, sends every model it can reach one tiny prompt, keeps only the ones that answer, asks which way calls go first, and writes <code>~/.config/concerto/config.json</code> with all of them. Rerun it with <code>--init</code>.</p>
         <p class="reveal">Concerto's agents edit files in the directory you start it from. Run it in a git worktree or on a clean branch. After a run, <code>.concerto/runs/</code> holds a report you can paste into a pull request. Every launch also gets a session id, shown in the status line and in any error, and a log at <code>.concerto/logs/&lt;id&gt;.log</code> with the models used, each agent's output and every error with its stack.</p>
         <p class="reveal affiliate">Need cheaper API access when your subscriptions run out? I use <a href="https://codex-everywhere.com/home?aff=H9TB6LJQJMEU">CodexEverywhere</a>, an AI API gateway for GPT, Claude, DeepSeek and Grok behind one key. Name its providers <code>ce-*</code> and Concerto picks them up.</p>
@@ -242,12 +243,13 @@ concerto "Move the API to Rust. Done means: every test passes."</code></pre>
           <div class="reveal"><dt><code>--yes</code></dt><dd>Skip the confirm step and start building after scoring.</dd></div>
           <div class="reveal"><dt><code>--orca</code></dt><dd>Start the run in a new Orca worktree, in its own terminal tab.</dd></div>
           <div class="reveal"><dt><code>--run</code></dt><dd>Score and build without the TUI, printing the log. For scripts and CI.</dd></div>
+          <div class="reveal"><dt><code>--resume &lt;id&gt;</code></dt><dd>Reopen a saved session and build the stories that did not pass. <code>/history</code> lists the ids.</dd></div>
           <div class="reveal"><dt><code>--prefer ce-*</code></dt><dd>Try these providers first for every model, for example your proxy.</dd></div>
           <div class="reveal"><dt><code>--stats</code></dt><dd>Tokens, cache reads, savings and fallbacks for this repository.</dd></div>
         </dl>
         <h3 class="reveal">In the terminal</h3>
         <p class="reveal">Enter scores the request and shows the stories. Enter again runs the plan, Esc throws it away. While a run is going, Esc stops it.</p>
-        <p class="reveal">Tab moves between the prompt, the agents, the stories and the changed files. Arrows pick one and Enter opens it: an agent's live output, why a story got its score, or a file's diff. Type <code>/</code> for commands such as <code>/setup</code>, <code>/config</code>, <code>/budget</code>, <code>/prefer</code> and <code>/onboarding</code>, which replays the animated tour.</p>
+        <p class="reveal">Tab moves between the prompt, the agents, the stories and the changed files. Arrows pick one and Enter opens it: an agent's live output, why a story got its score, or a file's diff. Type <code>/</code> for commands such as <code>/history</code>, which reopens an earlier session, <code>/setup</code>, <code>/config</code>, <code>/budget</code>, <code>/prefer</code> and <code>/onboarding</code>, which replays the animated tour.</p>
       </div>
     </section>
 

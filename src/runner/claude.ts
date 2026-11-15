@@ -48,8 +48,10 @@ export function buildClaudeArgs(req: RunRequest): string[] {
 }
 
 function toolEvent(message: Json): RunEvent | null {
-  const call = asArray(message.content).map(asRecord).find((p) => p.type === "tool_use");
-  if (!call) return null;
+  const parts = asArray(message.content).map(asRecord);
+  const call = parts.find((p) => p.type === "tool_use");
+  const text = parts.filter((p) => p.type === "text").map((p) => str(p.text)).join("");
+  if (!call) return text ? { kind: "text", delta: `${text}\n` } : null;
   const input = asRecord(call.input);
   return { kind: "tool", name: (str(call.name) || "tool").toLowerCase(), detail: oneLine(input.command ?? input.file_path ?? input.pattern) };
 }

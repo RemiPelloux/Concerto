@@ -51,7 +51,8 @@ async function standalone(values: Values, request: string): Promise<boolean> {
 export async function run(values: Values, request: string): Promise<void> {
   if (await standalone(values, request)) return;
   const tui = !values.plan && !values.run && !values.models && !values.doctor && !values["clear-cache"];
-  if (tui && process.stdin.isTTY && isFirstLaunch(process.cwd())) await (await import("./ui/launch.js")).runOnboarding();
+  const firstLaunch = tui && process.stdin.isTTY && isFirstLaunch(process.cwd());
+  if (firstLaunch) await (await import("./ui/launch.js")).runOnboarding();
   const s = await setup(values);
   if (values.doctor) return (await import("./setup/doctor.js")).printDoctor(s.cwd, await (await import("./setup/detect.js")).detect(), s);
   if (values["clear-cache"]) return clearCache(s.cwd, s.config);
@@ -59,5 +60,17 @@ export async function run(values: Values, request: string): Promise<void> {
   if ((values.plan || values.run) && !request) throw new Error("--plan and --run need a request.");
   if (values.plan) return printPlan(s, request);
   if (values.run) return headless(s, request);
-  return (await import("./ui/launch.js")).launchTui({ ...s, runner: runModel, autoPerform: Boolean(values.yes), initialRequest: request });
+  return interactive(values, s, { request, tour: firstLaunch });
+}
+
+/** The TUI; `/setup` closes it, reruns onboarding with fresh detection, and opens it again. */
+async function interactive(values: Values, first: Setup, start: { request: string; tour: boolean }): Promise<void> {
+  const { launchTui, runOnboarding } = await import("./ui/launch.js");
+  let s = first;
+  for (let initial = start.request, tour = start.tour; ; initial = "", tour = false) {
+    const reason = await launchTui({ ...s, runner: runModel, autoPerform: Boolean(values.yes), initialRequest: initial, showTour: tour });
+    if (reason !== "setup") return;
+    await runOnboarding();
+    s = await setup(values);
+  }
 }

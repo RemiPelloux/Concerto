@@ -28,7 +28,7 @@ export async function consult(c: Concert, checkpoint: Checkpoint, extra = ""): P
     { name: "question", text: [`## ${QUESTIONS[checkpoint]}`, extra].filter(Boolean).join("\n\n") },
   ];
   c.store.role("conductor", { activity: "working", note: checkpoint });
-  const reply = await callRole(c, { role: "conductor", segments, sessionKey: "conductor" });
+  const reply = await callRole(c, { role: "conductor", segments, sessionKey: "conductor", label: checkpoint });
   const result = { verdict: verdictOf(reply.text), finding: headline(reply.text, "VERDICT"), guidance: details(reply.text, "VERDICT") };
   c.store.update((st) => ({ checkpoints: { ...st.checkpoints, [checkpoint]: result.verdict } }));
   c.store.role("conductor", { activity: "waiting", note: "on call" });

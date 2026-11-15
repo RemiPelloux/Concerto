@@ -1,26 +1,43 @@
 import { Box, Text } from "ink";
 import type { State } from "../state/types.js";
 import { COLOR, ROLE_COLOR, shortModel } from "./theme.js";
+import type { Zone } from "./useNavigation.js";
 
 const HINT: Record<State["phase"], string> = {
-  idle: "type a request · enter to score · ctrl+c to quit",
+  idle: "enter to score · / for commands · tab to look around",
   scoring: "✻ Scoring… (esc to interrupt)",
-  planned: "enter to perform · esc to discard the plan",
-  running: "✻ Working… (esc to interrupt)",
-  done: "done · type a new request",
-  failed: "stopped · type a new request",
+  planned: "enter to build · esc to discard the plan · tab to inspect the stories",
+  running: "✻ Working… tab to watch the agents · esc to interrupt",
+  done: "done · tab to review the changes · type a new request",
+  failed: "stopped · tab to see what happened · type a new request",
 };
 
-export function StatusLine({ state }: { state: State }) {
-  const color = state.phase === "failed" ? COLOR.bad : "gray";
+const ZONE_HINT: Record<Exclude<Zone, "prompt">, string> = {
+  agents: "agents · ↑↓ select · enter live output · tab next · esc prompt",
+  stories: "stories · ↑↓ select · enter why this score · tab next · esc prompt",
+  changes: "changes · ↑↓ select · enter diff · tab next · esc prompt",
+};
+
+function hint(state: State, zone: Zone, overlay: boolean): string {
+  if (overlay) return "esc back";
+  const base = zone === "prompt" ? HINT[state.phase] : ZONE_HINT[zone];
+  return state.error && zone === "prompt" ? `${base} · ${state.error}` : base;
+}
+
+export function StatusLine({ state, zone, overlay }: { state: State; zone: Zone; overlay: boolean }) {
+  const color = state.phase === "failed" && zone === "prompt" ? COLOR.bad : "gray";
   return (
     <Box justifyContent="space-between">
-      <Text color={color}>{state.error ? `${HINT[state.phase]} · ${state.error}` : HINT[state.phase]}</Text>
-      <Text>
-        <Text color={ROLE_COLOR.conductor}>advisor: {shortModel(state.roles.conductor.model)}</Text>
-        <Text color="gray"> · </Text>
-        <Text color={ROLE_COLOR.soloist}>{shortModel(state.roles.soloist.model)}</Text>
-      </Text>
+      <Box flexShrink={1}>
+        <Text color={color} wrap="truncate-end">{hint(state, zone, overlay)}</Text>
+      </Box>
+      <Box flexShrink={0} marginLeft={2}>
+        <Text>
+          <Text color={ROLE_COLOR.conductor}>advisor: {shortModel(state.roles.conductor.model)}</Text>
+          <Text color="gray"> · </Text>
+          <Text color={ROLE_COLOR.soloist}>{shortModel(state.roles.soloist.model)}</Text>
+        </Text>
+      </Box>
     </Box>
   );
 }

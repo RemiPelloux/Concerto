@@ -38,7 +38,7 @@ export async function scoreRequest(c: Concert, request: string): Promise<void> {
     { name: "repository snapshot", text: c.repo.text },
     { name: "request", text: `## Request\n${request}` },
   ];
-  const reply = await callRole(c, { role: "scorer", segments, cacheable: true });
+  const reply = await callRole(c, { role: "scorer", segments, cacheable: true, label: "scoring the request" });
   const plan = withSafeFiles(parsePlan(reply.text));
   const impacts = await analyzeImpact({ cwd: c.cwd, repoFiles: c.repo.files, stories: plan.stories });
   const views = plan.stories.map((s) => view(c, s, impacts.get(s.id) ?? NO_IMPACT));

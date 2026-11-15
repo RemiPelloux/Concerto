@@ -17,7 +17,12 @@ export const USAGE = `concerto [options] [request]
   --install-skills    teach the agents on this machine (Claude Code, Codex, pi) to use Concerto
   --clear-cache       drop the local response cache
   -v, --version       print the version
-  -h, --help          this help`;
+  -h, --help          this help
+
+In the TUI, type / for commands: /setup /config /models /budget /prefer /onboarding /help.
+Docs: https://remipelloux.github.io/Concerto/
+Cheaper API access for GPT, Claude, DeepSeek and Grok behind one key (affiliate link):
+https://codex-everywhere.com/home?aff=H9TB6LJQJMEU`;
 
 export const OPTIONS = {
   plan: { type: "boolean" },

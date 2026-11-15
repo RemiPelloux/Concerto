@@ -30,10 +30,16 @@ export async function probeAndSave(refs: string[], onResult?: (ref: string, ok: 
 }
 
 /** `--probe`: tests every configured model that is installed, and records the result. */
-export async function runProbe(config: ConcertoConfig): Promise<void> {
+/** Configured models whose CLI or provider is installed: the ones worth a probe. */
+export async function installedTargets(config: ConcertoConfig): Promise<string[]> {
   const refs = Object.keys(config.models);
   const reachable = await reachableRefs(refs.map(parseRef));
-  const targets = refs.filter((ref) => reachable.has(ref));
+  return refs.filter((ref) => reachable.has(ref));
+}
+
+export async function runProbe(config: ConcertoConfig): Promise<void> {
+  const refs = Object.keys(config.models);
+  const targets = await installedTargets(config);
   out(`Probing ${targets.length} installed models (${refs.length - targets.length} not installed), one tiny prompt each...`);
   const working = await probeAndSave(targets, (ref, ok) => out(`${ok ? "ok  " : "FAIL"} ${ref}`));
   out(`${working.size} of ${targets.length} answered. Failed models are skipped for 24 hours: ${healthPath()}`);

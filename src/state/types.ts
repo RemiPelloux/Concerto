@@ -34,6 +34,21 @@ export type StoryView = {
 
 export type LogEntry = { role: Role; label: string; detail: string; result: string };
 
+/** One model call you can look into: what it is doing right now, line by line. */
+export type AgentView = {
+  id: string;
+  role: Role;
+  model: string;
+  label: string;
+  status: "working" | "done" | "failed";
+  lines: string[];
+  startedAt: number;
+  endedAt: number | null;
+};
+
+/** One file the run changed, from git. Untracked files count all their lines as added. */
+export type FileChange = { file: string; added: number; removed: number; status: "modified" | "added" | "deleted" };
+
 export const CHECKPOINTS = ["plan-lock", "repeat-error", "before-done"] as const;
 export type Checkpoint = (typeof CHECKPOINTS)[number];
 
@@ -50,6 +65,10 @@ export type State = {
   /** Conductor guidance every builder and critic sees for the rest of the run. */
   notes: string[];
   log: LogEntry[];
+  /** Every agent this session started, newest last; `agentOrder` keeps that order. */
+  agents: Record<string, AgentView>;
+  agentOrder: string[];
+  changes: FileChange[];
   ledger: Ledger;
   error: string;
 };

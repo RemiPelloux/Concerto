@@ -29,7 +29,7 @@ function Header() {
   return <Text color="gray">{`${cells.join(" ")}  ${"model".padEnd(W.model)} ${"review".padEnd(W.review)} status`}</Text>;
 }
 
-function StoryRow({ story, view }: { story: Story; view: StoryView }) {
+function StoryRow({ story, view, active }: { story: Story; view: StoryView; active: boolean }) {
   const cells = [
     story.title.slice(0, W.title).padEnd(W.title),
     String(story.points).padStart(W.pts),
@@ -42,7 +42,7 @@ function StoryRow({ story, view }: { story: Story; view: StoryView }) {
   return (
     <Box flexDirection="column">
       <Text>
-        {cells.join(" ")}  <Text color={ROLE_COLOR[view.role]}>{shortModel(view.model).padEnd(W.model)}</Text>{" "}
+        <Text inverse={active}>{cells.join(" ")}</Text>  <Text color={ROLE_COLOR[view.role]}>{shortModel(view.model).padEnd(W.model)}</Text>{" "}
         <Text color={ROLE_COLOR.critic}>{shortModel(view.critics[0] ?? "").padEnd(W.review)}</Text>{" "}
         <Text color={STATUS_COLOR[view.status]}>{view.status}</Text>
       </Text>
@@ -51,7 +51,7 @@ function StoryRow({ story, view }: { story: Story; view: StoryView }) {
   );
 }
 
-export function StoryBoard({ state }: { state: State }) {
+export function StoryBoard({ state, focused = false, selected = 0 }: { state: State; focused?: boolean; selected?: number }) {
   if (!state.plan) return null;
   const total = Object.values(state.stories).reduce((sum, v) => sum + v.estimate, 0);
   return (
@@ -63,7 +63,7 @@ export function StoryBoard({ state }: { state: State }) {
       <Header />
       {state.plan.stories.map((story) => {
         const view = state.stories[story.id];
-        return view ? <StoryRow key={story.id} story={story} view={view} /> : null;
+        return view ? <StoryRow key={story.id} story={story} view={view} active={focused && state.order[selected] === story.id} /> : null;
       })}
     </Box>
   );

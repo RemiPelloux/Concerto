@@ -4,7 +4,8 @@ import type { Effort, Role } from "../config/types.js";
 import { roleChain } from "../models/router.js";
 import type { ModelInfo } from "../models/types.js";
 import type { RunEvent } from "../runner/events.js";
-import type { RunResult } from "../runner/types.js";
+import type { RunRequest, RunResult } from "../runner/types.js";
+import { AgentFeed } from "./feed.js";
 import type { Concert } from "./concert.js";
 
 const MS_PER_MINUTE = 60_000;
@@ -23,6 +24,8 @@ export type Call = {
   tags?: string[];
   /** Same key, same model: one warm session, and segments it already has are not resent. */
   sessionKey?: string;
+  /** What the agent view calls this call: a story title, a checkpoint. */
+  label?: string;
   /** Read-only calls may be answered by the local response cache. */
   cacheable?: boolean;
 };
@@ -37,25 +40,44 @@ function onEvent(c: Concert, role: Role) {
   };
 }
 
+/** Runs the call as a visible agent: started, fed line by line, ended done or failed. */
+async function watched(c: Concert, call: Call, req: RunRequest): Promise<RunResult> {
+  const id = `${call.role}:${call.sessionKey ?? call.role}`;
+  const feed = new AgentFeed(c.store, id);
+  const notes = onEvent(c, call.role);
+  c.store.agentStart({ id, role: call.role, model: req.model, label: call.label ?? call.role });
+  try {
+    const result = await c.runner(req, (e) => {
+      notes(e);
+      feed.push(e);
+    });
+    feed.flush();
+    c.store.agentEnd(id, "done");
+    return result;
+  } catch (error) {
+    feed.push({ kind: "error", message: errorMessage(error).split("\n")[0] ?? "failed" });
+    feed.flush();
+    c.store.agentEnd(id, "failed");
+    throw error;
+  }
+}
+
 async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunResult> {
   const roleCfg = c.config.roles[call.role];
   const session = call.sessionKey ? c.sessions.open(call.sessionKey, model) : undefined;
   const assembled = assemble(call.segments, session?.sent);
   const timeout = AbortSignal.timeout(c.config.timeoutMinutes * MS_PER_MINUTE);
-  const result = await c.runner(
-    {
-      model: model.ref,
-      prompt: assembled.prompt,
-      systemFile: c.prompts.file(call.role),
-      tools: roleCfg.tools,
-      effort: call.effort ?? roleCfg.effort,
-      skills: c.skills.for(call.tags ?? []),
-      cwd: c.cwd,
-      session,
-      signal: AbortSignal.any([c.signal, timeout]),
-    },
-    onEvent(c, call.role),
-  );
+  const result = await watched(c, call, {
+    model: model.ref,
+    prompt: assembled.prompt,
+    systemFile: c.prompts.file(call.role),
+    tools: roleCfg.tools,
+    effort: call.effort ?? roleCfg.effort,
+    skills: c.skills.for(call.tags ?? []),
+    cwd: c.cwd,
+    session,
+    signal: AbortSignal.any([c.signal, timeout]),
+  });
   if (session) c.sessions.record(session, assembled.hashes);
   const entry = { usage: result.usage, price: model.price, brain: c.brainPrice };
   c.store.update((s) => ({ ledger: bump(record(s.ledger, entry), "dedupedTokens", assembled.skippedTokens) }));

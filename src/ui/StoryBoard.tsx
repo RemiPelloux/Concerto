@@ -9,11 +9,17 @@ const STATUS_COLOR: Record<StoryStatus, string> = {
   checking: ROLE_COLOR.critic,
   passed: COLOR.good,
   failed: COLOR.bad,
+  skipped: "gray",
 };
-const W = { title: 34, pts: 3, cx: 2, risk: 4, score: 5, model: 20, review: 18 };
+const W = { title: 32, pts: 3, cx: 2, risk: 4, score: 5, est: 7, model: 20, review: 18 };
+const CENTS = 2;
+
+function dollars(n: number): string {
+  return `$${n.toFixed(CENTS)}`;
+}
 
 function Header() {
-  const cells = ["story".padEnd(W.title), "pts".padStart(W.pts), "cx".padStart(W.cx), "risk".padStart(W.risk), "score".padStart(W.score)];
+  const cells = ["story".padEnd(W.title), "pts".padStart(W.pts), "cx".padStart(W.cx), "risk".padStart(W.risk), "score".padStart(W.score), "est".padStart(W.est)];
   return <Text color="gray">{`${cells.join(" ")}  ${"model".padEnd(W.model)} ${"review".padEnd(W.review)} status`}</Text>;
 }
 
@@ -24,6 +30,7 @@ function StoryRow({ story, view }: { story: Story; view: StoryView }) {
     String(story.complexity).padStart(W.cx),
     String(story.risk).padStart(W.risk),
     String(view.score).padStart(W.score),
+    dollars(view.estimate).padStart(W.est),
   ];
   return (
     <Text>
@@ -36,9 +43,13 @@ function StoryRow({ story, view }: { story: Story; view: StoryView }) {
 
 export function StoryBoard({ state }: { state: State }) {
   if (!state.plan) return null;
+  const total = Object.values(state.stories).reduce((sum, v) => sum + v.estimate, 0);
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1}>
-      <Text bold>{state.plan.summary}</Text>
+      <Text bold>
+        {state.plan.summary}
+        <Text color="gray"> · about {dollars(total)} API-equivalent before retries</Text>
+      </Text>
       <Header />
       {state.plan.stories.map((story) => {
         const view = state.stories[story.id];

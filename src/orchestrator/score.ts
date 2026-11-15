@@ -2,14 +2,18 @@ import { reviewChain, routeStory } from "../models/router.js";
 import type { StoryView } from "../state/types.js";
 import { callRole } from "./call.js";
 import type { Concert } from "./concert.js";
+import { estimateStory } from "./estimate.js";
 import { parsePlan, scoreStory, type Story } from "./plan.js";
 
 function view(c: Concert, story: Story): StoryView {
   const score = scoreStory(story);
   const route = routeStory({ score, tags: story.tags }, c.catalog, c.config);
   const chain = route.chain.map((m) => m.ref);
-  const critics = reviewChain(story.tags, c.catalog, c.config).map((m) => m.ref);
-  return { id: story.id, score, role: route.role, effort: route.effort, rule: route.rule, chain, model: chain[0] ?? "", critics, status: "queued" };
+  const reviewers = reviewChain(story.tags, c.catalog, c.config);
+  const estimate = estimateStory(story.points, route.chain[0], reviewers[0]);
+  const critics = reviewers.map((m) => m.ref);
+  const { role, effort, rule } = route;
+  return { id: story.id, score, role, effort, rule, chain, model: chain[0] ?? "", critics, estimate, status: "queued" };
 }
 
 /**

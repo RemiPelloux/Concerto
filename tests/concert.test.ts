@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { createConcert } from "../src/orchestrator/concert.js";
 import { perform } from "../src/orchestrator/perform.js";
@@ -70,6 +71,28 @@ describe("concert", () => {
     expect(third).toHaveLength(1);
     expect(third[0]?.prompt).toContain("ERR  (×3)");
     expect(store.get().ledger.condensedTokens).toBeGreaterThan(0);
+  });
+
+  it("writes a run report with every story, model and verdict", async () => {
+    const { init, store } = setup();
+    const concert = await createConcert(init);
+    await scoreRequest(concert, "add health and auth");
+    await perform(concert);
+    const entry = store.get().log.find((e) => e.label === "Report");
+    const report = readFileSync(entry?.detail ?? "", "utf8");
+    expect(report).toContain("# Add a health endpoint");
+    expect(report).toMatch(/\| Protect admin routes \| 8 \| 84 \| b\/cheap-builder \| .* \| passed \|/);
+    expect(report).toContain("## Totals");
+  });
+
+  it("stops starting stories once the budget is spent and says so", async () => {
+    const { init, store, calls } = setup();
+    const concert = await createConcert({ ...init, config: { ...init.config, budgetUsd: 0.000001 } });
+    await scoreRequest(concert, "add health and auth");
+    await perform(concert);
+    expect(Object.values(store.get().stories).every((s) => s.status === "skipped")).toBe(true);
+    expect(store.get().error).toMatch(/budget of \$0\.00 reached, 2 stories not started/);
+    expect(calls.filter((r) => is("builder")(r) || is("section")(r))).toHaveLength(0);
   });
 
   it("falls back to the next model in the chain when a call fails", async () => {

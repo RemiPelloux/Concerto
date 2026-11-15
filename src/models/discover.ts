@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { delimiter, join } from "node:path";
 import { promisify } from "node:util";
@@ -17,16 +17,28 @@ export function onPath(bin: string): boolean {
   return (process.env.PATH ?? "").split(delimiter).some((dir) => dir && existsSync(join(dir, bin)));
 }
 
-function codexHome(): string {
+export function codexHome(): string {
   return process.env.CODEX_HOME ?? join(homedir(), ".codex");
 }
 
 /** Model slugs the ChatGPT subscription offers, from Codex's own cache. Empty when unknown. */
-function codexSlugs(): Set<string> {
+export function codexSlugs(): Set<string> {
   const file = join(codexHome(), "models_cache.json");
   if (!existsSync(file)) return new Set();
   const data = JSON.parse(readFileSync(file, "utf8")) as { models?: { slug?: unknown }[] };
   return new Set((data.models ?? []).flatMap((m) => (typeof m.slug === "string" ? [m.slug] : [])));
+}
+
+const PROFILE_SUFFIX = ".config.toml";
+
+/** Codex profiles: every `$CODEX_HOME/<name>.config.toml`, e.g. a proxy such as ce-gpt. */
+export function codexProfiles(): string[] {
+  const home = codexHome();
+  if (!existsSync(home)) return [];
+  return readdirSync(home)
+    .filter((f) => f.endsWith(PROFILE_SUFFIX) && f !== "config.toml")
+    .map((f) => f.slice(0, -PROFILE_SUFFIX.length))
+    .sort();
 }
 
 /** Parses the table printed by `pi --list-models` into "provider/id" refs. */
@@ -40,7 +52,7 @@ export function parseListModels(text: string): string[] {
     });
 }
 
-async function piRefs(): Promise<Set<string>> {
+export async function piRefs(): Promise<Set<string>> {
   if (!onPath(piBin())) return new Set();
   const { stdout } = await run(piBin(), ["--list-models", "--offline"], { timeout: LIST_TIMEOUT_MS, env: childEnv() });
   return new Set(parseListModels(stdout));

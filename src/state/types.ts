@@ -4,7 +4,7 @@ import type { Plan } from "../orchestrator/plan.js";
 
 export type Phase = "idle" | "scoring" | "planned" | "running" | "done" | "failed";
 export type Activity = "idle" | "working" | "waiting" | "done";
-export type StoryStatus = "queued" | "building" | "checking" | "passed" | "failed";
+export type StoryStatus = "queued" | "building" | "checking" | "passed" | "failed" | "skipped";
 
 export type RoleView = { model: string; activity: Activity; note: string };
 
@@ -20,6 +20,8 @@ export type StoryView = {
   model: string;
   /** Reviewer models in order. */
   critics: string[];
+  /** Rough API-equivalent dollars for one build and one review. */
+  estimate: number;
   status: StoryStatus;
 };
 

@@ -6,7 +6,8 @@ const TIER = z.number().int().min(1).max(MAX_TIER);
 const DEFAULT_TIMEOUT_MINUTES = 30;
 const DEFAULT_CACHE_ENTRIES = 500;
 /** Model refs are checked by parseRef at load; this only keeps obvious garbage out. */
-const REF = z.string().regex(/^[\w.@-]+\/[\w.:[\]-]+$/, "model refs look like <backend>/<model>");
+/** The model id may itself contain slashes (pi lists `z-ai/glm-5.3`); the prefix may not. */
+const REF = z.string().regex(/^[\w.@-]+\/[\w.:/[\]-]+$/, "model refs look like <backend>/<model>");
 const PREFER = z.string().regex(/^[\w.@-]+\*?$/, "prefer entries are provider names, optionally ending in *");
 
 export const ROLES = ["conductor", "scorer", "soloist", "critic", "section"] as const;
@@ -45,6 +46,8 @@ export const ConfigSchema = z.object({
   /** Providers tried first in every chain, e.g. ["ce-*"] to send everything through a proxy. */
   prefer: z.array(PREFER).default([]),
   timeoutMinutes: z.number().positive().default(DEFAULT_TIMEOUT_MINUTES),
+  /** API-equivalent dollars; no new story or attempt starts once a run has spent this. */
+  budgetUsd: z.number().positive().optional(),
   roles: z.object({
     conductor: RoleConfigSchema,
     scorer: RoleConfigSchema,

@@ -1,6 +1,7 @@
 import { approxTokens, condense } from "../engine/condense.js";
 import { bump } from "../engine/ledger.js";
 import { headline, readTag, runSegments, storyBrief } from "./briefs.js";
+import { overBudget } from "./budget.js";
 import { callRole } from "./call.js";
 import type { Concert } from "./concert.js";
 import { consult } from "./consult.js";
@@ -53,6 +54,7 @@ async function finish(c: Concert, story: Story, pass: boolean): Promise<boolean>
 export async function buildStory(c: Concert, story: Story): Promise<boolean> {
   let feedback = "";
   for (let attempt = 1; attempt <= REVIEWED_ATTEMPTS; attempt += 1) {
+    if (overBudget(c, story.id)) return false;
     await play(c, story, feedback);
     const verdict = await review(c, story);
     if (verdict.pass) return finish(c, story, true);
@@ -60,6 +62,7 @@ export async function buildStory(c: Concert, story: Story): Promise<boolean> {
   }
   const advice = await consult(c, "repeat-error", `${storyBrief(story)}\n\n## Last critique\n${feedback}`);
   if (advice.verdict === "stop") return finish(c, story, false);
+  if (overBudget(c, story.id)) return false;
   await play(c, story, `${feedback}\n\n## Conductor guidance\n${advice.guidance || advice.finding}`);
   return finish(c, story, (await review(c, story)).pass);
 }

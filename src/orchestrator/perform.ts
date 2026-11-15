@@ -1,4 +1,6 @@
+import { writeReport } from "../engine/report.js";
 import { saveRun } from "../engine/stats.js";
+import { runOutcome } from "./budget.js";
 import { buildStory } from "./build.js";
 import type { Concert } from "./concert.js";
 import { consult } from "./consult.js";
@@ -47,10 +49,11 @@ export async function perform(c: Concert): Promise<void> {
     const results: boolean[] = [];
     for (const wave of executionWaves(plan.stories)) results.push(...(await playWave(c, wave)));
     const final = await consult(c, "before-done");
-    const failed = results.filter((ok) => !ok).length;
-    const error = failed > 0 ? `${failed} stories failed review` : final.verdict !== "ok" ? `Conductor: ${final.finding}` : "";
+    const error = runOutcome(c, final.verdict === "ok" ? "" : final.finding);
     c.store.update(() => ({ phase: error ? "failed" : "done", error }));
   } finally {
     saveRun(c.cwd, c.store.get().ledger);
+    const report = writeReport(c.store.get(), { cwd: c.cwd, runId: c.runId });
+    c.store.log({ role: "conductor", label: "Report", detail: report, result: "written" });
   }
 }

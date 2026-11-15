@@ -1,6 +1,9 @@
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { readFileSync, realpathSync } from "node:fs";
+import { relative } from "node:path";
 import { codexBin } from "#src/runner/bins.js";
 import type { Effort } from "#src/config/types.js";
+import { gitEnv } from "#src/runner/env.js";
 import type { RunEvent } from "#src/runner/events.js";
 import { asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
 import { withSkillNote } from "#src/runner/skill-note.js";
@@ -12,6 +15,20 @@ const WRITE_TOOLS = new Set(["edit", "write", "bash"]);
 const READ_STDIN = "-";
 
 /**
+ * In a git worktree the repository's git data lives outside the folder, and Codex's sandbox
+ * makes it read-only: `git status`, `git stash` and tests that run git then fail with EPERM.
+ */
+function gitDataOutside(cwd: string): string | null {
+  try {
+    const out = execFileSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { cwd, env: gitEnv(), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    const dir = realpathSync(out.trim());
+    return relative(realpathSync(cwd), dir).startsWith("..") ? dir : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * `codex exec` on the ChatGPT subscription, or through a profile such as a proxy
  * (`codex@ce-gpt/gpt-6.1-sol` runs with `-p ce-gpt`). Builders get a workspace-write
  * sandbox, everyone else read-only.
@@ -20,6 +37,8 @@ export function buildCodexArgs(req: RunRequest): string[] {
   const ref = parseRef(req.model);
   const sandbox = req.tools.some((t) => WRITE_TOOLS.has(t)) ? "workspace-write" : "read-only";
   const args = ["exec", "--json", "--skip-git-repo-check", "--cd", req.cwd, "--model", ref.id, "--sandbox", sandbox];
+  const gitData = sandbox === "workspace-write" ? gitDataOutside(req.cwd) : null;
+  if (gitData) args.push("--add-dir", gitData);
   if (ref.profile) args.push("--profile", ref.profile);
   args.push("-c", `model_reasoning_effort="${EFFORT[req.effort] ?? req.effort}"`, READ_STDIN);
   return args;

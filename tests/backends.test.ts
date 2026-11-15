@@ -1,10 +1,12 @@
-import { writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildClaudeArgs, parseClaudeLine, sessionUuid } from "#src/runner/claude.js";
 import { buildCodexArgs, codexInput, codexParser } from "#src/runner/codex.js";
 import { parseLine } from "#src/runner/events.js";
 import { runJsonl } from "#src/runner/spawn.js";
+import { gitEnv } from "#src/runner/env.js";
 import type { RunRequest } from "#src/runner/types.js";
 import { tempDir } from "#tests/fixtures.js";
 
@@ -90,6 +92,19 @@ describe("codex backend", () => {
     expect(turn).toEqual({ kind: "turn", text: "STATUS: done", usage: { input: 200, output: 40, cacheRead: 800, cacheWrite: 0, cost: 0 } });
     const command = { type: "item.started", item: { type: "command_execution", command: "/usr/bin/bash -lc npm test" } };
     expect(parse(JSON.stringify(command))).toEqual({ kind: "tool", name: "bash", detail: "npm test" });
+  });
+
+  it("lets a builder in a git worktree write the repository's git data, which lives outside it", () => {
+    const repo = tempDir();
+    const git = (cwd: string, ...args: string[]) => execFileSync("git", args, { cwd, env: gitEnv(), stdio: "ignore" });
+    git(repo, "init", "-q");
+    git(repo, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "init");
+    const tree = join(tempDir(), "tree");
+    git(repo, "worktree", "add", "-q", "--detach", tree);
+    const builder = buildCodexArgs(request({ model: "codex/gpt-6.1-sol", tools: ["read", "edit", "bash"], cwd: tree }));
+    expect(builder.slice(builder.indexOf("--add-dir"), builder.indexOf("--add-dir") + 2)).toEqual(["--add-dir", join(realpathSync(repo), ".git")]);
+    expect(buildCodexArgs(request({ model: "codex/gpt-6.1-sol", tools: ["read", "edit", "bash"], cwd: repo }))).not.toContain("--add-dir");
+    expect(buildCodexArgs(request({ model: "codex/gpt-6.1-sol", tools: ["read"], cwd: tree }))).not.toContain("--add-dir");
   });
 
   it("shows each command once, though Codex reports it when it starts and again when it ends", () => {

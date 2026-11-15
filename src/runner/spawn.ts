@@ -31,18 +31,23 @@ export function runJsonl(job: JsonlJob, onEvent: (e: RunEvent) => void): Promise
     const child = spawn(job.bin, job.args, { cwd: job.cwd, signal: job.signal, env: childEnv() });
     const result: RunResult = { text: "", usage: ZERO_USAGE, turns: 0 };
     let stderr = "";
+    let failure = "";
     child.stderr.on("data", (chunk: Buffer) => (stderr = (stderr + chunk.toString()).slice(-STDERR_TAIL)));
     child.stdin.on("error", () => undefined);
     child.stdin.end(job.input);
     createInterface({ input: child.stdout }).on("line", (line) => {
       const event = job.parse(line);
       if (!event) return;
+      if (event.kind === "error") failure = event.message;
       fold(result, event);
       onEvent(event);
     });
     child.on("error", reject);
-    child.on("close", (code) =>
-      code === 0 ? resolve(result) : reject(new Error(`${job.bin} exited ${code}: ${stderr.trim().slice(-ERROR_TAIL)}`)),
-    );
+    // A failure reported in the stream counts even on exit code 0, unless a later turn answered.
+    child.on("close", (code) => {
+      if (code !== 0) return reject(new Error(`${job.bin} exited ${code}: ${failure || stderr.trim().slice(-ERROR_TAIL)}`));
+      if (failure && !result.text) return reject(new Error(`${job.bin}: ${failure}`));
+      resolve(result);
+    });
   });
 }

@@ -54,6 +54,8 @@ export function codexParser(): (line: string) => RunEvent | null {
     const event = parseJsonLine(line);
     if (!event) return null;
     if (event.type === "turn.completed") return turnEvent(event, lastText);
+    if (event.type === "error") return { kind: "error", message: str(event.message) };
+    if (event.type === "turn.failed") return { kind: "error", message: str(asRecord(event.error).message) };
     if (event.type !== "item.started" && event.type !== "item.completed") return null;
     const out = itemEvent(asRecord(event.item));
     if (out?.kind === "text") lastText = out.delta;

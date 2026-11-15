@@ -69,6 +69,7 @@ function resultEvent(event: Json): RunEvent {
 /** Usage is summed once, from the final `result` line; per-message usage would double count. */
 export function parseClaudeLine(line: string): RunEvent | null {
   const event = parseJsonLine(line);
+  if (event?.type === "result" && event.is_error === true) return { kind: "error", message: str(event.result) || str(event.subtype) || "claude failed" };
   if (event?.type === "result") return resultEvent(event);
   return event?.type === "assistant" ? toolEvent(asRecord(event.message)) : null;
 }

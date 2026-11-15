@@ -4,7 +4,9 @@ import type { Usage } from "./usage.js";
 export type RunEvent =
   | { kind: "text"; delta: string }
   | { kind: "tool"; name: string; detail: string }
-  | { kind: "turn"; usage: Usage; text: string };
+  | { kind: "turn"; usage: Usage; text: string }
+  /** The model call failed, reported inside the stream (pi exits 0 when that happens). */
+  | { kind: "error"; message: string };
 
 /** pi reports usage per assistant message in its own shape. */
 export function readUsage(raw: unknown): Usage {
@@ -40,6 +42,7 @@ export function parseLine(line: string): RunEvent | null {
   if (event.type === "tool_execution_start") return { kind: "tool", name: str(event.toolName) || "tool", detail: toolDetail(event.args) };
   const message = asRecord(event.message);
   if (event.type === "message_end" && message.role === "assistant") {
+    if (message.stopReason === "error") return { kind: "error", message: str(message.errorMessage) || "model call failed" };
     return { kind: "turn", usage: readUsage(message.usage), text: textOf(message) };
   }
   return null;

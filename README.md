@@ -29,8 +29,8 @@ You need git, Node 22+, and at least one of these logged in: `claude` (Claude Co
 curl -fsSL https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.sh | sh
 ```
 
-This puts a checkout in `~/.local/share/concerto`, a `concerto` command in `~/.local/bin`, and a
-Concerto skill in the agents it finds (Claude Code, Codex, pi). Run it again to update. Read the
+This puts a checkout in `~/.local/share/concerto`, a `concerto` command in `~/.local/bin`, and
+Concerto's skills in the agents it finds (Claude Code, Codex, pi). Run it again to update. Read the
 [script](scripts/install.sh) first if you prefer; it needs no sudo.
 
 ## Quick start
@@ -62,8 +62,29 @@ the scored stories, and Enter again to build them. Esc throws a plan away or sto
 | `concerto --probe` | Retest the configured models |
 | `concerto --doctor` | What is installed, linked, skipped, and why |
 | `concerto --stats` | Tokens, cache hits and savings for this repository |
+| `concerto --install-skills` | Teach the agents on this machine to use Concerto |
 
 After a build, the report is in `.concerto/runs/`, ready to paste into a pull request.
+
+## Who does the work
+
+Concerto starts the agents itself. For every story it runs a builder (`claude -p`, `codex exec` or
+`pi -p`) as a background process in the project folder, then a critic the same way, and the
+conductor at its checkpoints. You do not open them, and they do not appear as separate tabs: you
+watch them in Concerto's screen, and their work shows up as changes in the folder. Concerto never
+commits; you review the diff.
+
+## Teach your agents
+
+`concerto --install-skills` (the installer runs it) adds three skills to Claude Code, Codex and pi:
+
+- `concerto`: when to hand a job to Concerto, which command to run, how to read the plan and the
+  report.
+- `concerto-config`: changing routes, models, provider preference and budget.
+- `concerto-doctor`: fixing skipped models, failed logins, rate limits and failed runs.
+
+Then ask any of them, for example, "plan this with Concerto" or "build it with Concerto in a new
+Orca worktree".
 
 ## Use with Orca
 
@@ -71,8 +92,8 @@ After a build, the report is in `.concerto/runs/`, ready to paste into a pull re
   repository and starts Concerto in a new tab there, so the run never touches your branch.
 - **One click:** in Orca, open Settings, then the terminal quick commands, and add a command with
   the label `Concerto` and the command `concerto`. It opens the TUI in the current worktree.
-- **From your agents:** the install adds a Concerto skill, so Claude Code, Codex or pi running in
-  Orca can call `concerto --plan` or `concerto --orca` when you ask them to.
+- **From your agents:** with the skills installed, Claude Code, Codex or pi running in Orca call
+  `concerto --plan` or `concerto --orca` when you ask them to.
 
 ## How a story is scored
 

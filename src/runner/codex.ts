@@ -44,9 +44,13 @@ function turnEvent(event: Json, lastText: string): RunEvent {
   return { kind: "turn", usage, text: lastText };
 }
 
-/** Codex prints the answer as the last agent_message, then usage on turn.completed. */
+/**
+ * Codex prints the answer as the last agent_message, then usage on turn.completed. A command
+ * comes twice, on item.started and item.completed: each item id is reported once.
+ */
 export function codexParser(): (line: string) => RunEvent | null {
   let lastText = "";
+  const seen = new Set<string>();
   return (line) => {
     const event = parseJsonLine(line);
     if (!event) return null;
@@ -54,7 +58,11 @@ export function codexParser(): (line: string) => RunEvent | null {
     if (event.type === "error") return { kind: "error", message: str(event.message) };
     if (event.type === "turn.failed") return { kind: "error", message: str(asRecord(event.error).message) };
     if (event.type !== "item.started" && event.type !== "item.completed") return null;
-    const out = itemEvent(asRecord(event.item));
+    const item = asRecord(event.item);
+    const id = str(item.id);
+    if (id && seen.has(id)) return null;
+    if (id) seen.add(id);
+    const out = itemEvent(item);
     if (out?.kind === "text") lastText = out.delta;
     return out;
   };

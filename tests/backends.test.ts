@@ -91,4 +91,13 @@ describe("codex backend", () => {
     const command = { type: "item.started", item: { type: "command_execution", command: "/usr/bin/bash -lc npm test" } };
     expect(parse(JSON.stringify(command))).toEqual({ kind: "tool", name: "bash", detail: "npm test" });
   });
+
+  it("shows each command once, though Codex reports it when it starts and again when it ends", () => {
+    const parse = codexParser();
+    const item = { id: "item_1", type: "command_execution", command: "/usr/bin/bash -lc npm test" };
+    expect(parse(JSON.stringify({ type: "item.started", item }))).toEqual({ kind: "tool", name: "bash", detail: "npm test" });
+    expect(parse(JSON.stringify({ type: "item.completed", item }))).toBeNull();
+    const edit = { id: "item_2", type: "file_change" };
+    expect(parse(JSON.stringify({ type: "item.completed", item: edit }))).toEqual({ kind: "tool", name: "edit", detail: "files" });
+  });
 });

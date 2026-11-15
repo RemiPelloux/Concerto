@@ -118,6 +118,7 @@ export class Store {
   }
 
   tool(name: string): void {
+    if (this.state.swarm.length === SWARM_TRAIL && this.state.swarm.every((tool) => tool === name)) return;
     this.update((s) => ({ swarm: [...s.swarm, name].slice(-SWARM_TRAIL) }));
   }
 }

@@ -1,15 +1,32 @@
+import { execFile } from "node:child_process";
 import { join } from "node:path";
+import { promisify } from "node:util";
 import { childEnv } from "#src/runner/env.js";
-import { onPath, runTool } from "#src/runner/tool.js";
+import { onPath } from "#src/runner/tool.js";
 import { asArray, asRecord, parseJsonLine, str } from "#src/runner/json.js";
 import { BlastRadius } from "#src/engine/blast-radius.js";
 import { type ImportGraph, isCodeFile, isTestFile } from "#src/engine/import-graph.js";
 import { PathMatcher } from "#src/engine/paths.js";
 import { areaOf, churnCounts, isSensitive } from "#src/engine/signals.js";
 
+const run = promisify(execFile);
 const EXPLAIN_TIMEOUT_MS = 30_000;
 const EXPLAIN_CONCURRENCY = 4;
+const EXPLAIN_MAX_BUFFER = 1_048_576;
 const LISTED_TESTS = 10;
+// Load the repository's public CLI entry once; keep its per-file JSON and error semantics.
+const EXPLAIN_BATCH = `
+import { realpathSync } from "node:fs";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
+const [bin, ...files] = process.argv.slice(1);
+const entry = createRequire(realpathSync(bin)).resolve("@tkmremi/smarttest");
+const { main } = await import(pathToFileURL(entry).href);
+for (const file of files) {
+  try { await main(["explain", file, "--json"]); }
+  catch { process.stdout.write(JSON.stringify({ target: file, tests: [] }) + "\\n"); }
+}
+`;
 
 /** What a story reaches in the repository, measured before it is built. */
 export type Impact = {
@@ -42,24 +59,21 @@ function smarttestBin(cwd: string): string | null {
   return onPath(bin) ? bin : null;
 }
 
-/** `smarttest explain <file> --json`: the tests protecting one file, through every import path. */
-async function explain(bin: string, cwd: string, file: string): Promise<string[]> {
-  try {
-    const { stdout } = await runTool(bin, ["explain", file, "--json"], { cwd, timeout: EXPLAIN_TIMEOUT_MS, env: childEnv() });
-    return asArray((parseJsonLine(stdout.trim()) ?? {}).tests).map((t) => str(asRecord(t).test)).filter(Boolean);
-  } catch {
-    return [];
-  }
-}
-
-/** Each distinct file is explained once for the whole plan, a few at a time. */
+/** A fixed pool of batch processes retains per-file coverage without per-file launches. */
 async function explainAll(bin: string, cwd: string, files: string[]): Promise<Map<string, string[]>> {
-  const out = new Map<string, string[]>();
-  const queue = [...files];
-  const worker = async (): Promise<void> => {
-    for (let f = queue.shift(); f !== undefined; f = queue.shift()) out.set(f, await explain(bin, cwd, f));
-  };
-  await Promise.all(Array.from({ length: EXPLAIN_CONCURRENCY }, worker));
+  if (files.length === 0) return new Map();
+  const groups = Array.from({ length: EXPLAIN_CONCURRENCY }, (_, group) => files.filter((_, i) => i % EXPLAIN_CONCURRENCY === group));
+  const results = await Promise.all(groups.filter((group) => group.length).map(async (group) => {
+    const args = ["--input-type=module", "-e", EXPLAIN_BATCH, bin, ...group];
+    return run(process.execPath, args, { cwd, timeout: EXPLAIN_TIMEOUT_MS * group.length, maxBuffer: EXPLAIN_MAX_BUFFER * group.length, env: childEnv() })
+      .catch((error: { stdout?: string }) => ({ stdout: error.stdout ?? "" }));
+  }));
+  const answers = results.flatMap(({ stdout }) => stdout.split(/(?=^\{)/m)).filter((text) => text.trim()).map((text) => parseJsonLine(text.trim()));
+  const out = new Map<string, string[]>(files.map((file) => [file, []]));
+  for (const answer of answers) {
+    const file = str(answer?.target);
+    if (out.has(file)) out.set(file, asArray(answer?.tests).map((t) => str(asRecord(t).test)).filter(Boolean));
+  }
   return out;
 }
 
@@ -102,8 +116,8 @@ function measure(ctx: Context, files: string[], source: Impact["source"]): Impac
 export type ImpactInput = { cwd: string; repoFiles: readonly string[]; stories: { id: string; files: string[] }[]; cache?: BlastRadius };
 
 /**
- * Every story's reach in one pass: one import graph, one `git log` and one SmartTest call per
- * distinct file for the whole plan. Tests come from SmartTest when the repository has it,
+ * Every story's reach in one pass: one import graph, one `git log` and a fixed SmartTest pool
+ * for the whole plan. Tests come from SmartTest when the repository has it,
  * otherwise from the import graph.
  */
 export async function analyzeImpact(input: ImpactInput): Promise<Map<string, Impact>> {

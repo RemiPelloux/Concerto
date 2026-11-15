@@ -14,7 +14,7 @@ import { buildRepoMap } from "#src/engine/repo-map.js";
 import { callRole } from "#src/orchestrator/call.js";
 import { scoreRequest } from "#src/orchestrator/score.js";
 import { Store } from "#src/state/store.js";
-import { createFixture, enableSmarttest, fixtureConcert, fixturePlan, performFixture, REQUEST, TOOL_EVENTS } from "./perf-fixture.js";
+import { createFixture, enableSmarttest, fixtureConcert, fixturePlan, performFixture, REQUEST, TOOL_EVENTS } from "#scripts/perf-fixture.js";
 
 const DEFAULT_SAMPLES = 5;
 const DECIMAL_PLACES = 3;

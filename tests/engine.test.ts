@@ -185,16 +185,18 @@ describe("run repository scan cache", () => {
 
 const coverageProcess = vi.hoisted(() => ({ enabled: false, calls: 0, fail: false }));
 
-/** The SmartTest process is faked at the process boundary; everything inside Concerto is real. */
-vi.mock("#src/runner/tool.js", async (original) => {
-  const tool = await original<typeof import("#src/runner/tool.js")>();
-  const runTool: typeof tool.runTool = async (bin, args, call) => {
-    if (!coverageProcess.enabled || !bin.endsWith("smarttest")) return tool.runTool(bin, args, call);
+vi.mock("node:child_process", async (original) => {
+  const cp = await original<typeof import("node:child_process")>();
+  const { promisify } = await import("node:util");
+  const run = promisify(cp.execFile);
+  const execFile = (...args: unknown[]) => Reflect.apply(cp.execFile, undefined, args);
+  Object.assign(execFile, { [promisify.custom]: async (bin: string, args: string[], options: object) => {
+    if (!coverageProcess.enabled || !args.some((arg) => /[\\/]smarttest$/.test(arg))) return run(bin, args, options);
     coverageProcess.calls += 1;
     if (coverageProcess.fail) throw new Error("SmartTest unavailable");
-    return { stdout: JSON.stringify({ tests: [{ test: "a.test.ts" }] }) };
-  };
-  return { ...tool, runTool };
+    return { stdout: JSON.stringify({ target: args.at(-1), tests: [{ test: "a.test.ts" }] }), stderr: "" };
+  } });
+  return { ...cp, execFile };
 });
 
 describe("run coverage cache", () => {

@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { readChanges } from "#src/engine/changes.js";
+import { tempDir } from "#tests/fixtures.js";
 
 const git = vi.hoisted(() => ({ run: vi.fn() }));
 
@@ -11,41 +14,36 @@ vi.mock("node:child_process", async () => {
 beforeEach(() => { git.run.mockReset(); });
 
 describe("orchestrator change scans", () => {
-  it.each([24, 96])("bounds concurrent diffs and keeps process count linear for %i files", async (count) => {
+  it.each([24, 96])("keeps process count constant for %i files", async (count) => {
+    const cwd = tempDir();
     const files = Array.from({ length: count }, (_, i) => `new-${i}.txt`);
-    let active = 0;
-    let peak = 0;
+    files.forEach((file) => writeFileSync(join(cwd, file), "one\n"));
     git.run.mockImplementation(async (command: string, args: string[]) => {
       expect(command).toBe("git");
       if (args[0] === "ls-files") return { stdout: [...files, ".concerto/run.md", ".serena/cache.json", ""].join("\0") };
-      if (!args.includes("--no-index")) return { stdout: "2\t1\ttracked.txt\n" };
-      active += 1;
-      peak = Math.max(peak, active);
-      await new Promise<void>((resolve) => setImmediate(resolve));
-      active -= 1;
-      throw Object.assign(new Error("differences"), { stdout: `1\t0\t${args.at(-1)}\n` });
+      expect(args).not.toContain("--no-index");
+      return { stdout: "2\t1\ttracked.txt\n" };
     });
 
-    const changes = await readChanges("/fixture");
-    expect(peak).toBe(4);
-    expect(active).toBe(0);
-    expect(git.run).toHaveBeenCalledTimes(count + 2);
+    const changes = await readChanges(cwd);
+    expect(git.run).toHaveBeenCalledTimes(4);
     expect(changes[0]).toEqual({ file: "tracked.txt", added: 2, removed: 1, status: "modified" });
     expect(changes.slice(1)).toEqual(files.map((file) => ({ file, added: 1, removed: 0, status: "added" })));
-    expect(git.run.mock.calls.filter(([, args]) => args.includes("--no-index")).map(([, args]) => args.at(-1))).toEqual(files);
+    expect(git.run.mock.calls.some(([, args]) => args.includes("--no-index"))).toBe(false);
   });
 
   it("finishes later batches when one untracked file disappears", async () => {
-    const files = Array.from({ length: 9 }, (_, i) => `new-${i}.txt`);
+    const cwd = tempDir();
+    const files = Array.from({ length: 65 }, (_, i) => `new-${i}.txt`);
+    files.slice(1).forEach((file) => writeFileSync(join(cwd, file), "one\n"));
     git.run.mockImplementation(async (_command: string, args: string[]) => {
       if (args[0] === "ls-files") return { stdout: `${files.join("\0")}\0` };
-      if (!args.includes("--no-index")) return { stdout: "" };
-      if (args.at(-1) === files[0]) throw new Error("file disappeared");
-      throw Object.assign(new Error("differences"), { stdout: `1\t0\t${args.at(-1)}\n` });
+      expect(args).not.toContain("--no-index");
+      return { stdout: "" };
     });
 
-    expect(await readChanges("/fixture")).toEqual(files.slice(1).map((file) => ({ file, added: 1, removed: 0, status: "added" })));
-    expect(git.run).toHaveBeenCalledTimes(files.length + 2);
+    expect(await readChanges(cwd)).toEqual(files.slice(1).map((file) => ({ file, added: 1, removed: 0, status: "added" })));
+    expect(git.run).toHaveBeenCalledTimes(4);
   });
 
   it("starts no file diffs when there are no eligible untracked files", async () => {

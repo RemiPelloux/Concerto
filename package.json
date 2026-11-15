@@ -11,7 +11,8 @@
       "source": "./src/*",
       "default": "./dist/*"
     },
-    "#tests/*": "./tests/*"
+    "#tests/*": "./tests/*",
+    "#scripts/*": "./scripts/*"
   },
   "files": [
     ".pelloux/GUIDELINES.md",

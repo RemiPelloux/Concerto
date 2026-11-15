@@ -5,11 +5,13 @@ import { perform } from "#src/orchestrator/perform.js";
 import { scoreRequest } from "#src/orchestrator/score.js";
 import type { Store } from "#src/state/store.js";
 import type { State } from "#src/state/types.js";
+import { resumable } from "#src/engine/history.js";
+import { unfinished } from "#src/ui/RunSummary.js";
 import type { AppDeps } from "#src/ui/App.js";
 import { runSlash, type ExitReason, type Panel, type Session } from "#src/ui/slash.js";
 
 type Run = { concert: Concert | null; abort: AbortController };
-type Controls = { panel: Panel | null; submit: (text: string) => void };
+type Controls = { panel: Panel | null; submit: (text: string) => void; retry: () => void };
 type KeyContext = { store: Store; run: RefObject<Run | null>; fail: (e: unknown) => void; closePanel: () => boolean; active: boolean };
 export type NavHooks = { active: boolean; tour: () => void };
 
@@ -68,6 +70,17 @@ function useRequest(deps: AppDeps, session: Session, run: RefObject<Run | null>)
   return { fail, request, resume: useResume({ deps, session, run, fail }) };
 }
 
+/** After a run, builds again the stories that did not pass; the ones that passed are kept. */
+function useRetry(store: Store, run: RefObject<Run | null>, fail: (e: unknown) => void): () => void {
+  return useCallback(() => {
+    const state = store.get();
+    const concert = run.current?.concert;
+    if (!concert || !["done", "failed"].includes(state.phase) || unfinished(state).length === 0) return;
+    store.update(() => resumable(state));
+    perform(concert).catch(fail);
+  }, [store, run, fail]);
+}
+
 /** Wires keyboard, prompt and slash commands to the orchestrator for one interactive session. */
 export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const [session, setSession] = useState<Session>({ config: deps.config, catalog: deps.catalog });
@@ -87,5 +100,5 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const closePanel = () => (panel ? (setPanel(null), true) : false);
   useKeys({ store: deps.store, run, fail, closePanel, active: nav.active });
   useStartOnce(deps.initialRequest, submit);
-  return { panel, submit };
+  return { panel, submit, retry: useRetry(deps.store, run, fail) };
 }

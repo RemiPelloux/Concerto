@@ -30,6 +30,8 @@ export type StoryView = {
   /** Files, importers and covering tests, measured after scoring. */
   impact: Impact;
   status: StoryStatus;
+  /** The critic's last finding, in one line: why a story failed, shown when the run ends. */
+  finding?: string;
 };
 
 export type LogEntry = { role: Role; label: string; detail: string; result: string };

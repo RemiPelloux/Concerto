@@ -1,6 +1,7 @@
 import { Box, Text } from "ink";
 import type { State } from "#src/state/types.js";
 import { COLOR, ROLE_COLOR, shortModel } from "#src/ui/theme.js";
+import { unfinished } from "#src/ui/RunSummary.js";
 import type { Zone } from "#src/ui/useNavigation.js";
 
 const HINT: Record<State["phase"], string> = {
@@ -18,9 +19,15 @@ const ZONE_HINT: Record<Exclude<Zone, "prompt">, string> = {
   changes: "changes · ↑↓ select · enter diff · tab next · esc prompt",
 };
 
+/** After a run with stories left, the first thing to say is that Enter retries them. */
+function promptHint(state: State): string {
+  const left = (state.phase === "done" || state.phase === "failed") ? unfinished(state).length : 0;
+  return left ? `enter retries the ${left} ${left === 1 ? "story" : "stories"} that did not pass · tab to review · or type a new request` : HINT[state.phase];
+}
+
 function hint(state: State, zone: Zone, overlay: boolean): string {
   if (overlay) return "esc back";
-  const base = zone === "prompt" ? HINT[state.phase] : ZONE_HINT[zone];
+  const base = zone === "prompt" ? promptHint(state) : ZONE_HINT[zone];
   return state.error && zone === "prompt" ? `${base} · ${state.error}` : base;
 }
 

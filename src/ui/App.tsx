@@ -17,6 +17,7 @@ import { LogView } from "#src/ui/LogView.js";
 import { OverlayView } from "#src/ui/Overlays.js";
 import { PanelView } from "#src/ui/PanelView.js";
 import { PromptBar } from "#src/ui/PromptBar.js";
+import { RunSummary } from "#src/ui/RunSummary.js";
 import type { ExitReason } from "#src/ui/slash.js";
 import { Stage } from "#src/ui/Stage.js";
 import { StatusLine } from "#src/ui/StatusLine.js";
@@ -128,7 +129,7 @@ export function App(deps: AppDeps) {
   const state = useFrameState(deps.store);
   const roomy = (useStdout().stdout.rows ?? ROOMY_ROWS) >= ROOMY_ROWS;
   const nav = useNavigation(state, deps.cwd, deps.showTour);
-  const { panel, submit } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }) });
+  const { panel, submit, retry } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }) });
   const brain = useMemo(() => shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? ""), [deps.catalog, deps.config]);
   const idle = TYPING_PHASES.includes(state.phase);
   if (nav.overlay) return <OverlayScreen state={state} nav={nav} session={deps.log.id} />;
@@ -140,7 +141,8 @@ export function App(deps: AppDeps) {
       <Work state={state} nav={nav} />
       <LogView log={state.log} />
       <PanelView panel={panel} />
-      <PromptBar enabled={idle && nav.zone === "prompt"} onSubmit={submit} onTab={nav.nextZone} />
+      <RunSummary state={state} />
+      <PromptBar enabled={idle && nav.zone === "prompt"} onSubmit={submit} onTab={nav.nextZone} onEmpty={retry} />
       <StatusLine state={state} zone={nav.zone} overlay={false} session={deps.log.id} />
     </Box>
   );

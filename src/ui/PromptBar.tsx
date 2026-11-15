@@ -3,7 +3,8 @@ import { useState } from "react";
 import { completeSlash } from "#src/ui/slash.js";
 import { COLOR } from "#src/ui/theme.js";
 
-type Props = { enabled: boolean; onSubmit: (text: string) => void; onTab: () => void };
+/** `onEmpty`: Enter on an empty prompt, which retries what did not pass after a run. */
+type Props = { enabled: boolean; onSubmit: (text: string) => void; onTab: () => void; onEmpty: () => void };
 
 const SUGGESTIONS = 6;
 const NAME_WIDTH = 22;
@@ -24,12 +25,13 @@ function Suggestions({ value }: { value: string }) {
   );
 }
 
-function usePromptInput({ enabled, onSubmit, onTab }: Props): string {
+function usePromptInput({ enabled, onSubmit, onTab, onEmpty }: Props): string {
   const [value, setValue] = useState("");
   useInput(
     (input, key) => {
       if (key.return) {
         if (value.trim()) onSubmit(value.trim());
+        else onEmpty();
         return setValue("");
       }
       if (key.tab) {
@@ -46,8 +48,9 @@ function usePromptInput({ enabled, onSubmit, onTab }: Props): string {
 }
 
 /** The request line. A leading "/" turns it into a command, with suggestions and tab completion. */
-export function PromptBar({ enabled, onSubmit, onTab }: Props) {
-  const value = usePromptInput({ enabled, onSubmit, onTab });
+export function PromptBar(props: Props) {
+  const { enabled } = props;
+  const value = usePromptInput(props);
   return (
     <Box flexDirection="column">
       <Suggestions value={value} />

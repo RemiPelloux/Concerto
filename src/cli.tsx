@@ -2,6 +2,7 @@
 import { render } from "ink";
 import { parseArgs } from "node:util";
 import { clearCache, printModels, printStats } from "./commands/info.js";
+import { runInOrca } from "./commands/orca.js";
 import { runInit, runOnboarding, runProbe } from "./commands/setup.js";
 import { isFirstLaunch, loadConfig } from "./config/load.js";
 import { ROLES, type ConcertoConfig } from "./config/types.js";
@@ -21,6 +22,7 @@ const USAGE = `concerto [options] [request]
   --plan              score the request into user stories, print JSON and exit
   --run               score and build without the TUI, printing the log (scripts, CI)
   --yes               build right after scoring, without the confirm step
+  --orca              start the run in a new Orca worktree, in its own terminal tab
   --budget <usd>      stop starting stories once a run has spent this (API-equivalent)
   --prefer <list>     providers to try first, e.g. ce-* or ce-gpt,openai
   --init              detect every linked AI and write your personal config
@@ -36,6 +38,7 @@ const OPTIONS = {
   plan: { type: "boolean" },
   run: { type: "boolean" },
   yes: { type: "boolean" },
+  orca: { type: "boolean" },
   budget: { type: "string" },
   prefer: { type: "string" },
   init: { type: "boolean" },
@@ -84,6 +87,7 @@ async function main(): Promise<void> {
   if (values.help) return void process.stdout.write(`${USAGE}\n`);
   if (values.stats) return printStats(process.cwd());
   if (values.init) return runInit(values.routing);
+  if (values.orca) return runInOrca(request);
   if (values.probe) return runProbe(loadConfig(process.cwd()));
   const tui = !values.plan && !values.run && !values.models && !values.doctor && !values["clear-cache"];
   if (tui && process.stdin.isTTY && isFirstLaunch(process.cwd())) await runOnboarding();

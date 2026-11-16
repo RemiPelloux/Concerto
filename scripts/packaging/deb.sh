@@ -11,7 +11,7 @@ Package: concerto
 Version: $VERSION
 Architecture: $ARCH
 Maintainer: RemiPelloux <noreply@github.com>
-Depends: git
+Depends: git, libatomic1
 Section: devel
 Priority: optional
 Homepage: https://github.com/RemiPelloux/Concerto

@@ -1,0 +1,1 @@
+Implement slugify in src/slug.js: lowercase; strip accents (é becomes e); replace every run of characters that are not letters or digits with a single dash; no dash at either end; at most 60 characters, cutting at a dash rather than inside a word when the slug is longer. Add tests.

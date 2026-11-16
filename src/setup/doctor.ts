@@ -2,10 +2,12 @@ import { configPath, userConfigPath } from "#src/config/load.js";
 import type { ConcertoConfig } from "#src/config/types.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { firstOf } from "#src/models/router.js";
+import { readPriceBook } from "#src/models/price-book.js";
 import { ROLES } from "#src/config/types.js";
 import { isBroken, readHealth } from "#src/models/health.js";
 import type { Detection } from "#src/setup/detect.js";
 
+const ISO_DAY = 10;
 const COUNT_WIDTH = 3;
 const ROLE_WIDTH = 10;
 const out = (line: string) => process.stdout.write(`${line}\n`);
@@ -32,6 +34,8 @@ export function printDoctor(cwd: string, d: Detection, setup: { config: Concerto
   out(`config    ${configPath(cwd)}`);
   if (configPath(cwd) !== userConfigPath()) out(`          (personal config: ${userConfigPath()}, written by --init)`);
   out(`reachable ${setup.catalog.models.length} of ${Object.keys(setup.config.models).length} configured models`);
+  const book = readPriceBook();
+  out(`prices    ${book ? `models.dev, fetched ${book.fetchedAt.slice(0, ISO_DAY)}` : "pi's registry; run --update-prices for current ones"}`);
   ROLES.forEach((r) => {
     const first = firstOf(setup.catalog, setup.config, r);
     out(`${r.padEnd(ROLE_WIDTH)}${first?.ref ?? "nothing reachable"}`);

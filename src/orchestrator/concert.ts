@@ -5,6 +5,13 @@ import { buildRepoMap, type RepoMap } from "#src/engine/repo-map.js";
 import { ResponseCache } from "#src/engine/response-cache.js";
 import { Sessions } from "#src/engine/sessions.js";
 import { SystemPrompts } from "#src/engine/system-prompts.js";
+import { claimRun, clearLeftovers } from "#src/engine/worktree.js";
+import { detectChecks, type Check } from "#src/engine/checks.js";
+import { calibrate, type Calibration } from "#src/engine/calibrate.js";
+import { readOutcomes, type Outcome } from "#src/engine/outcomes.js";
+import { readStats } from "#src/engine/stats.js";
+import { templateBrief } from "#src/engine/templates.js";
+import { WEIGHTS } from "#src/orchestrator/scoring.js";
 import { detectToolchain, toolchainNotes } from "#src/engine/toolchain.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { roleChain } from "#src/models/router.js";
@@ -30,11 +37,50 @@ export type Concert = {
   skills: Skills;
   repo: RepoMap;
   blastRadius: BlastRadius;
+  /** Stories build in their own git worktrees (a git repository and isolation not turned off). */
+  isolated: boolean;
+  /** A saved plan shape for the scorer to follow, as a segment, or "". */
+  template: string;
+  /** What every story must pass before review: the project's tests, type check and lint. */
+  checks: Check[];
+  /** What this repository's past runs say: fitted score weights and each model's track record. */
+  calibration: Calibration;
+  /** API-equivalent dollars spent here before this run: today, and in total. For the budgets. */
+  spentBefore: { today: number; total: number };
   /** Conductor list price: the "one frontier model alone" baseline in the cost panel. */
   brainPrice: Price | null;
+  /** Commit each story's merged files on its own (`--commit`, `--pr`). Unset: Concerto never commits. */
+  commit?: boolean;
 };
 
-export type ConcertInit = Pick<Concert, "config" | "catalog" | "store" | "runner" | "cwd"> & { signal?: AbortSignal };
+/** `template`: the name of a saved plan shape the scorer should follow. */
+export type ConcertInit = Pick<Concert, "config" | "catalog" | "store" | "runner" | "cwd"> & { signal?: AbortSignal; template?: string; commit?: boolean };
+
+/** What finished stories cost since local midnight. */
+function spentToday(outcomes: Outcome[]): number {
+  const midnight = new Date().setHours(0, 0, 0, 0);
+  return outcomes.filter((o) => o.at >= midnight).reduce((sum, o) => sum + o.cost, 0);
+}
+
+/** What the repository's history brings to a run: the calibration and what was already spent. */
+function learned(cwd: string): Pick<Concert, "calibration" | "spentBefore"> {
+  const outcomes = readOutcomes(cwd);
+  return { calibration: calibrate(outcomes, WEIGHTS), spentBefore: { today: spentToday(outcomes), total: readStats(cwd).ledger.usage.cost } };
+}
+
+/** Claims this run's worktrees and saves, then removes, any a crashed run left behind. */
+async function prepareWorktrees(init: ConcertInit, runId: string): Promise<void> {
+  claimRun(init.cwd, runId);
+  const patches = await clearLeftovers(init.cwd);
+  if (patches.length > 0) init.store.log({ role: "conductor", label: "Cleanup", detail: `unmerged work of an interrupted run saved in ${patches.length} patch file(s) in .concerto/worktrees/`, result: "saved" });
+}
+
+/** Whether stories build in worktrees; a run that commits needs them, to know each story's files. */
+function isolatedFor(init: ConcertInit, repoKey: string): boolean {
+  const isolated = init.config.isolation === "worktree" && repoKey !== "no-git";
+  if (init.commit && !isolated) throw new Error("--commit and --pr need a git repository with isolation on: a commit holds one story's merged files.");
+  return isolated;
+}
 
 export async function createConcert(init: ConcertInit): Promise<Concert> {
   const { config, cwd } = init;
@@ -42,6 +88,8 @@ export async function createConcert(init: ConcertInit): Promise<Concert> {
   const cache = new ResponseCache({ ...config.cache, dir: join(cwd, config.cache.dir) });
   cache.prune();
   const repo = await buildRepoMap(cwd);
+  const isolated = isolatedFor(init, repo.key);
+  if (isolated) await prepareWorktrees(init, runId);
   return {
     ...init,
     runId,
@@ -52,6 +100,10 @@ export async function createConcert(init: ConcertInit): Promise<Concert> {
     skills: new Skills(config.skills, cwd),
     repo,
     blastRadius: new BlastRadius(cwd, repo.files),
+    isolated,
+    checks: detectChecks(cwd, config.checks),
+    template: init.template ? templateBrief(init.template) : "",
+    ...learned(cwd),
     brainPrice: roleChain(init.catalog, config, "conductor")[0]?.price ?? null,
   };
 }

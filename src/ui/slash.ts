@@ -8,9 +8,19 @@ import type { SessionLog } from "#src/engine/session-log.js";
 import type { Store } from "#src/state/store.js";
 import type { State } from "#src/state/types.js";
 import { history } from "#src/ui/history.js";
+import type { Edit } from "#src/orchestrator/edit.js";
+import type { Concert } from "#src/orchestrator/concert.js";
+import { readCalls, type CallRecord } from "#src/engine/session-log.js";
+import { listSessions, readSession } from "#src/engine/history.js";
+import { writeShare } from "#src/engine/share.js";
+import { join } from "node:path";
+import { REVIEW_COMMANDS } from "#src/ui/review-commands.js";
+import { parseEdit, PLAN_EDITS } from "#src/ui/plan-commands.js";
+import { listTemplates, saveTemplate, templateBrief } from "#src/engine/templates.js";
 
 export type Panel = { title: string; lines: string[] };
-export type Session = { config: ConcertoConfig; catalog: Catalog };
+/** `template`: the plan shape the scorer follows for the next requests, if one was picked. */
+export type Session = { config: ConcertoConfig; catalog: Catalog; template?: string };
 export type ExitReason = "quit" | "setup";
 
 export type SlashContext = {
@@ -23,9 +33,15 @@ export type SlashContext = {
   tour: () => void;
   /** Opens the arrow-key model picker. */
   pick: () => void;
+  /** Opens the replay of a session's recorded calls. */
+  replay: (calls: CallRecord[]) => void;
   log: SessionLog;
   /** Puts a saved session on screen and gets it ready to build. */
   resume: (state: State) => void;
+  /** Changes the plan waiting for Enter; returns what was done. */
+  edit: (edit: Edit) => Promise<string>;
+  /** The run of this session, for reviewing its work: null before the first request. */
+  concert: () => Concert | null;
 };
 
 type Command = { name: string; args: string; help: string; run: (arg: string, ctx: SlashContext) => Promise<void> | void };
@@ -117,7 +133,58 @@ async function orca(arg: string, ctx: SlashContext): Promise<void> {
   ctx.show({ title: "Started in Orca", lines: [`A new worktree is building: ${arg}`] });
 }
 
+/** `/drop`, `/merge`, `/route`…: one command per plan edit. */
+const editCommands: Command[] = Object.entries(PLAN_EDITS).map(([name, spec]) => ({
+  name,
+  args: spec.usage,
+  help: spec.help,
+  run: async (arg, ctx) => {
+    const edit = parseEdit(name, arg);
+    if (typeof edit === "string") return ctx.show({ title: "Usage", lines: [edit] });
+    ctx.show({ title: "Plan", lines: [await ctx.edit(edit), "Enter builds the plan; more edits, or Esc to discard it."] });
+  },
+}));
+
+function template(arg: string, ctx: SlashContext): void {
+  const [verb, name = ""] = arg.split(/\s+/);
+  if (verb === "save" && name) {
+    const plan = ctx.store.get().plan;
+    if (!plan) return ctx.show({ title: "Template", lines: ["Score a request first: a template saves the shape of a plan."] });
+    return ctx.show({ title: "Template", lines: [`Saved ${saveTemplate(name, plan)}`] });
+  }
+  if (verb === "use" && name) {
+    templateBrief(name);
+    ctx.setSession({ ...ctx.session, template: name });
+    return ctx.show({ title: "Template", lines: [`Next requests are planned in the shape of "${name}". /template off stops it.`] });
+  }
+  if (verb === "off") return ctx.setSession({ ...ctx.session, template: undefined });
+  ctx.show({ title: "Templates", lines: [`Saved: ${listTemplates().join(", ") || "none"}`, "/template save <name> · /template use <name> · /template off"] });
+}
+
+/** `/replay`: this session's calls; `/replay 2` or `/replay <id>`: a saved session's. */
+function replay(arg: string, ctx: SlashContext): void {
+  const n = Number(arg);
+  const id = !arg ? ctx.log.id : Number.isInteger(n) && n >= 1 ? (listSessions(ctx.cwd)[n - 1]?.id ?? arg) : arg;
+  const calls = readCalls(id === ctx.log.id ? ctx.log.callsPath : join(ctx.cwd, ".concerto", "logs", `${id}.calls.jsonl`));
+  if (calls.length === 0) return ctx.show({ title: "Replay", lines: [`No recorded calls for ${id}. Calls are recorded from version 0.10 on.`] });
+  ctx.replay(calls);
+}
+
+/** `/share`: this session as one HTML page; `/share 2` or `/share <id>`: a saved one. */
+function share(arg: string, ctx: SlashContext): void {
+  const n = Number(arg);
+  const id = !arg ? ctx.log.id : Number.isInteger(n) && n >= 1 ? (listSessions(ctx.cwd)[n - 1]?.id ?? arg) : arg;
+  const state = id === ctx.log.id ? ctx.store.get() : readSession(ctx.cwd, id);
+  if (!state) return ctx.show({ title: "Share", lines: [`No saved session "${arg}". /history lists them.`] });
+  ctx.show({ title: "Share", lines: [`Written to ${writeShare(ctx.cwd, id, state)}`, "One HTML file: request, stories, log and agent output. Anything shaped like a key or token is redacted; read it before you send it."] });
+}
+
 export const COMMANDS: readonly Command[] = [
+  ...editCommands,
+  { name: "share", args: "[n|id]", help: "a run as one HTML file to send someone, secrets redacted", run: share },
+  { name: "replay", args: "[n|id]", help: "step through a session's model calls: what each was asked and answered", run: replay },
+  ...REVIEW_COMMANDS,
+  { name: "template", args: "save|use <name>", help: "save a plan's shape, or plan the next requests in one", run: template },
   { name: "help", args: "", help: "list these commands", run: (_a, ctx) => ctx.show({ title: "Commands", lines: COMMANDS.map((c) => `/${`${c.name} ${c.args}`.trim().padEnd(HELP_NAME)} ${c.help}`) }) },
   { name: "session", args: "", help: "this session's id and its log file, for debugging", run: (_a, ctx) => ctx.show({ title: "Session", lines: [`id    ${ctx.log.id}`, `log   ${ctx.log.shownPath}`, "Every phase, agent line and error with its stack is in that file. Attach it to a bug report."] }) },
   { name: "history", args: "[n|id]", help: "saved sessions; /history 2 reopens one and builds what did not pass", run: history },
@@ -130,6 +197,7 @@ export const COMMANDS: readonly Command[] = [
   { name: "reload", args: "", help: "read the config file again", run: (_a, ctx) => reload(ctx) },
   { name: "budget", args: "<usd|off>", help: "spending cap for this session", run: budget },
   { name: "prefer", args: "<providers|off>", help: "providers tried first, e.g. ce-*", run: prefer },
+  { name: "insights", args: "", help: "what past runs say: pass rate and cost per model, files that fail", run: async (_a, ctx) => ctx.show({ title: "Insights", lines: (await import("#src/commands/insights.js")).insightsLines(ctx.cwd) }) },
   { name: "stats", args: "", help: "tokens, cache hits and savings for this repository", run: (_a, ctx) => ctx.show({ title: "Stats", lines: statsLines(ctx.cwd) }) },
   { name: "orca", args: "<request>", help: "build a request in a new Orca worktree", run: orca },
   { name: "clear", args: "", help: "clear the plan and the log", run: (_a, ctx) => ctx.store.update(() => ({ phase: "idle", plan: null, stories: {}, order: [], log: [], error: "" })) },

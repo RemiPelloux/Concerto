@@ -20,7 +20,7 @@ export function initialState(): State {
     order: [],
     roles: idleRoles(),
     swarm: [],
-    checkpoints: { "plan-lock": "", "repeat-error": "", "before-done": "" },
+    checkpoints: { "plan-lock": "", "repeat-error": "", "critics-disagree": "", "before-done": "" },
     notes: [],
     log: [],
     agents: {},
@@ -28,6 +28,7 @@ export function initialState(): State {
     changes: [],
     ledger: EMPTY_LEDGER,
     error: "",
+    paths: [],
   };
 }
 

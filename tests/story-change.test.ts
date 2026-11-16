@@ -3,6 +3,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { snapshotStat, worktreeSnapshot } from "#src/engine/snapshot.js";
+import { gitEnv } from "#src/runner/env.js";
 import { createConcert } from "#src/orchestrator/concert.js";
 import { perform } from "#src/orchestrator/perform.js";
 import { scoreRequest } from "#src/orchestrator/score.js";
@@ -12,7 +13,8 @@ import { CATALOG, PLAN_REPLY, scriptedRunner, tempDir, testConfig } from "#tests
 
 function gitRepo(): string {
   const cwd = tempDir();
-  const git = (...args: string[]) => execFileSync("git", args, { cwd });
+  // gitEnv(): never the GIT_DIR a commit hook sets, or these commands would act on the real repository.
+  const git = (...args: string[]) => execFileSync("git", args, { cwd, env: gitEnv() });
   git("init", "-q");
   writeFileSync(join(cwd, "a.txt"), "one\n");
   git("add", "a.txt");
@@ -58,7 +60,8 @@ describe("the critic's scope", () => {
     const cwd = gitRepo();
     writeFileSync(join(cwd, "someone-else.txt"), "unrelated work");
     let builds = 0;
-    const critics = await run(cwd, () => writeFileSync(join(cwd, `build-${++builds}.txt`), "built"));
+    // Each story builds in its own worktree: the builder writes where it is started.
+    const critics = await run(cwd, (r) => writeFileSync(join(r.cwd, `build-${++builds}.txt`), "built"));
     expect(critics.length).toBeGreaterThan(0);
     for (const critic of critics) {
       const change = changeSection(critic.prompt);
@@ -96,7 +99,7 @@ describe("a blocked builder", () => {
   it("that changed files is still checked by the critic", async () => {
     const cwd = gitRepo();
     let n = 0;
-    const calls = await runAll(cwd, () => (writeFileSync(join(cwd, `work-${++n}.txt`), "done"), BLOCKED));
+    const calls = await runAll(cwd, (r) => (writeFileSync(join(r.cwd, `work-${++n}.txt`), "done"), BLOCKED));
     expect(calls.filter(is("critic")).length).toBeGreaterThan(0);
   });
 });

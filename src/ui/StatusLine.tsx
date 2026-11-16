@@ -1,33 +1,24 @@
 import { Box, Text } from "ink";
+import { t } from "#src/i18n/index.js";
 import type { State } from "#src/state/types.js";
 import { COLOR, ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 import { unfinished } from "#src/ui/RunSummary.js";
 import type { Zone } from "#src/ui/useNavigation.js";
 
-const HINT: Record<State["phase"], string> = {
-  idle: "enter to score · / for commands · tab to look around",
-  scoring: "✻ Scoring… (esc to interrupt)",
-  planned: "enter to build · type a change to re-plan · esc to discard the plan · tab to inspect the stories",
-  running: "✻ Working… type a note for the agents · tab to watch them · esc to interrupt",
-  done: "done · tab to review the changes · type a new request",
-  failed: "stopped · tab to see what happened · type a new request",
-};
-
-const ZONE_HINT: Record<Exclude<Zone, "prompt">, string> = {
-  agents: "agents · ↑↓ select · enter live output · tab next · esc prompt",
-  stories: "stories · ↑↓ select · enter why this score · tab next · esc prompt",
-  changes: "changes · ↑↓ select · enter diff · tab next · esc prompt",
-};
+function zoneHint(zone: Exclude<Zone, "prompt">): string {
+  const z = t().zone;
+  return zone === "stories" ? z.stories() : z[zone];
+}
 
 /** After a run with stories left, the first thing to say is that Enter retries them. */
 function promptHint(state: State): string {
   const left = (state.phase === "done" || state.phase === "failed") ? unfinished(state).length : 0;
-  return left ? `enter retries the ${left} ${left === 1 ? "story" : "stories"} that did not pass · tab to review · or type a new request` : HINT[state.phase];
+  return left ? t().retry(left) : t().phase[state.phase];
 }
 
 function hint(state: State, zone: Zone, overlay: boolean): string {
-  if (overlay) return "esc back";
-  const base = zone === "prompt" ? promptHint(state) : ZONE_HINT[zone];
+  if (overlay) return t().back;
+  const base = zone === "prompt" ? promptHint(state) : zoneHint(zone);
   return state.error && zone === "prompt" ? `${base} · ${state.error}` : base;
 }
 

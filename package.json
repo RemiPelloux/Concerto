@@ -1,6 +1,6 @@
 {
   "name": "concerto",
-  "version": "0.1.4",
+  "version": "0.19.0",
   "description": "Terminal orchestrator that scores a request into user stories and routes each one to the most efficient model available through pi.",
   "type": "module",
   "bin": {
@@ -36,6 +36,10 @@
     "test": "vitest run",
     "test:affected": "smarttest run --affected",
     "test:explain": "smarttest explain",
+    "docs:reference": "node --import tsx --conditions=source scripts/reference.ts > docs/reference.md",
+    "bench:single": "pnpm build && mkdir -p out && node --import tsx --conditions=source scripts/bench-single.ts",
+    "perf:budgets": "node --import tsx --conditions=source scripts/perf-budgets.ts dist/cli.js",
+    "bench:languages": "node --import tsx --conditions=source scripts/language-bench.ts",
     "perf": "pnpm build && node --import tsx --conditions=source scripts/perf-bench.ts",
     "pelloux": "python3 .pelloux/pelloux.py audit",
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm pelloux"
@@ -60,6 +64,7 @@
     "@types/cross-spawn": "6.0.6",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
+    "esbuild": "0.25.12",
     "eslint": "^10.15.0",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",

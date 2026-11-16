@@ -98,11 +98,12 @@ describe("onboarding", () => {
 
 describe("estimate", () => {
   it("grows with points and model price, and is zero without a price", () => {
-    const cheap = estimateStory(2, CATALOG.get("a/swarm"), CATALOG.get("a/swarm"));
-    const dear = estimateStory(2, CATALOG.get("a/brain"), CATALOG.get("a/swarm"));
+    const cheap = estimateStory({ points: 2, builder: CATALOG.get("a/swarm"), critic: CATALOG.get("a/swarm") });
+    const dear = estimateStory({ points: 2, builder: CATALOG.get("a/brain"), critic: CATALOG.get("a/swarm") });
     expect(cheap).toBeGreaterThan(0);
     expect(dear).toBeGreaterThan(cheap);
-    expect(estimateStory(4, CATALOG.get("a/swarm"), undefined)).toBeCloseTo(2 * estimateStory(2, CATALOG.get("a/swarm"), undefined));
-    expect(estimateStory(3, CATALOG.get("c/unpriced"), undefined)).toBe(0);
+    const at = (points: number, ref: string) => estimateStory({ points, builder: CATALOG.get(ref), critic: undefined });
+    expect(at(4, "a/swarm")).toBeCloseTo(2 * at(2, "a/swarm"));
+    expect(at(3, "c/unpriced")).toBe(0);
   });
 });

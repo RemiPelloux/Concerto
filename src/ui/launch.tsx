@@ -7,9 +7,15 @@ import { detect } from "#src/setup/detect.js";
 import { App, type AppDeps } from "#src/ui/App.js";
 import type { ExitReason } from "#src/ui/slash.js";
 import { Onboarding } from "#src/ui/Onboarding.js";
+import { applyKeys } from "#src/ui/keys.js";
+import { setLanguage } from "#src/i18n/index.js";
+import { applyTheme } from "#src/ui/theme.js";
 
 /** The only module that loads Ink and React: commands that print and exit never import it. */
 export async function launchTui(deps: Omit<AppDeps, "onExit">): Promise<ExitReason> {
+  applyTheme(deps.config.ui.theme);
+  applyKeys(deps.config.ui.keys);
+  setLanguage(deps.config.ui.language);
   process.stdout.write("\x1b[2J\x1b[H");
   let reason: ExitReason = "quit";
   await render(<App {...deps} onExit={(r) => (reason = r)} />).waitUntilExit();

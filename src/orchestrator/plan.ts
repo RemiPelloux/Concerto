@@ -5,6 +5,8 @@ export const FIBONACCI: readonly number[] = [1, 2, 3, 5, 8, 13];
 const SCALE_MAX = 5;
 const SCALE = z.number().int().min(1).max(SCALE_MAX);
 const MAX_STORIES = 24;
+const MAX_CHECKS = 5;
+const MAX_CHECK_LENGTH = 300;
 /** Story ids end up in session ids and file names: keep them to a safe slug. */
 const STORY_ID = /^[a-z0-9][a-z0-9-]{0,47}$/;
 
@@ -25,6 +27,8 @@ export const StorySchema = z.object({
   dependsOn: z.array(z.string()).default([]),
   /** Files the story will likely change or create. Sanitized before any use. */
   files: z.array(z.string()).default([]),
+  /** Acceptance items as shell commands that exit 0 when met: Concerto runs them after each build. */
+  checks: z.array(z.string().min(1).max(MAX_CHECK_LENGTH)).max(MAX_CHECKS).default([]),
 });
 export type Story = z.infer<typeof StorySchema>;
 

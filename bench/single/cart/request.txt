@@ -1,0 +1,1 @@
+Add discount codes to total in src/cart.js, as total(items, code). SAVE10 takes 10% off the subtotal, rounded down to the cent, before shipping is decided. FREESHIP makes shipping 0. BOGO-<sku> makes every second unit of that sku free. No code works as today. Any other code throws an Error whose message contains the code and the word unknown. Add tests.

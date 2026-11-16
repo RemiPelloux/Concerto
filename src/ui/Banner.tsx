@@ -1,5 +1,6 @@
 import { Box, Text } from "ink";
 import { useEffect, useState } from "react";
+import { t } from "#src/i18n/index.js";
 import { COLOR } from "#src/ui/theme.js";
 
 const GLYPHS: Record<string, string[]> = {
@@ -36,7 +37,7 @@ export function Banner() {
     <Box flexDirection="column">
       {welcome && (
         <Box borderStyle="round" borderColor={COLOR.brassDeep} paddingX={1} alignSelf="flex-start">
-          <Text color={COLOR.brass}>♪ Welcome to Concerto</Text>
+          <Text color={COLOR.brass}>{t().welcome}</Text>
         </Box>
       )}
       {rows.map((line, i) => (

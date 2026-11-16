@@ -1,10 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { gitEnv } from "#src/runner/env.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createConcert } from "#src/orchestrator/concert.js";
 import { worktreeSnapshot } from "#src/engine/snapshot.js";
-import { runGates } from "#src/orchestrator/gate.js";
 import { perform } from "#src/orchestrator/perform.js";
 import { scoreRequest } from "#src/orchestrator/score.js";
 import type { RunRequest } from "#src/runner/types.js";
@@ -13,33 +13,14 @@ import { CATALOG, PLAN_REPLY, scriptedRunner, tempDir, testConfig } from "#tests
 
 function gitRepo(): string {
   const cwd = tempDir();
-  const git = (...args: string[]) => execFileSync("git", args, { cwd });
+  // gitEnv(): never the GIT_DIR a commit hook sets, or these commands would act on the real repository.
+  const git = (...args: string[]) => execFileSync("git", args, { cwd, env: gitEnv() });
   git("init", "-q");
   writeFileSync(join(cwd, "a.txt"), "one\n");
   git("add", "a.txt");
   git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "init");
   return cwd;
 }
-
-describe("runGates", () => {
-  it("passes when every command exits 0", async () => {
-    expect(await runGates(["true", "echo ok"], { cwd: tempDir() })).toBeNull();
-  });
-
-  it("stops at the first failing command and returns the end of its output", async () => {
-    const failure = await runGates(["true", "echo boom >&2; exit 3", "echo never > ran.txt"], { cwd: tempDir() });
-    expect(failure?.command).toBe("echo boom >&2; exit 3");
-    expect(failure?.output).toContain("boom");
-    expect(failure?.output).toContain("[exit 3]");
-  });
-
-  it("keeps only the tail of a long output", async () => {
-    const failure = await runGates(["seq 1 20000; exit 1"], { cwd: tempDir() });
-    expect(failure?.output.length).toBeLessThan(6_100);
-    expect(failure?.output).toContain("20000");
-    expect(failure?.output).not.toMatch(/^1\n/);
-  });
-});
 
 describe("worktreeSnapshot", () => {
   it("changes with tracked edits and new files, not with Concerto's own state", async () => {
@@ -60,7 +41,7 @@ describe("worktreeSnapshot", () => {
     const cwd = gitRepo();
     writeFileSync(join(cwd, "new.txt"), "x");
     await worktreeSnapshot(cwd);
-    expect(execFileSync("git", ["status", "--porcelain"], { cwd }).toString()).toBe("?? new.txt\n");
+    expect(execFileSync("git", ["status", "--porcelain"], { cwd, env: gitEnv() }).toString()).toBe("?? new.txt\n");
   });
 
   it("is null outside a Git repository", async () => {
@@ -97,7 +78,7 @@ describe("gates in a run", () => {
     const cwd = gitRepo();
     const { builds } = await run([`echo x >> ${join(cwd, ".git", "gate-runs")}; exit 1`], cwd);
     expect(builds.some((r) => r.prompt.includes("changed no file"))).toBe(true);
-    const runs = execFileSync("cat", [join(cwd, ".git", "gate-runs")]).toString().trim().split("\n");
+    const runs = readFileSync(join(cwd, ".git", "gate-runs"), "utf8").trim().split("\n");
     expect(runs.length).toBeLessThan(builds.length);
   });
 

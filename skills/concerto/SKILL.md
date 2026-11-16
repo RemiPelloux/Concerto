@@ -18,6 +18,7 @@ edit files in the directory Concerto runs in.
 | It built here, unattended, with a cap | `concerto --run --budget 5 "<request>"` | Yes, here |
 | To finish a run that crashed, was stopped or failed review | `concerto --resume <session id>` (opens the TUI; the user presses Enter to build) | Yes, here |
 | To check which models work | `concerto --doctor` | No |
+| What past runs say: which model passes, what it costs, which files keep failing | `concerto --insights` | No |
 
 Rules:
 
@@ -27,6 +28,9 @@ Rules:
   first; if it is dirty, use `--orca` or ask.
 - Always pass `--budget` with `--run` unless the user gave a budget or said not to.
 - `--run` can take many minutes. Run it in the background if your harness allows it.
+
+`concerto --plan --explain "<request>"` prints the same plan in words: each story's score with the
+factors behind it, its builders and reviewers in order, and where its estimate comes from.
 
 ## Reading `--plan` output
 

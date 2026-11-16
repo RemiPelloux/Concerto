@@ -32,6 +32,20 @@ export type StoryView = {
   status: StoryStatus;
   /** The critic's last finding, in one line: why a story failed, shown when the run ends. */
   finding?: string;
+  /** API-equivalent dollars this story's builds and reviews cost so far. */
+  spent?: number;
+  /** Milliseconds from the first build to the story's end, for the slowest-stories view. */
+  ms?: number;
+  /** Builds this story took, rebuilds included. */
+  attempts?: number;
+  /** Files this story's merge wrote into the main folder (isolated runs). */
+  merged?: string[];
+  /** Routes whose answer changed when Concerto ran the server before and after the story. */
+  behaviour?: string[];
+  /** The flipped condition Concerto tried on the last attempt, and whether a test caught it. */
+  mutation?: { file: string; line: number; from: string; to: string; caught: boolean };
+  /** The checks Concerto ran on the last attempt: command, result, time, and whether a rerun passed. */
+  checks?: { name: string; command: string; ok: boolean; ms: number; flaky?: boolean }[];
 };
 
 export type LogEntry = { role: Role; label: string; detail: string; result: string };
@@ -53,7 +67,7 @@ export type AgentView = {
 /** One file the run changed, from git. Untracked files count all their lines as added. */
 export type FileChange = { file: string; added: number; removed: number; status: "modified" | "added" | "deleted" };
 
-export const CHECKPOINTS = ["plan-lock", "repeat-error", "before-done"] as const;
+export const CHECKPOINTS = ["plan-lock", "repeat-error", "critics-disagree", "before-done"] as const;
 export type Checkpoint = (typeof CHECKPOINTS)[number];
 
 export type State = {
@@ -75,4 +89,11 @@ export type State = {
   changes: FileChange[];
   ledger: Ledger;
   error: string;
+  /** The saved session this one was reopened from: sessions form a history with branches. */
+  parent?: string;
+  /** What the plan would cost on each way of reaching the models, for picking one before building. */
+  paths: PathCost[];
 };
+
+/** The plan's cost if every story ran one way; `prefer` is the /prefer value that picks it. */
+export type PathCost = { path: "subscriptions" | "profiles" | "api"; label: string; cost: number; missing: number; prefer: string };

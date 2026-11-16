@@ -1,0 +1,34 @@
+# .github/workflows/concerto.yml: label an issue `concerto`, or comment `/concerto` on it, and
+# Concerto builds it and opens a pull request with the run report as its body.
+name: Concerto
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+concurrency:
+  group: concerto-${{ github.event.issue.number }}
+jobs:
+  build:
+    # Only people with write access can spend the budget: an issue from anyone else is not enough.
+    if: >-
+      (github.event_name == 'issues' && github.event.label.name == 'concerto') ||
+      (github.event_name == 'issue_comment' && !github.event.issue.pull_request &&
+       startsWith(github.event.comment.body, '/concerto') &&
+       contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association))
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      # Pin a release tag (RemiPelloux/Concerto@v0.16.0 and later) once you have tried it.
+      - uses: RemiPelloux/Concerto@main
+        with:
+          budget: "5"
+          agents: claude-code
+        env:
+          # From `claude setup-token`, stored as a repository secret. Or ANTHROPIC_API_KEY.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

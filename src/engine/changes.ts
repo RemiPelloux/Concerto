@@ -103,3 +103,14 @@ export async function fileDiff(cwd: string, file: string): Promise<string> {
   if (tracked) return tracked;
   return git(cwd, ["diff", "--no-index", "--", "/dev/null", file]).catch((e: { stdout?: string }) => e.stdout ?? "");
 }
+
+/** Everything the working tree adds since the last commit, new files included, as one diff. Empty outside git. */
+export async function workingDiff(cwd: string): Promise<string> {
+  try {
+    const [tracked, untracked] = await Promise.all([git(cwd, ["diff", "--no-color", "HEAD"]), git(cwd, ["ls-files", "--others", "--exclude-standard", "-z"])]);
+    const fresh = await Promise.all(untracked.split("\0").filter((f) => f && !OWN_STATE.test(f)).map((f) => fileDiff(cwd, f)));
+    return [tracked, ...fresh].join("");
+  } catch {
+    return "";
+  }
+}

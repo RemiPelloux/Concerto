@@ -51,6 +51,17 @@ function StoryRow({ story, view, active }: { story: Story; view: StoryView; acti
   );
 }
 
+/** The plan's cost on each way of reaching the models, cheapest first, with the command that picks it. */
+function Paths({ state }: { state: State }) {
+  if (state.phase !== "planned" || state.paths.length < 2) return null;
+  const sorted = [...state.paths].sort((a, b) => a.cost - b.cost);
+  return (
+    <Text color="gray" wrap="truncate-end">
+      {sorted.map((p) => `${p.label} ${dollars(p.cost)}${p.path === "subscriptions" ? " (prepaid)" : ""}${p.missing ? `, ${p.missing} not reachable` : ""} (/prefer ${p.prefer})`).join(" · ")}
+    </Text>
+  );
+}
+
 export function StoryBoard({ state, focused = false, selected = 0 }: { state: State; focused?: boolean; selected?: number }) {
   if (!state.plan) return null;
   const total = Object.values(state.stories).reduce((sum, v) => sum + v.estimate, 0);
@@ -60,6 +71,7 @@ export function StoryBoard({ state, focused = false, selected = 0 }: { state: St
         {state.plan.summary}
         <Text color="gray"> · about {dollars(total)} API-equivalent before retries</Text>
       </Text>
+      <Paths state={state} />
       <Header />
       {state.plan.stories.map((story) => {
         const view = state.stories[story.id];

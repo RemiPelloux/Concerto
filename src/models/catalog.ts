@@ -6,7 +6,9 @@ import { loadPriceIndex, priceFor } from "#src/models/prices.js";
 import type { ModelInfo } from "#src/models/types.js";
 
 const SUBSCRIPTION_COST_FACTOR = 0.25;
-const SUBSCRIPTIONS = new Set<Backend>(["claude-code", "codex"]);
+/** A model on this machine costs nothing per token. */
+const FREE = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+const SUBSCRIPTIONS = new Set<Backend>(["claude-code", "codex", "gemini", "cursor"]);
 
 /** Reachable models, indexed by ref so lookups never scan the list. */
 export class Catalog {
@@ -31,15 +33,20 @@ function defaultCostFactor(backend: Backend, profile: string): number {
   return SUBSCRIPTIONS.has(backend) && !profile ? SUBSCRIPTION_COST_FACTOR : 1;
 }
 
-/** Every configured model, priced; the caller has already checked they answer. */
+/** `ollama/*` blocks every ref with that prefix; anything else blocks one ref. */
+export function blockedBy(blocked: readonly string[], ref: string): boolean {
+  return blocked.some((b) => (b.endsWith("*") ? ref.startsWith(b.slice(0, -1)) : ref === b));
+}
+
+/** Every configured model the policy allows, priced (a local model is free); the caller has already checked they answer. */
 export function catalogFrom(config: ConcertoConfig, keep: (ref: string) => boolean = () => true): Catalog {
   const prices = loadPriceIndex();
   const models = Object.entries(config.models)
-    .filter(([ref]) => keep(ref))
+    .filter(([ref]) => keep(ref) && !blockedBy(config.policy.blockedModels, ref))
     .map(([ref, entry]) => {
       const parsed = parseRef(ref);
       const costFactor = entry.costFactor ?? defaultCostFactor(parsed.backend, parsed.profile);
-      return { ref, parsed, tier: entry.tier, price: priceFor(prices, parsed), costFactor };
+      return { ref, parsed, tier: entry.tier, price: parsed.backend === "local" ? FREE : priceFor(prices, parsed), costFactor };
     });
   return new Catalog(models);
 }

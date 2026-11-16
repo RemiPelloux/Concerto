@@ -1,12 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync, realpathSync } from "node:fs";
+import { realpathSync } from "node:fs";
 import { relative } from "node:path";
 import { codexBin } from "#src/runner/bins.js";
 import type { Effort } from "#src/config/types.js";
 import { gitEnv } from "#src/runner/env.js";
 import type { RunEvent } from "#src/runner/events.js";
-import { asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
-import { withSkillNote } from "#src/runner/skill-note.js";
+import { type Json, asRecord, num, parseJsonLine, str, tool } from "#src/runner/json.js";
+import { withRolePrompt } from "#src/runner/skill-note.js";
 import { runJsonl } from "#src/runner/spawn.js";
 import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
 
@@ -65,11 +65,11 @@ export function buildCodexArgs(req: RunRequest): string[] {
 /** Codex has no system prompt flag: the role prompt opens the message, still a stable prefix. */
 export function codexInput(req: RunRequest, platform: NodeJS.Platform = process.platform): string {
   const note = platform === "linux" && sandboxOf(req) === "workspace-write" ? `\n\n${SANDBOX_NOTE}` : "";
-  return `${readFileSync(req.systemFile, "utf8")}\n\n---\n\n${withSkillNote(req.prompt, req.skills)}${note}`;
+  return `${withRolePrompt(req)}${note}`;
 }
 
 function itemEvent(item: Json): RunEvent | null {
-  if (item.type === "command_execution") return { kind: "tool", name: "bash", detail: oneLine(str(item.command).replace(/^\S*bash -lc /, "")) };
+  if (item.type === "command_execution") return tool("bash", str(item.command).replace(/^\S*bash -lc /, ""));
   if (item.type === "file_change") return { kind: "tool", name: "edit", detail: "files" };
   if (item.type === "agent_message") return { kind: "text", delta: str(item.text) };
   return null;
@@ -107,4 +107,4 @@ export function codexParser(): (line: string) => RunEvent | null {
 }
 
 export const runCodex: Runner = (req, onEvent) =>
-  runJsonl({ bin: codexBin(), args: buildCodexArgs(req), input: codexInput(req), cwd: req.cwd, signal: req.signal, parse: codexParser() }, onEvent);
+  runJsonl({ bin: codexBin(), args: buildCodexArgs(req), input: codexInput(req), cwd: req.cwd, signal: req.signal, sandbox: req.sandbox, parse: codexParser() }, onEvent);

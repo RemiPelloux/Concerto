@@ -6,7 +6,7 @@
   <a href="https://github.com/RemiPelloux/Concerto/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/RemiPelloux/Concerto/ci.yml?branch=main&style=flat-square&label=CI&labelColor=111113"></a>
   <a href="https://remipelloux.github.io/Concerto/"><img alt="Docs" src="https://img.shields.io/badge/docs-github%20pages-E0A458?style=flat-square&labelColor=111113"></a>
   <img alt="Node 22+" src="https://img.shields.io/badge/node-22%2B-4FD08A?style=flat-square&labelColor=111113">
-  <img alt="Backends: Claude Code, Codex, pi" src="https://img.shields.io/badge/backends-Claude%20Code%20%7C%20Codex%20%7C%20pi-B48CFF?style=flat-square&labelColor=111113">
+  <img alt="Backends: Claude Code, Codex, Gemini CLI, Cursor, OpenCode, Goose, Aider, pi, local" src="https://img.shields.io/badge/backends-9-B48CFF?style=flat-square&labelColor=111113">
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-F3F1EC?style=flat-square&labelColor=111113"></a>
 </p>
 
@@ -14,8 +14,9 @@
 
 You describe a coding job in your terminal. Concerto splits it into user stories, measures how much
 of your repository each one touches, and sends each story to the model that fits it. Opus 5.5
-builds the hard and UI stories, GPT-6.1 Sol the middle ones, Haiku 5.5 the small ones. A critic tries to break every story, and
-Fable 5.2 checks the plan at three checkpoints.
+builds the hard and UI stories, GPT-6.1 Sol the middle ones, Haiku 5.5 the small ones. Every story
+builds in its own git worktree and must pass your tests before a critic tries to break it, and
+Fable 5.2 checks the plan at four checkpoints.
 
 It runs on your Claude Code and ChatGPT subscriptions, and on any API key pi holds. Concerto never
 sees a key. Full documentation: [remipelloux.github.io/Concerto](https://remipelloux.github.io/Concerto/)
@@ -56,6 +57,22 @@ Windows), add a `concerto` command, and give Concerto's skills to the agents the
 again to update. Nothing is built on your machine and no admin rights are needed. Read
 [install.sh](scripts/install.sh) or [install.ps1](scripts/install.ps1) first if you prefer.
 
+From 0.17 each release also has a standalone executable per system, which needs no Node, through
+the usual package managers:
+
+| System | Command |
+|---|---|
+| macOS, Linux (Homebrew) | `brew tap remipelloux/concerto https://github.com/RemiPelloux/Concerto && brew install concerto` |
+| Windows (Scoop) | `scoop bucket add concerto https://github.com/RemiPelloux/Concerto; scoop install concerto` |
+| Ubuntu, Debian | download `concerto_<version>_amd64.deb` (or `arm64`) from the release, then `sudo apt install ./concerto_*.deb` |
+| Nix | `nix profile install github:RemiPelloux/Concerto` |
+| Docker | `docker run --rm -v "$PWD:/work" -w /work ghcr.io/remipelloux/concerto --help` |
+| Any system | the `concerto-<system>-<arch>` archive of the release: one file to put on your PATH |
+
+`concerto --update` updates it the way it was installed. Concerto checks for a newer release at
+most once a day and says so in one line; nothing about you or your project is sent, and
+`CONCERTO_NO_UPDATE_CHECK=1` turns it off.
+
 ## Quick start
 
 Go to a project, ideally on a clean branch or a git worktree, because agents edit the files there:
@@ -77,6 +94,8 @@ pass.`, press Enter to see the scored stories, and Enter again to build them.
 | `concerto` | Start the terminal UI |
 | `concerto "request"` | Start with a request already typed |
 | `concerto --plan "request"` | Show the scored stories as JSON, build nothing |
+| `concerto --plan --explain "request"` | Why each story got its score, model and estimate, in words |
+| `concerto --template <name> "request"` | Plan in the shape of a saved template |
 | `concerto --run "request"` | Score and build without the UI, for scripts and CI |
 | `concerto --orca "request"` | Start the run in a new Orca worktree, in its own tab |
 | `concerto --resume <id>` | Reopen a saved session and build what did not pass |
@@ -87,6 +106,8 @@ pass.`, press Enter to see the scored stories, and Enter again to build them.
 | `concerto --probe` | Retest the configured models |
 | `concerto --doctor` | What is installed, linked, skipped, and why |
 | `concerto --stats` | Tokens, cache hits and savings for this repository |
+| `concerto --update-prices` | Fetch current model prices from models.dev for estimates and budgets |
+| `concerto --insights` | What past runs say: pass rate, builds and cost per point per model, files that keep failing |
 | `concerto --install-skills` | Teach the agents on this machine to use Concerto |
 
 After a build, the report is in `.concerto/runs/`, ready to paste into a pull request.
@@ -112,7 +133,8 @@ stories that passed stay passed, and Enter builds the rest.
 | ↑ ↓ | Pick an agent, a story or a file |
 | Enter on an agent | Its live output: what it reads, runs and says, as it happens |
 | Enter on a story | Why it got its score: every factor, the files, the covering tests |
-| Enter on a file | Its diff |
+| d, m, s on a story | While a plan waits: drop it, merge the next story into it, split it |
+| Enter on a file | Its diff: side by side with the changed words marked on a wide terminal |
 | Esc | Close, go back to the prompt, discard a plan, or stop a build |
 
 While agents work, their clocks tick every second and a preview shows the last lines of one of them
@@ -122,7 +144,18 @@ Type `/` for commands, with suggestions as you type and Tab to complete:
 
 | Command | What it does |
 |---|---|
+| `/drop`, `/merge`, `/split`, `/retitle`, `/after` | Change the waiting plan: `/merge s4 s3` folds s4 into s3 |
+| `/route`, `/reviewer`, `/effort` | Pick who builds or reviews a story, and how hard: `/route s1 claude-code/claude-opus-5-5` |
+| `/hunks <story>`, `/reject <story> [n]` | After a run: list a story's hunks; take the whole story, or hunk n, back out (saved as a patch) |
+| `/ask <story> <message>` | After a run: send a story back to its builder with a comment; only that story is rebuilt |
+| `/pause`, `/continue` | Let the stories building finish and start no new one, then go on |
+| `/template save <name>`, `/template use <name>` | Keep a plan's shape, or plan the next requests in it |
+| `/insights` | Pass rate and cost per model in this repository, and the files that keep failing |
 | `/history`, `/history 2` | Saved sessions of this project; reopen one and build what did not pass |
+| `/history <words>` | Search saved sessions by request, file, model or result: `/history billing.ts failed` |
+| `/redo <story>` | Queue a passed story to build again, after editing the plan if you like |
+| `/replay [n\|id]` | Step through a session's model calls, ←→ between calls, each prompt and answer |
+| `/share [n\|id]` | The run as one HTML file in `.concerto/share/`, keys and tokens redacted (`concerto --share <id>` too) |
 | `/onboarding` | Replay the animated tour |
 | `/setup` | Detect and test your models again, then pick the routing |
 | `/config` | Every role, build route and review rule with its model: ↑↓ to move, Enter to open the list of models, Enter to pick one. Applies now and saves to the config in use |
@@ -142,17 +175,45 @@ conductor at its checkpoints. You do not open them, and they do not appear as se
 watch them in Concerto's screen, and their work shows up as changes in the folder. Concerto never
 commits; you review the diff.
 
-**Gates.** List your own checks in the config (`"gates": ["pnpm typecheck", "pnpm test"]`) or pass
-`--gate` once per command. After each build they run in order, in the project folder. A failing
-check goes straight back to the builder with the last 6,000 characters of its output, and the
-critic is not called. When the builder changed no file since a check failed, the check is not run
-again and the attempt fails at once, so a stuck builder cannot spend attempts. Only a story whose
-gates pass reaches the critic.
+### Learning from runs
 
-**The critic judges the story's own change.** Concerto snapshots the working tree before a story
-and after each build, and gives the critic the files that changed in between and the `git diff`
-that shows them. Your own edits and other work already in the folder are not held against the
-story.
+Every finished story is recorded in `.concerto/outcomes.jsonl`: its factors, model, builds, cost
+and result. After 20 stories, the score's weights are fitted to this repository: a factor that
+went with failures and retries weighs more, one that did not weighs less, within a quarter to
+double of its starting weight. Once a model has five paid stories here, the estimate uses its real
+cost per point instead of list prices. Between two models of the same price, the one that passed
+more stories here goes first. `concerto --insights` shows it all.
+
+### How each story is checked
+
+1. **Its own worktree.** The story starts from a snapshot of your folder, uncommitted work
+   included, in a git worktree under `.concerto/worktrees/`, with `node_modules`, `.venv` and
+   `.env` files linked in. Your index, HEAD and branches are not touched, and parallel stories
+   cannot see each other's edits.
+2. **Your tests.** After each build Concerto runs the project's test command (SmartTest, npm,
+   pnpm, yarn, bun, pytest, go, cargo, PHPUnit, Maven or Gradle), then the `typecheck` and `lint`
+   scripts, then your own gates, then the acceptance commands the scorer wrote. A red check goes
+   back to the builder with its output; a test that passes on a rerun is reported as flaky.
+3. **A broken condition.** On a story that adds tests, Concerto flips one condition the story
+   added and runs the tests again. If they still pass, nothing tests that condition, and the
+   builder is told to add a test that does.
+4. **The critic,** with what already passed in hand. On a high-risk story a critic from another
+   vendor reviews it too, and the conductor settles a disagreement.
+5. **The merge.** A story that passes is merged into your folder with a three-way merge, so work
+   that landed meanwhile is kept. When it conflicts with that work, as when several stories add to
+   the same export list, the story is rebuilt on top of the current code, up to twice, as a
+   developer would rebase. Your folder only ever receives a clean merge. The work of a story that
+   still fails is saved as a patch in `.concerto/worktrees/`.
+
+**Gates.** List your own checks in the config (`"gates": ["pnpm typecheck", "pnpm test"]`) or pass
+`--gate` once per command. They run with the project's checks, in the story's folder, and a
+failing one goes straight back to the builder with the end of its output; the critic is not
+called. When the builder changed no file since the checks failed, they are not run again and the
+attempt fails at once, so a stuck builder cannot spend attempts.
+
+**The critic judges the story's own change.** Concerto snapshots the story's folder before its
+first build and after each one, and gives the critic the files that changed in between and the
+`git diff` that shows them.
 
 **Builders end with `done`, `nothing-to-do` or `blocked`.** When the code already meets the story,
 the builder changes nothing and says so, and the critic passes it if the acceptance items hold. A
@@ -170,6 +231,76 @@ empty build, no blind retry.
 
 Then ask any of them, for example, "plan this with Concerto" or "build it with Concerto in a new
 Orca worktree".
+
+## Concerto as MCP tools
+
+`concerto --mcp` serves Concerto on stdio to any agent that speaks the Model Context Protocol:
+Claude Code, Codex, Cursor and the rest. Five tools:
+
+| Tool | Does |
+|---|---|
+| `concerto_plan` | Splits a request into scored stories and picks their models; changes no file |
+| `concerto_build` | Builds a planned session: worktrees, checks, critics, merge |
+| `concerto_run` | Both in one call |
+| `concerto_status` | A saved session: its plan, or each story's result and the cost |
+| `concerto_sessions` | This project's sessions, or those matching a query |
+
+Each takes the project's absolute path as `cwd`, so one server serves every project. Long builds
+report each log line as MCP progress. For Claude Code:
+
+```sh
+claude mcp add concerto -- concerto --mcp
+```
+
+## CI and pull requests
+
+- `concerto --run --json "…"` prints one JSON event per line: `session`, `log`, `story`, `done`.
+- `--commit` commits each merged story on its own: its title as the subject, the user story and
+  who built and reviewed it in the body, only its files. Without it Concerto never commits.
+- `--pr` starts a branch from a clean tree, commits per story, then pushes and opens a pull
+  request with `gh`, the run report as its body.
+
+On GitHub, the Concerto Action does this for an issue: copy
+[examples/github/concerto.yml](examples/github/concerto.yml) to `.github/workflows/`, add
+`CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) as a secret, then label an issue `concerto`
+or comment `/concerto <more instructions>`. Only people with write access can start a run, the
+budget caps it, and the issue gets a link to the pull request. On GitLab,
+[examples/gitlab/concerto.gitlab-ci.yml](examples/gitlab/concerto.gitlab-ci.yml) builds the
+`CONCERTO_REQUEST` of a pipeline and pushes a merge request.
+
+## Safety
+
+- `--sandbox`, or `"sandbox": { "enabled": true }`, runs every agent and every check sandboxed:
+  bubblewrap on Linux, `sandbox-exec` on macOS. The system is read-only and your credentials
+  (`~/.ssh`, `~/.aws`, `gh`, `.npmrc`…) are hidden. The only network is to the model providers
+  and `sandbox.allowHosts`.
+- Every change is scanned for keys, tokens and password literals before review; one sends the
+  story back and it never merges.
+- Each run keeps a signed audit log of every command its agents ran and every host the sandbox
+  refused, in `.concerto/audit/`.
+
+[docs/security.md](docs/security.md) lists every place model output reaches a shell, a path or a
+file, and what stands in the way.
+
+## Costs, dashboard and traces
+
+Every finished run is recorded, from every repository, in `~/.config/concerto/runs.jsonl`.
+
+- `concerto --costs` breaks it down by ISO week, repository and model: calls, tokens and cost.
+  `--since 7` keeps the last seven days; `--csv` prints it as CSV for a spreadsheet.
+- `concerto --dashboard` writes one page of every run: cost per week, pass rate per repository,
+  cost per model and the slowest stories. It needs no server and no network.
+- With `OTEL_EXPORTER_OTLP_ENDPOINT` set (or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, and
+  `OTEL_EXPORTER_OTLP_HEADERS` for a key), each run is sent as an OpenTelemetry trace: the run, a
+  span per story, and a client span per model call with the GenAI attributes
+  (`gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`) and its cost.
+  Any OTLP collector works: Jaeger, Grafana Tempo, Honeycomb, Datadog.
+
+## Neovim
+
+[`editors/nvim`](editors/nvim) adds `:Concerto` and `:ConcertoPlan`. Over a visual selection,
+`:'<,'>Concerto round to cents` starts Concerto with the file, the lines and the selected code;
+`:ConcertoPlan` shows the plan without building.
 
 ## Use with Orca
 
@@ -200,7 +331,8 @@ to 100 from ten factors:
 | Scope uncertainty | 8% | Tests to run, churn over 90 days, areas touched | 4% each |
 
 Tests come from [SmartTest](https://github.com/RemiPelloux/SmarttyTest) when the repository uses it,
-otherwise from Concerto's own import graph (TypeScript, JavaScript, Python). A misremembered path is
+otherwise from Concerto's own import graph (TypeScript, JavaScript, Python, Go, Rust, PHP, Java,
+Kotlin, C#, Ruby, Swift; [benchmark](docs/language-benchmark.md)). A misremembered path is
 matched to the real file. If a story names no file, the model's four factors decide alone. Every
 score comes with its top three reasons, for example `why 64: complexity 4/5 · touches
 src/auth/session.ts · 2 of 2 source files untested`.
@@ -225,15 +357,41 @@ last attempt.
 - System prompts are byte-identical between calls, so provider caches keep hitting.
 - A resumed session is not sent what it already has.
 - Critiques and logs lose noise (ANSI codes, spinners, repeated lines) before going back to a model.
-- Scoring the same request twice is answered from a local cache, with no tokens spent.
+- Scoring the same request twice, even worded differently, is answered from a local cache, with no
+  tokens spent. Requests that name different numbers never match.
+- Each builder sees only its story's neighbours in the plan, and a context pack of what its files
+  export, so it opens fewer files to find its way. Critics, who read the diff, get no repository map.
+- The import graph's parse of every file is kept between runs; only changed files are read again.
+- `concerto --stats` shows the provider cache hit rate per role.
 - Agents are told to use [rtk](https://github.com/rtk-ai/rtk) when it is installed.
 
 ## Configuration
 
 Your config is `~/.config/concerto/config.json`, written by the first launch. A
-`concerto.config.json` in a project overrides it. Edit the routes, model chains, tiers, budget or
-skills there. [examples/concerto.config.full.json](examples/concerto.config.full.json) shows a full
-one with 37 working models.
+`concerto.config.json` in a project is merged over it: what the team commits there (routes,
+reviewers, budgets, policy) wins, objects merge key by key, lists are replaced, and each person keeps
+their own models and logins. [examples/concerto.config.full.json](examples/concerto.config.full.json)
+shows a full one with 37 working models.
+
+A team's policy and notifications go in the project config:
+
+```json
+"policy": {
+  "protectedPaths": ["infra/", "**/*.pem"],
+  "blockedModels": ["ollama/*"],
+  "maxRunUsd": 20,
+  "requireReview": [{ "paths": ["src/auth/**"], "role": "security" }]
+},
+"notify": [
+  { "kind": "slack", "url": "${SLACK_WEBHOOK}", "on": ["done", "failed", "plan"] }
+]
+```
+
+A story that changes a protected path goes back to its builder and can never pass or merge; the
+log says which file and which rule. Blocked models leave every chain. `maxRunUsd` caps `budgetUsd`
+and `--budget`. A required review runs the named custom review role on every story touching those
+paths. Notifications go to Slack, Discord or any webhook when a run ends or a plan waits for you;
+`${VAR}` in a URL reads the environment, so the secret stays out of the repository.
 
 On Linux, Codex's sandbox stops Node from starting programs, so tests that run git or sh fail
 inside a Codex build. Concerto tells Codex builders so, and the gates and the critic run those
@@ -243,7 +401,70 @@ let any command touch.
 
 Model names look like `claude-code/claude-opus-5-5` (Claude subscription), `codex/gpt-6.1-sol`
 (ChatGPT subscription), `codex@ce-gpt/gpt-6.1-sol` (a Codex profile, such as a proxy), or
-`openai/gpt-6.1-sol` (any provider in pi).
+`openai/gpt-6.1-sol` (any provider in pi). Five more coding agents work the same way, each with
+the login or providers it is set up with:
+
+| Ref | Runs | Reviewers, who only read |
+|---|---|---|
+| `gemini/<model>` | Gemini CLI | plan mode |
+| `cursor/<model>` | Cursor's agent | plan mode |
+| `opencode/<provider>/<model>` | OpenCode (`/setup` or `concerto --init` lists its models) | the plan agent |
+| `goose/<provider>/<model>` | Goose | chat mode, no tools |
+| `aider/<model>` | Aider, which never commits | ask mode |
+
+Builders get each CLI's own write access; Concerto still works in a worktree and merges the
+result. Prompts go in on stdin, and token use and cost are read from each CLI's output.
+
+Models on your own machine work too: `ollama/qwen3:8b` through Ollama (port 11434, or
+`OLLAMA_HOST`) and `lmstudio/<model>` through LM Studio (port 1234, or `LMSTUDIO_HOST`). They cost
+nothing, `/setup` (or `concerto --init`) adds the ones the server has at tier 1, and they get a small tool set of
+their own: read and list files, and write them when building, inside the story's folder, with no
+shell. That suits scoring, diff reviews and small stories.
+
+Roles of your own go in `customRoles`. A `review` role runs after the critic passes a story it
+applies to, and failing it sends the story back to its builder with the review. A `build` role
+works on a passed story in its worktree before the merge. Each takes its instructions as text or
+as a file of the repository, and applies by tag, by path glob, or to every story above `minScore`:
+
+```json
+"customRoles": [
+  { "name": "security", "kind": "review", "instructions": "docs/SECURITY_REVIEW.md", "tags": ["auth", "payments"], "models": ["codex/gpt-6.1-sol"] },
+  { "name": "migrations", "kind": "review", "instructions": "Fail any migration that cannot be rolled back.", "paths": ["**/migrations/**"] },
+  { "name": "docs", "kind": "build", "instructions": "Update README.md for what the story changed.", "paths": ["src/**"], "minTier": 2 }
+]
+```
+
+The run report lists every model call by model, with its tokens and cost.
+
+How stories are checked is set in the same file:
+
+```json
+{
+  "checks": { "test": "pnpm test", "typecheck": "pnpm typecheck", "lint": false, "timeoutMinutes": 10 },
+  "isolation": "worktree",
+  "behaviour": { "serve": "npm run dev", "routes": ["/", "/api/health"], "readySeconds": 60 }
+}
+```
+
+Spending is capped per run (`budgetUsd`, or `--budget`), per story, per day and per repository,
+and each budget warns once at 80 %. Per account (`claude-code`, `codex`, `codex@ce-gpt` or a pi
+provider), `limits` caps what Concerto spends in a rolling window and sends later calls
+elsewhere; an account that answers with a rate limit is paused until the reset it names:
+
+```json
+{
+  "budgets": { "story": 2, "day": 20, "repo": 200 },
+  "limits": { "claude-code": { "windowHours": 5, "maxUsd": 40 } }
+}
+```
+
+When a plan waits for Enter, Concerto shows what it would cost on your subscriptions, through
+Codex profiles and on API keys, with the `/prefer` command that picks each.
+
+Each check is a command, `false` to turn it off, or left out to let Concerto detect it.
+`"isolation": "off"` builds every story in the folder itself. `behaviour` is for web projects:
+the server (which must read `PORT`) is started before and after each story, and the critic sees
+which routes changed.
 
 ## Cheaper API access
 
@@ -251,6 +472,25 @@ When your subscriptions run out, an API gateway that serves GPT, Claude, DeepSee
 one key is the simplest fallback. I use [CodexEverywhere](https://codex-everywhere.com/home?aff=H9TB6LJQJMEU).
 Add it to pi or as a Codex profile with providers named `ce-gpt`, `ce-claude`, `ce-deepseek` and
 `ce-grok`, and Concerto picks them up.
+
+## Accessibility and languages
+
+- `concerto --plain "…"` says the plan and every event as plain sentences, one per line, and asks
+  before building: for screen readers, braille displays and logs.
+- Themes: `"ui": { "theme": "high-contrast" }`, `"colorblind"` (pass in blue, fail in vermilion,
+  never red against green) or `"mono"`; `NO_COLOR=1` always gives mono.
+- Every single-key action can be remapped, and Tab and the arrows can get extra keys:
+  `"ui": { "keys": { "drop": "x", "down": "j", "up": "k" } }`.
+- The TUI speaks English and French (`"ui": { "language": "fr" }`, or `"auto"` to follow `LANG`);
+  [docs/fr](docs/fr/README.md) has the essentials in French.
+
+## Documentation
+
+- [Reference](docs/reference.md): every flag, slash command and config key, generated from the code.
+- [Recipes](docs/recipes.md): spend less, work as a team, build issues in CI, run untrusted work safely…
+- [Failures](docs/failures.md): every error message, why it happens and what to do; each one is tested.
+- [Security](docs/security.md), the [language benchmark](docs/language-benchmark.md) and the
+  [benchmark against one model alone](docs/benchmark-single.md).
 
 ## Roadmap
 

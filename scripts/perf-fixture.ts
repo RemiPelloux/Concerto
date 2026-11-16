@@ -15,7 +15,8 @@ const run = promisify(execFile);
 const SOURCE_COUNT = 256;
 const UNTRACKED_COUNT = 24;
 const STORY_COUNT = 8;
-const SCAN_TIMEOUT_MS = 10_000;
+/** A hang guard, not a measurement: every story now builds in a worktree, and Windows starts git slowly. */
+const SCAN_TIMEOUT_MS = 60_000;
 export const TOOL_EVENTS = 100;
 export const REQUEST = "Update the fixture modules and verify their dependents";
 
@@ -49,7 +50,7 @@ export async function createFixture() {
     await git(cwd, ["add", "src", ".gitignore", "package.json"]);
     await git(cwd, ["-c", "user.name=Benchmark", "-c", "user.email=benchmark@localhost", "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "-m", "fixture"]);
     for (let i = 0; i < UNTRACKED_COUNT; i += 1) writeFileSync(join(cwd, `new-${i}.txt`), "fixture\n");
-    return { cwd, sources: SOURCE_COUNT, untracked: UNTRACKED_COUNT, cleanup: () => rmSync(cwd, { recursive: true, force: true }) };
+    return { cwd, sources: SOURCE_COUNT, untracked: UNTRACKED_COUNT, cleanup: () => rmSync(cwd, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }) };
   } catch (error) {
     rmSync(cwd, { recursive: true, force: true });
     throw error;

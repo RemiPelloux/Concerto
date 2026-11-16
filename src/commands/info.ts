@@ -6,7 +6,7 @@ import { readStats } from "#src/engine/stats.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { reviewChain, roleChain, routeStory } from "#src/models/router.js";
 import type { ModelInfo } from "#src/models/types.js";
-import { promptTokens } from "#src/runner/usage.js";
+import { promptTokens, type Usage } from "#src/runner/usage.js";
 
 const COLUMN = 30;
 const PERCENT = 100;
@@ -42,6 +42,13 @@ export function printModels(catalog: Catalog, config: ConcertoConfig): void {
 }
 
 /** Totals across every run in this repository. Shared by `--stats` and `/stats`. */
+/** Provider cache hit rate per role: where the stable prompt prefix pays off, and where it does not. */
+function roleCacheLines(roles: Record<string, Usage>): string[] {
+  const shown = Object.entries(roles).filter(([, u]) => promptTokens(u) > 0);
+  if (shown.length === 0) return [];
+  return [`cache by role     ${shown.map(([role, u]) => `${role} ${Math.round(cacheHitRatio(u) * PERCENT)}%`).join(", ")}`];
+}
+
 export function statsLines(cwd: string): string[] {
   const { runs, ledger } = readStats(cwd);
   const u = ledger.usage;
@@ -53,6 +60,7 @@ export function statsLines(cwd: string): string[] {
     `condensed         ${ledger.condensedTokens} tokens removed from feedback and logs`,
     `session dedupe    ${ledger.dedupedTokens} tokens not resent`,
     `fallbacks         ${ledger.fallbacks}`,
+    ...roleCacheLines(ledger.roles),
     `cost              $${u.cost.toFixed(2)} (API-equivalent) vs $${ledger.soloCost.toFixed(2)} on the conductor alone`,
   ];
 }

@@ -5,7 +5,7 @@ import { parseSlash, type Panel } from "#src/ui/slash.js";
 
 const BUSY: ReadonlySet<Phase> = new Set(["scoring", "running"]);
 /** Commands that would pull a run out from under its agents: they wait until it is stopped. */
-const NEEDS_STOP: ReadonlySet<string> = new Set(["setup", "clear", "history"]);
+const NEEDS_STOP: ReadonlySet<string> = new Set(["setup", "clear", "history", "ask", "reject"]);
 
 export type PromptActions = {
   store: Store;

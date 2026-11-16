@@ -1,6 +1,7 @@
 import { createInterface } from "node:readline";
 import { childEnv } from "#src/runner/env.js";
 import type { RunEvent } from "#src/runner/events.js";
+import { sandboxed, type SandboxSpec } from "#src/runner/sandbox.js";
 import { spawnTool } from "#src/runner/tool.js";
 import type { RunResult } from "#src/runner/types.js";
 import { addUsage, ZERO_USAGE } from "#src/runner/usage.js";
@@ -16,6 +17,9 @@ export type JsonlJob = {
   cwd: string;
   signal?: AbortSignal;
   parse: (line: string) => RunEvent | null;
+  /** Extra environment for this CLI only, on top of Concerto's child environment. */
+  env?: Record<string, string>;
+  sandbox?: SandboxSpec;
 };
 
 function fold(result: RunResult, event: RunEvent): void {
@@ -25,10 +29,20 @@ function fold(result: RunResult, event: RunEvent): void {
   if (event.text) result.text = event.text;
 }
 
-/** Runs a CLI that prints JSON lines and folds its "turn" events into one result. */
-export function runJsonl(job: JsonlJob, onEvent: (e: RunEvent) => void): Promise<RunResult> {
+/** Runs a CLI that prints JSON lines and folds its "turn" events into one result; in the sandbox when asked. */
+export async function runJsonl(job: JsonlJob, onEvent: (e: RunEvent) => void): Promise<RunResult> {
+  if (!job.sandbox) return run(job, onEvent);
+  const launch = await sandboxed({ bin: job.bin, args: job.args, cwd: job.cwd }, job.sandbox);
+  try {
+    return await run({ ...job, bin: launch.bin, args: launch.args, env: { ...job.env, ...launch.env } }, onEvent);
+  } finally {
+    launch.close();
+  }
+}
+
+function run(job: JsonlJob, onEvent: (e: RunEvent) => void): Promise<RunResult> {
   return new Promise((resolve, reject) => {
-    const child = spawnTool(job.bin, job.args, { cwd: job.cwd, signal: job.signal, env: childEnv() });
+    const child = spawnTool(job.bin, job.args, { cwd: job.cwd, signal: job.signal, env: { ...childEnv(), ...job.env } });
     const result: RunResult = { text: "", usage: ZERO_USAGE, turns: 0 };
     let stderr = "";
     let failure = "";

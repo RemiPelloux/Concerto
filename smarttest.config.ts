@@ -4,6 +4,8 @@ import { defineConfig } from "@tkmremi/smarttest";
 // Reference: https://github.com/RemiPelloux/SmarttyTest/blob/main/documentation/reference/configuration.md
 export default defineConfig({
   mode: "balanced",
+  // bench/: the benchmark tasks are repositories of their own; their tests grade an agent's work.
+  exclude: ["bench/**"],
   adapters: ["vitest"],
   vcs: { provider: "auto", snapshots: true },
   tests: { layout: "mirror", directory: "tests" },

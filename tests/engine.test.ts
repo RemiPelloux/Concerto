@@ -146,7 +146,7 @@ vi.mock("node:fs/promises", async (original) => {
 });
 
 describe("run repository scan cache", () => {
-  it("reads sources once across stories and repeated analysis, but isolates runs", async () => {
+  it("reads sources once across stories and analyses, and a new run reads unchanged ones from the parse cache", async () => {
     const cwd = tempDir();
     writeFileSync(join(cwd, "a.ts"), "export const a = 1;");
     writeFileSync(join(cwd, "a.test.ts"), 'import { a } from "./a";');
@@ -158,11 +158,11 @@ describe("run repository scan cache", () => {
     const second = await analyzeImpact(input);
     expect(first.get("a")?.tests).toEqual(["a.test.ts"]);
     expect(second).toEqual(first);
-    const reads = () => vi.mocked(readFileSync).mock.calls.filter(([path]) => String(path).startsWith(cwd));
+    const reads = () => vi.mocked(readFileSync).mock.calls.filter(([path]) => String(path).startsWith(cwd) && !String(path).includes(".concerto"));
     expect(reads()).toHaveLength(2);
     expect(vi.mocked(readdir).mock.calls.filter(([path]) => String(path).startsWith(cwd))).toHaveLength(1);
-    await analyzeImpact({ ...input, cache: new BlastRadius(cwd, input.repoFiles) });
-    expect(reads()).toHaveLength(4);
+    expect((await analyzeImpact({ ...input, cache: new BlastRadius(cwd, input.repoFiles) })).get("a")?.tests).toEqual(["a.test.ts"]);
+    expect(reads()).toHaveLength(2);
   });
 
   it("refreshes imports, line counts and file membership after edits, additions and deletions", async () => {

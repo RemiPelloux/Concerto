@@ -1,0 +1,30 @@
+# Include in .gitlab-ci.yml, then run a pipeline with the variable CONCERTO_REQUEST set (from the
+# UI, the API or a trigger). Concerto builds it on a new branch, one commit per story, and the push
+# opens a merge request. Needs CONCERTO_PUSH_TOKEN (a project access token with write_repository)
+# and the agent's credentials, such as CLAUDE_CODE_OAUTH_TOKEN, as masked CI/CD variables.
+concerto:
+  image: node:22
+  rules:
+    - if: $CONCERTO_REQUEST
+  variables:
+    CONCERTO_BUDGET: "5"
+    GIT_DEPTH: "0"
+  script:
+    - |
+      curl -fsSL https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.sh | sh
+      export PATH="$HOME/.local/bin:$PATH"
+      npm install -g @anthropic-ai/claude-code
+      git config user.name "Concerto"
+      git config user.email "concerto@noreply.invalid"
+      branch="concerto/pipeline-$CI_PIPELINE_ID"
+      git switch -c "$branch"
+      status=0
+      concerto --run --commit --json --budget "$CONCERTO_BUDGET" "$CONCERTO_REQUEST" > /tmp/concerto-events.jsonl || status=$?
+      if [ "$(git rev-list --count "$CI_COMMIT_SHA..HEAD")" -eq 0 ]; then echo "Nothing was merged, so there is no merge request."; exit 1; fi
+      git push "https://oauth2:${CONCERTO_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "HEAD:$branch" \
+        -o merge_request.create -o "merge_request.target=$CI_DEFAULT_BRANCH" -o "merge_request.title=Concerto: $CONCERTO_REQUEST"
+      exit "$status"
+  artifacts:
+    when: always
+    paths:
+      - .concerto/runs/

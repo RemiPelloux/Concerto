@@ -6,6 +6,7 @@ import type { Concert } from "#src/orchestrator/concert.js";
 const QUESTIONS: Record<Checkpoint, string> = {
   "plan-lock": "Checkpoint: before the plan locks. What did the plan miss?",
   "repeat-error": "Checkpoint: the same story failed twice, or its builder is blocked. Root cause or rabbit hole? Give the one change that unblocks it.",
+  "critics-disagree": "Checkpoint: two critics from different vendors disagree on a high-risk story. Read the change and both reviews: ok if it is right, revise with what to fix, stop if it cannot be fixed here.",
   "before-done": "Checkpoint: before calling done. Did the diff break anything? Read the files; run nothing.",
 };
 
@@ -17,7 +18,7 @@ function verdictOf(reply: string): Consult["verdict"] {
 }
 
 /**
- * Wakes the conductor at one of its three checkpoints. It reads; it never writes. Its session
+ * Wakes the conductor at one of its checkpoints. It reads; it never writes. Its session
  * is warm across checkpoints, so the snapshot and plan are only sent the first time.
  */
 export async function consult(c: Concert, checkpoint: Checkpoint, extra = ""): Promise<Consult> {

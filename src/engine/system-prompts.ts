@@ -38,16 +38,29 @@ export class SystemPrompts {
   file(role: Role): string {
     const known = this.files.get(role);
     if (known) return known;
+    const file = this.write(role, this.body(role));
+    this.files.set(role, file);
+    return file;
+  }
+
+  /** A custom role's prompt: the role it builds on, then its own instructions under a heading. */
+  custom(name: string, base: Role, instructions: string): string {
+    return this.write(`custom-${name}`, `${this.body(base)}${SEPARATOR}## Your role: ${name}\n\n${instructions.trim()}\n`);
+  }
+
+  private body(role: Role): string {
     const brief = ROLE_FILES[role].map((f) => readFileSync(join(packageRoot(), "prompts", f), "utf8")).join("\n\n");
-    const body = [this.guidelines, brief, this.notes].filter(Boolean).join(SEPARATOR);
+    return [this.guidelines, brief, this.notes].filter(Boolean).join(SEPARATOR);
+  }
+
+  private write(name: string, body: string): string {
     const dir = join(this.cwd, ".concerto", "prompts");
-    const file = join(dir, `${role}-${hashParts([body])}.md`);
+    const file = join(dir, `${name}-${hashParts([body])}.md`);
     if (!existsSync(file)) {
       mkdirSync(dir, { recursive: true, mode: DIR_MODE });
       writeFileSync(file, body, { mode: FILE_MODE });
       chmodSync(file, FILE_MODE);
     }
-    this.files.set(role, file);
     return file;
   }
 }

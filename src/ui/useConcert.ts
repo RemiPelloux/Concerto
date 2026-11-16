@@ -10,12 +10,16 @@ import { resumable } from "#src/engine/history.js";
 import { unfinished } from "#src/ui/RunSummary.js";
 import type { AppDeps } from "#src/ui/App.js";
 import { submitPrompt } from "#src/ui/prompt-actions.js";
+import type { Edit } from "#src/orchestrator/edit.js";
+import { announcePlan } from "#src/orchestrator/announce.js";
+import type { CallRecord } from "#src/engine/session-log.js";
+import { applyEdit } from "#src/orchestrator/replan.js";
 import { runSlash, seedRoles, type ExitReason, type Panel, type Session } from "#src/ui/slash.js";
 
 type Run = { concert: Concert | null; abort: AbortController };
 type Controls = { panel: Panel | null; submit: (text: string) => void; enter: () => void; session: Session; apply: (config: ConcertoConfig) => void };
 type KeyContext = { store: Store; run: RefObject<Run | null>; closePanel: () => boolean; active: boolean };
-export type NavHooks = { active: boolean; tour: () => void; models: () => void };
+export type NavHooks = { active: boolean; tour: () => void; models: () => void; replay: (calls: CallRecord[]) => void };
 
 /** Reads the store at keypress time, so this hook never subscribes and never re-renders the App. */
 function useKeys({ store, run, closePanel, active }: KeyContext): void {
@@ -64,6 +68,7 @@ function useRequest(deps: AppDeps, session: Session, run: RefObject<Run | null>)
         current.concert = concert;
         await scoreRequest(concert, text);
         if (deps.autoPerform) await perform(concert);
+        else await announcePlan(concert);
       })
       .catch(fail);
   }, [deps, session, fail, run]);
@@ -100,6 +105,15 @@ function useApply(store: Store, session: Session, setSession: (s: Session) => vo
   }, [store, session, setSession]);
 }
 
+/** Plan edits (/drop, /merge, /route…) go to the concert that scored the waiting plan. */
+function useEdit(run: RefObject<Run | null>): (e: Edit) => Promise<string> {
+  return useCallback(async (e: Edit) => {
+    const concert = run.current?.concert;
+    if (!concert) throw new Error("Edits change a plan waiting for Enter; there is none right now.");
+    return applyEdit(concert, e);
+  }, [run]);
+}
+
 /** Wires keyboard, prompt and slash commands to the orchestrator for one interactive session. */
 export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const [session, setSession] = useState<Session>({ config: deps.config, catalog: deps.catalog });
@@ -107,6 +121,7 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const run = useRef<Run | null>(null);
   const { exit } = useApp();
   const { fail, request, resume } = useRequest(deps, session, run);
+  const editPlan = useEdit(run);
   const leave = useCallback((reason: ExitReason) => {
     deps.onExit(reason);
     exit();
@@ -114,10 +129,10 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const submit = useCallback((text: string) => {
     const slash = (t: string) => {
       deps.log.write("command", t);
-      void runSlash(t, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, pick: nav.models, log: deps.log, resume });
+      void runSlash(t, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, pick: nav.models, replay: nav.replay, log: deps.log, resume, edit: editPlan, concert: () => run.current?.concert ?? null });
     };
     submitPrompt(text, { store: deps.store, log: deps.log, request, slash, show: setPanel });
-  }, [deps.cwd, deps.store, deps.log, session, request, resume, leave, nav.tour, nav.models]);
+  }, [deps.cwd, deps.store, deps.log, session, request, resume, leave, nav.tour, nav.models, nav.replay, editPlan]);
   const closePanel = () => (panel ? (setPanel(null), true) : false);
   useKeys({ store: deps.store, run, closePanel, active: nav.active });
   useStartOnce(deps.initialRequest, submit);

@@ -14,244 +14,280 @@ one goal, the work that serves it, and a test that says when it is done.
 | 0.1.2 | Tab works in every phase, a visible "enter to build" |
 | 0.1.3 | Windows support, release packages and installers, `/history` and `--resume`, a live agent panel, an end-of-run summary with retry |
 | 0.1.4 | The prompt works in every phase: type a change to re-plan, a note for running agents, any command |
-| Unreleased | An Orca plugin: a Concerto panel in the right sidebar that plans or builds a request; gates: your own checks run after each build, before the critic |
+| 0.4.0 | Part 1: every story in its own worktree with rebuild on conflict, a test gate, acceptance commands, mutation spot checks, a second critic, a behaviour diff |
+| 0.10.0 | Parts 2 and 3: learning from runs, account windows and budgets, a leaner token engine, a plan editor, reject and ask per story, search, replay and share |
+| 0.13.0 | Part 4: import graphs for eight more languages and monorepos, five more agent CLIs, local models, custom roles, an MCP server, a Neovim plugin |
+| 0.16.0 | Part 5: commits per story, pull requests, a GitHub Action, shared config and policy, notifications, traces, cost reports and a dashboard |
+| 0.19.0 | Part 6: standalone executables and package managers, a Docker image, a sandbox, secret scanning and a signed audit log, themes, a plain mode, French, full docs, performance budgets |
+| Unreleased | An Orca plugin: a Concerto panel in the sidebar that plans or builds a request; your own `gates`; builders that end with done, nothing-to-do or blocked; an arrow-key model picker and `/config auto` |
 
 ---
 
-## Part 1 · Trust the result
+## Part 1 · Trust the result · shipped in 0.4
 
-### Sprint 1 · 0.2 · isolation
+### Sprint 1 · isolation · shipped
 
-Parallel stories share one folder, so they collide on shared files and a critic can fail a story
-for someone else's edit.
+- **One git worktree per story,** every story, not only parallel ones: a soloist editing the main
+  folder while section stories merge into it would bring the collisions back. Each starts from a
+  snapshot commit of the working tree, made in a throwaway index, with ignored dependency folders
+  and `.env` files linked in.
+- **Three-way merge back** against that snapshot, all files or none; edits on adjacent lines
+  merge line by line.
+- **Rebuild on conflict:** a story that passed but conflicts with work that landed meanwhile is
+  rebuilt on the current code, up to twice, with fresh critic sessions.
+- **Per-story diff** for the critic and the report; failed stories' work saved as patches.
+- **Cleanup on crash:** worktrees of a run whose process is gone are saved as patches and removed.
 
-- **One git worktree per story.** Section stories build in their own worktree; soloist stories
-  keep the main folder. Worktrees are created from the same commit and removed after merge.
-- **Merge back in dependency order.** A story whose dependencies passed is merged with a
-  three-way merge; a conflict fails that story with the conflicting files and hunks.
-- **Per-story diff.** The critic, the changes table and the report see only the story's own diff.
-  The critic already gets the change made while its story was built; worktrees remove what a
-  parallel story adds in that window.
-- **Cleanup on crash.** Leftover worktrees from an interrupted run are found and offered for
-  removal at the next start.
+Done: six stories editing neighbouring lines of one file merge in parallel, each critic sees only
+its story; a real run of three stories editing the same export line lands all three.
 
-Done when: six section stories editing neighbouring lines of the same files run in parallel, each
-critic sees only its story, and the merged result passes the tests.
+### Sprint 2 · a test gate Concerto runs itself · shipped
 
-### Sprint 2 · 0.3 · a test gate Concerto runs itself
+- **The project's checks after every build,** before the critic: SmartTest, npm, pnpm, yarn,
+  bun, pytest, go test, cargo test, PHPUnit, Maven or Gradle, then the typecheck and lint scripts.
+- **Red means retry** with the failing command and the end of its output; the critic only sees
+  green stories and is told what passed.
+- **Flaky tests:** a test command that passes on a rerun is reported as flaky.
+- **`checks` in the config** sets, replaces or turns off each check.
 
-Shipped first: configured gates (`gates` in the config, `--gate`) run after each build, a red gate
-goes back to the builder without a review, and a build that changed nothing is not checked again.
-The sprint makes the gate automatic.
+Done: a story whose tests fail never reaches the critic, and the report lists every check per story.
 
-- **Run the covering tests after each build,** before the critic: SmartTest when the repository
-  has it, the import graph otherwise, the project's own test command as the fallback.
-- **Detect the test command** for npm, pnpm, yarn, bun, pytest, go test, cargo test, PHPUnit,
-  Maven and Gradle.
-- **Red means retry,** with the failing test names and output condensed into the builder's
-  feedback. The critic only reviews green stories.
-- **Type check and lint gates,** configurable per repository.
-- **Flaky test handling:** a test that fails then passes on rerun is marked flaky in the report,
-  not counted against the story.
+### Sprint 3 · verification beyond tests · shipped
 
-Done when: a story whose tests fail never reaches the critic, and the report lists every test that
-ran for every story.
+- **Acceptance checks as code,** written by the scorer when it is sure and run by Concerto.
+- **Mutation spot checks:** one condition the story added is flipped; a test must notice.
+- **Critic disagreement:** a second critic from another vendor on high-risk stories, settled by the
+  conductor at a fourth checkpoint.
+- **Behaviour diff,** opt-in for web projects: the server is started before and after each story
+  and the critic sees which routes changed.
 
-### Sprint 3 · 0.4 · verification beyond tests
-
-- **Acceptance checks as code.** The scorer writes each acceptance item as a runnable check
-  (a command, a request, a file assertion) when it can; Concerto runs them.
-- **Mutation spot checks.** For a story that adds tests, flip one condition in the new code and
-  check that a test fails; a test that passes with the feature broken fails the story.
-- **Behaviour diff.** For web projects, start the dev server before and after and compare chosen
-  routes.
-- **Critic disagreement.** A second critic from another vendor reviews high-risk stories; when the
-  two disagree the conductor decides.
-
-Done when: a story with a test that passes with the feature deleted is caught on 9 of 10 seeded
-examples.
+Done: 10 of 10 seeded weak tests caught, a real test left alone.
 
 ---
 
-## Part 2 · Smarter routing and lower cost
+## Part 2 · Smarter routing and lower cost · shipped in 0.10
 
-### Sprint 4 · 0.5 · learn from runs
+### Sprint 4 · learn from runs · shipped
 
-- **Run history as data.** Every story's factors, model, retries, review result, tokens and cost
-  go into a local SQLite file.
-- **Calibrated score.** Factor weights are fitted to that history per repository, with a minimum
-  sample size and the hand-set weights as the prior.
-- **Calibrated estimates.** Cost per point per model replaces the fixed constant.
-- **Per-model track record** by story type, used to break ties and to pick the reviewer.
-- **`concerto --insights`:** which models pass which kinds of stories, where money goes, which
-  files keep failing review.
+- **Run history as data:** each finished story's factors, model, critic, builds, cost and result,
+  in `.concerto/outcomes.jsonl` (JSON lines rather than SQLite: Node 22's SQLite module is still
+  experimental, and a few thousand records need no database).
+- **Calibrated score:** after 20 stories the factor weights are fitted to the repository's
+  history, within a quarter to double of the hand-set prior.
+- **Calibrated estimates:** a model's median cost per point here replaces list prices once it has
+  five paid stories.
+- **Per-model track record:** breaks price ties for builders and reviewers.
+- **`concerto --insights`** and `/insights`.
 
-Done when: on a repository with 20 recorded runs, the estimate lands within 30 % of the real cost
-for 8 runs out of 10.
+Done: with 20 recorded runs the estimate lands within 30 % for 8 of 10 new runs, where list prices
+miss by more.
 
-### Sprint 5 · 0.6 · rate limits, budgets and quotas
+### Sprint 5 · rate limits, budgets and quotas · shipped
 
-- **Subscription awareness.** Read Claude Code's 5-hour window and Codex's usage, and move work to
-  the next way of reaching a model before the limit hits.
-- **Budgets per story, per run, per day** and per repository, with a warning at 80 %.
-- **Price book updates** from the providers' public pricing, cached, with the date shown.
-- **Wait out a quota.** When every model in a chain is out of quota and the provider says when it
-  resets, park the story and resume it at that time instead of failing it.
-- **Cheapest-path planner.** Before building, show what the plan would cost on subscriptions,
-  through a proxy and on API keys, and let the user pick.
+- **Account awareness:** Claude Code and Codex do not expose their windows to other programs, so
+  Concerto keeps its own account of what it spent per account in a rolling window (`limits`), and
+  an account that answers with a rate limit is paused until the reset it names. Either way, later
+  calls go to the next way of reaching the model instead of failing first.
+- **Budgets** per run, story, day and repository, each warning once at 80 %.
+- **Price book:** `concerto --update-prices` fetches models.dev; the doctor shows its date.
+- **Cheapest path:** a waiting plan shows its cost on subscriptions, Codex profiles and API keys,
+  with the `/prefer` that picks each.
 
-Done when: a run that would cross the Claude Code window moves the remaining stories to the next
-provider without a single failed call.
+Done: a run whose account window is spent mid-run moves the remaining calls to another account
+with no failed call.
 
-### Sprint 6 · 0.7 · deeper token engine
+### Sprint 6 · deeper token engine · shipped
 
-- **Shared repo map across sessions** with incremental updates from git, not a full rebuild.
-- **Context packs per story:** only the files, symbols and tests a story needs, ranked by the
-  import graph, under a token budget.
-- **Semantic response cache** for scoring: a request that differs only in wording reuses the plan.
-- **Prompt cache planning:** order segments so the longest stable prefix is shared by the most
-  calls, and report the hit rate per role.
+- **A repository parse kept between runs:** the import graph re-reads only files whose size or
+  modification time changed.
+- **Context packs:** each builder gets what its story's files export, under 400 tokens, and only
+  its neighbours in the plan; critics, who read the diff, get no repository map.
+- **A request worded differently** (same content words, same numbers, same repository) reuses
+  the plan without a model call.
+- **Cache hit rate per role** in `concerto --stats`.
 
-Done when: the same 10-story run costs 30 % less in input tokens than in 0.4, with the same
-pass rate.
-
----
-
-## Part 3 · Control during a run
-
-### Sprint 7 · 0.8 · edit the plan
-
-- **Plan editor in the TUI:** drop, merge, split or reword a story; change its model, effort or
-  reviewer; reorder dependencies.
-- **Templates:** save a plan shape ("API endpoint with tests and docs") and reuse it.
-- **Dry run:** `--plan --explain` prints why each story got its model and what it would cost.
-
-Done when: a five-story plan can be trimmed to three, rerouted and built without leaving the TUI.
-
-### Sprint 8 · 0.9 · review and accept
-
-- **Accept or reject per story,** and per hunk, after a run; rejected work is stashed, not lost.
-- **Side-by-side diff view** with syntax colours and word-level changes.
-- **Ask the builder:** a follow-up message to one story's builder session from its agent view.
-- **Pause and continue** a run between stories.
-
-Done when: after a 4-story run, two stories are kept, one is kept in part, one is sent back with a
-comment, and the second attempt only touches that story.
-
-### Sprint 9 · 0.10 · history and replay
-
-- **Session branching:** reopen a session, change one story, and run it as a new branch of the
-  history.
-- **Replay** a finished run step by step in the TUI, with every prompt and answer.
-- **Search** `/history` by request, file, model or result.
-- **Share a run:** export the report and the session as one HTML file without secrets.
-
-Done when: a failed run from last week can be found by a file name, opened, branched and rebuilt.
+Done: the same 10-story run sends 40 % fewer prompt tokens than 0.4 (4,269 against 7,079), all ten
+stories passing. Measured on what Concerto sends; what agents read on their own is only measurable
+on real runs, and the context packs aim at exactly that.
 
 ---
 
-## Part 4 · Reach
+## Part 3 · Control during a run · shipped in 0.10
 
-### Sprint 10 · 0.11 · more languages and repositories
+### Sprint 7 · edit the plan · shipped
 
-- **Import graph** for Go, Rust, PHP, Java, Kotlin, C#, Ruby and Swift.
-- **Monorepos:** workspace packages, project references, per-package test commands.
-- **Polyglot stories** that touch two languages are scored with both graphs.
+- **Plan editor:** `/drop`, `/merge`, `/split` (by acceptance items), `/retitle`, `/after`, and
+  `/route`, `/reviewer`, `/effort`; `d`, `m` and `s` on a story in the list. Shape edits measure
+  and score the changed stories again; dependencies always point at stories that exist.
+- **Templates:** `/template save <name>` keeps a plan's shape in the config folder;
+  `/template use <name>` or `--template <name>` has the scorer follow it.
+- **Dry run:** `--plan --explain` says why each story got its score, model and estimate.
 
-Done when: real open-source repositories in each of those languages score with correct importers
-and covering tests on a published benchmark set.
+Done: a five-story plan trimmed to three, one story rerouted, and built, all from the TUI.
 
-### Sprint 11 · 0.12 · more agents and models
+### Sprint 8 · review and accept · shipped
 
-- **Backends:** Gemini CLI, OpenCode, Cursor's agent, Aider and Goose behind the same runner
-  interface, with the same fallbacks and accounting.
-- **Local models** through Ollama and LM Studio for scoring and small stories.
-- **Custom roles** defined in the config: a security reviewer, a docs writer, a migration checker,
-  each with its own prompt, tools and routing.
+- **Accept or reject per story, and per hunk:** every merge keeps each file's before and after;
+  `/reject <story>` reverts the story with a three-way merge, so later stories stay, and
+  `/reject <story> <n>` takes back one hunk (`/hunks <story>` numbers them). Rejected work is
+  saved in `.concerto/rejected/` as a patch that `git apply` brings back.
+- **Side-by-side diff** on wide terminals, changed words marked, light syntax colour.
+- **Ask the builder:** `/ask <story> <message>` resumes the builder's session with the comment;
+  the story goes through the gate, critic and merge again, alone.
+- **Pause and continue** between stories.
 
-Done when: one run uses five vendors, a local model and a custom role, and the report accounts for
-every call.
+Done: after a 4-story run, two stories kept, one kept in part, one sent back with a comment and
+rebuilt without touching the others.
 
-### Sprint 12 · 0.13 · editors and tools
+### Sprint 9 · history and replay · shipped
 
-- **MCP server:** other agents can plan, run and read Concerto runs as tools.
-- **Neovim plugin:** plan or build the visual selection from a command.
+- **Session branching:** a reopened session continues as a new one that remembers its parent;
+  `/redo <story>` queues a passed story again, so one story can be changed and rebuilt.
+- **Replay:** every model call is recorded next to the session log; `/replay` steps through
+  them with ←→, each prompt and answer in full.
+- **Search:** `/history billing.ts failed` matches requests, files, models and results.
+- **Share a run:** `/share` or `concerto --share <id>` writes one HTML file, with anything
+  shaped like a key, token or password redacted.
 
-Done when: another agent plans and builds a request through the MCP server alone, and Neovim
-starts a run from a selection.
+Done: a failed run from last week was found by a file name, opened as a branch and rebuilt.
 
 ---
 
-## Part 5 · Teams
+## Part 4 · Reach · shipped in 0.13
 
-### Sprint 13 · 0.14 · CI and pull requests
+### Sprint 10 · more languages and repositories · shipped
 
-- **GitHub Action:** label an issue or comment `/concerto`, and a run opens a pull request with
-  the report as its body, inside a budget.
-- **GitLab CI** template.
-- **Optional commit per story** and `--pr`; Concerto still never commits unless asked.
+- **Import graph** for Go, Rust, PHP, Java, Kotlin, C#, Ruby and Swift, through each one's own
+  rules: `go.mod` modules, crates and `mod` files, PSR-4, declared packages and namespaces (same
+  package or namespace without an import included), `require`, SwiftPM targets.
+- **Monorepos:** workspace packages resolve by name; a story inside one package runs that
+  package's tests (`pnpm --filter`, `yarn workspace`, `npm --workspace`, `cargo test -p`,
+  `go -C`).
+- **Polyglot stories** are scored with one graph that holds every language.
+
+Done: on [eight real repositories](docs/language-benchmark.md), one per language at a pinned
+release, the graph finds the importer and the test a person checked by reading the code, 8 of 8.
+`pnpm bench:languages` runs it again.
+
+### Sprint 11 · more agents and models · shipped
+
+- **Backends:** Gemini CLI, Cursor's agent, OpenCode, Goose and Aider behind the same runner,
+  with the same fallbacks and accounting. Each reads its prompt on stdin; reviewers run read-only
+  in each CLI's own way; token use and cost come from each CLI's output. OpenCode was run for
+  real; the others are read the way their installed code or source writes their output.
+- **Local models** through Ollama and LM Studio, free, with a small tool set of Concerto's own
+  (read, list, write inside the story's folder, no shell); `/setup` (or `--init`) adds them at tier 1.
+- **Custom roles** in `customRoles`: reviewers that can send a story back, and builders that
+  work on a passed story before its merge, each with its own instructions, models and tools.
+- **The report lists every call** by model, with tokens and cost.
+
+Done: a run through Claude Code, Codex, Gemini CLI, OpenCode and Goose (five vendors), with
+scoring on an Ollama model, a security reviewer that sends a story back once and a docs writer,
+has every call in the report's table. In the test suite the CLIs are scripted; a live run needs
+each CLI logged in.
+
+### Sprint 12 · editors and tools · shipped
+
+- **MCP server:** `concerto --mcp` gives other agents `concerto_plan`, `concerto_build`,
+  `concerto_run`, `concerto_status` and `concerto_sessions`, with build progress as MCP progress.
+- **Neovim plugin:** `:Concerto` and `:ConcertoPlan`, on a request or the visual selection.
+
+Done: Claude Code, given only Concerto's MCP tools, planned and built "add subtract with a test"
+in a test repository; the story passed review and was merged with `npm test` green. Neovim starts
+a run from a selection, tested in a real headless Neovim.
+
+---
+
+## Part 5 · Teams · shipped in 0.16
+
+### Sprint 13 · CI and pull requests · built, live test pending
+
+- **GitHub Action** (`action.yml`): label an issue `concerto` or comment `/concerto`, and a run
+  opens a pull request with the report as its body, inside a budget, started only by people with
+  write access. The issue's text reaches the run through the environment only.
+- **GitLab CI** template that pushes a merge request.
+- **Optional commit per story** (`--commit`) and `--pr`; Concerto still never commits unless asked.
 - **Machine-readable output:** `--run --json` streams one event per line.
 
 Done when: labelling an issue in a test repository opens a reviewable pull request within the
-budget, with the tests green.
+budget, with the tests green. Tested so far: commits, the branch, the push and the `gh` call
+against a local remote, and the Action's script with stand-ins for `concerto` and `gh`. The live
+test needs a test repository with an agent token as a secret.
 
-### Sprint 14 · 0.15 · shared configuration and policy
+### Sprint 14 · shared configuration and policy · shipped
 
 - **Project config** merged over the personal one, so a team agrees on routes, budgets and
-  reviewers.
-- **Policy:** paths no agent may touch, models not allowed, maximum spend per run, required
-  reviewers for sensitive paths.
-- **Notifications** to Slack, Discord or a webhook when a run ends or needs a decision.
+  reviewers while each person keeps their models.
+- **Policy:** paths no agent may touch, models not allowed, a ceiling on any run's spend, and
+  custom reviews required on sensitive paths.
+- **Notifications** to Slack, Discord or a webhook when a run ends or a plan waits.
 
-Done when: a policy that forbids edits under `infra/` stops a story that tries, with a clear
-message, in both the TUI and CI.
+Done: a policy that forbids `infra/` sends back a builder that edits `infra/main.tf`, never lets
+the story merge, and says so in the log of a `--run --json` run and on the TUI's screen.
 
-### Sprint 15 · 0.16 · observability
+### Sprint 15 · observability · shipped
 
-- **OpenTelemetry traces** for every run, story and model call.
-- **A local dashboard** (`concerto --dashboard`): runs, costs, pass rates, slowest stories.
-- **Cost reports** per repository, per week, per model, exportable as CSV.
+- **OpenTelemetry traces** for every run, story and model call, over OTLP/HTTP, with the GenAI
+  semantic-convention attributes, when an OTLP endpoint is set.
+- **A local dashboard** (`concerto --dashboard`): costs per week, pass rates per repository, cost
+  per model, slowest stories.
+- **Cost reports** per week, repository and model (`concerto --costs`), as CSV with `--csv`.
 
-Done when: a week of runs can be broken down by model and repository without reading a log.
+Done: runs in two repositories over a week break down by model and repository in the table, the CSV
+and the dashboard, read from the run log alone; a run's trace reaches a collector as one tree.
 
 ---
 
-## Part 6 · Ready for everyone
+## Part 6 · Ready for everyone · shipped in 0.19
 
-### Sprint 16 · 0.17 · distribution
+### Sprint 16 · distribution · shipped
 
-- **npm** (`npx concerto`), **Homebrew**, **Scoop**, **winget**, **AUR** and **Nix** packages,
-  published by the release workflow.
-- **Standalone binaries** with Node's single executable applications, so Node is not required.
-- **A Docker image** for CI and remote runners.
-- **Auto-update** check with a one-line changelog.
+- **Standalone executables** with Node's single executable applications, for Linux (x64, arm64),
+  macOS (arm64, x64) and Windows (x64): Concerto's files are embedded and unpacked once.
+- **Homebrew** and **Scoop** read this repository as a tap and a bucket, **Nix** its flake; a
+  **.deb** for apt; the **AUR** PKGBUILD and **winget** manifests are attached to each release for
+  submission; **npm** as `@tkmremi/concerto` once an `NPM_TOKEN` secret is set.
+- **A Docker image,** `ghcr.io/remipelloux/concerto`, amd64 and arm64.
+- **Update check** once a day with a one-line notice, and `concerto --update`.
 
 Done when: a fresh Mac, a fresh Windows machine and a fresh Ubuntu install Concerto with their
-usual package manager, without installing Node first.
+usual package manager, without installing Node first. The release workflow does exactly that after
+publishing: Homebrew on macOS, Scoop on Windows, apt in a bare Ubuntu container, and the Docker
+image. Every push already builds the five executables and runs the .deb in a container without Node.
 
-### Sprint 17 · 0.18 · safety
+### Sprint 17 · safety · shipped
 
-- **Optional sandbox** for every builder, not only Codex: bubblewrap on Linux, sandbox-exec on
-  macOS, a container elsewhere, with network off by default.
-- **Secret scanning** of every diff before it is shown or merged.
-- **Audit log** of every command an agent ran, signed and kept per run.
-- **Security review** of every place model output reaches a shell, a path or a file, and fuzzing
-  of the plan parser and every backend's event parser.
+- **Optional sandbox** for every agent and every check: bubblewrap on Linux, sandbox-exec on
+  macOS, refusing to run elsewhere; the system read-only, credentials hidden, network only to the
+  model providers through Concerto's allow-listing proxy.
+- **Secret scanning** of every diff before it is reviewed, shown or merged.
+- **Audit log** of every command an agent ran and every refused host, each line signed over the
+  one before it, kept per run.
+- **Security review** of every place model output reaches a shell, a path or a file
+  ([docs/security.md](docs/security.md)). It found and fixed one: a symbolic link in a story could
+  copy a file from outside the project into it at merge. Fuzzing of the plan parser and every
+  backend's event parser.
 
-Done when: a builder told to read `~/.ssh` or call an outside URL is stopped by the sandbox, and
-the attempt is in the audit log.
+Done: a builder process told to read `~/.ssh` and to call example.com is stopped by the sandbox,
+reaches only the host it is allowed, and both attempts are in the signed audit log.
 
-### Sprint 18 · 0.19 · polish
+### Sprint 18 · polish · shipped
 
-- **Themes,** including high contrast and colour-blind safe palettes; full keyboard remapping.
-- **Accessibility:** a screen-reader friendly plain mode that prints events as sentences.
-- **Translations** of the TUI and docs.
-- **Docs:** every flag, slash command, config key and failure message, with recipes and a public
-  benchmark against single-model runs.
-- **Performance budgets in CI:** startup, scoring and frame time fail the build when they regress.
+- **Themes:** default, high contrast, colour-blind safe and mono (NO_COLOR); every single-key
+  action remappable, with extra keys for Tab and the arrows.
+- **Accessibility:** `--plain` says the plan and every event as sentences, for screen readers.
+- **Translations:** the TUI's guiding lines in English and French; the essentials of the docs in
+  [French](docs/fr/README.md).
+- **Docs:** a [reference](docs/reference.md) of every flag, slash command and config key,
+  generated from the code and tested against it; [recipes](docs/recipes.md); every
+  [failure message](docs/failures.md); a [benchmark against one model alone](docs/benchmark-single.md),
+  rerun with `pnpm bench:single`. It found Concerto slower and costlier than one model on
+  one-file tasks, with one more hidden test passed.
+- **Performance budgets in CI:** startup, scoring and frame time fail the build when they pass
+  their budgets.
 
-Done when: every documented failure message has a test, and the benchmark is reproducible from
-one command.
+Done: each of the 39 documented failure messages is triggered by a test, and a new error without a
+row fails the build; the benchmark runs from one command.
 
 ## 1.0 · stable
 

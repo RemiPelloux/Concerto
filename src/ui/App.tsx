@@ -10,6 +10,7 @@ import type { State } from "#src/state/types.js";
 import { AgentList } from "#src/ui/AgentList.js";
 import { AgentTree } from "#src/ui/AgentTree.js";
 import { Banner } from "#src/ui/Banner.js";
+import { UpdateNotice } from "#src/ui/UpdateNotice.js";
 import { ChangesTable } from "#src/ui/ChangesTable.js";
 import { ConductorPanel } from "#src/ui/ConductorPanel.js";
 import { CostBar } from "#src/ui/CostBar.js";
@@ -26,6 +27,8 @@ import { StoryBoard } from "#src/ui/StoryBoard.js";
 import { ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 import { useConcert } from "#src/ui/useConcert.js";
 import { useNavigation, type Navigation } from "#src/ui/useNavigation.js";
+import { usePlanKeys } from "#src/ui/usePlanKeys.js";
+import type { CallRecord } from "#src/engine/session-log.js";
 
 /** Below this many rows the decorative diagram is left out, so the useful parts fit. */
 const ROOMY_ROWS = 72;
@@ -79,6 +82,7 @@ function Header({ state }: { state: State }) {
   return (
     <Box>
       <Banner />
+      <UpdateNotice />
       <AgentTree roles={state.roles} />
     </Box>
   );
@@ -139,7 +143,9 @@ export function App(deps: AppDeps) {
   const state = useFrameState(deps.store);
   const roomy = (useStdout().stdout.rows ?? ROOMY_ROWS) >= ROOMY_ROWS;
   const nav = useNavigation(state, deps.cwd, deps.showTour);
-  const { panel, submit, enter, session, apply } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }), models: () => nav.open({ kind: "models" }) });
+  const hooks = { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }), models: () => nav.open({ kind: "models" }), replay: (calls: CallRecord[]) => nav.open({ kind: "replay", calls, index: 0 }) };
+  const { panel, submit, enter, session, apply } = useConcert(deps, hooks);
+  usePlanKeys(state, nav, submit);
   const brain = useMemo(() => shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? ""), [deps.catalog, deps.config]);
   if (nav.overlay?.kind === "models") return <PickerScreen state={state} picker={{ config: session.config, catalog: session.catalog, cwd: deps.cwd, onApply: apply, onClose: () => nav.open(null) }} />;
   if (nav.overlay) return <OverlayScreen state={state} nav={nav} session={deps.log.id} />;

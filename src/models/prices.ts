@@ -3,6 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { ModelRef } from "#src/runner/types.js";
 import type { Price } from "#src/models/types.js";
+import { readPriceBook } from "#src/models/price-book.js";
 
 export type PriceIndex = { byRef: Map<string, Price>; byId: Map<string, Price> };
 
@@ -23,7 +24,7 @@ function isPriced(node: unknown): node is { id: string; cost: Price } {
 function collect(node: unknown, provider: string, into: PriceIndex): void {
   if (isPriced(node)) {
     into.byRef.set(`${provider}/${node.id}`, node.cost);
-    if (!into.byId.has(node.id)) into.byId.set(node.id, node.cost);
+    into.byId.set(node.id, node.cost);
     return;
   }
   if (typeof node !== "object" || node === null) return;
@@ -32,12 +33,24 @@ function collect(node: unknown, provider: string, into: PriceIndex): void {
   }
 }
 
-/** Prices in USD per million tokens, read from pi's own model registry. */
+function addBook(into: PriceIndex): void {
+  const book = readPriceBook();
+  Object.entries(book?.providers ?? {}).forEach(([provider, models]) => Object.entries(models).forEach(([id, price]) => {
+    into.byRef.set(`${provider}/${id}`, price);
+    into.byId.set(id, price);
+  }));
+}
+
+/**
+ * Prices in USD per million tokens. Read lowest priority first, each overriding the last: pi's
+ * bundled registry, then the price book `--update-prices` fetched, then the models you defined in pi.
+ */
 export function loadPriceIndex(dir = piAgentDir()): PriceIndex {
   const index: PriceIndex = { byRef: new Map(), byId: new Map() };
+  collect(readJson(join(dir, "models-store.json")), "", index);
+  addBook(index);
   const custom = readJson(join(dir, "models.json")) as { providers?: unknown };
   collect(custom.providers ?? {}, "", index);
-  collect(readJson(join(dir, "models-store.json")), "", index);
   return index;
 }
 

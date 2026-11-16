@@ -1,11 +1,15 @@
 import { useInput } from "ink";
+import { KEYS } from "#src/ui/keys.js";
+import { scrub } from "#src/engine/secrets.js";
 import { useState } from "react";
 import { fileDiff } from "#src/engine/changes.js";
 import type { State } from "#src/state/types.js";
 
 export const ZONES = ["prompt", "agents", "stories", "changes"] as const;
 export type Zone = (typeof ZONES)[number];
-export type Overlay = { kind: "agent"; id: string } | { kind: "diff"; file: string; text: string } | { kind: "story"; id: string } | { kind: "tour" } | { kind: "models" } | null;
+import type { CallRecord } from "#src/engine/session-log.js";
+
+export type Overlay = { kind: "agent"; id: string } | { kind: "diff"; file: string; text: string } | { kind: "story"; id: string } | { kind: "tour" } | { kind: "models" } | { kind: "replay"; calls: CallRecord[]; index: number } | null;
 
 export type Navigation = {
   zone: Zone;
@@ -35,7 +39,8 @@ function pick({ zone, index, state, cwd, open }: Pick): void {
   if (zone !== "changes") return;
   const file = state.changes[index]?.file ?? "";
   open({ kind: "diff", file, text: "loading…" });
-  fileDiff(cwd, file).then((text) => open({ kind: "diff", file, text }), () => open({ kind: "diff", file, text: "no diff" }));
+  // Shown with anything shaped like a secret redacted: a screen can be shared or recorded.
+  fileDiff(cwd, file).then((text) => open({ kind: "diff", file, text: scrub(text) }), () => open({ kind: "diff", file, text: "no diff" }));
 }
 
 /**
@@ -55,12 +60,12 @@ export function useNavigation(state: State, cwd: string, showTour: boolean): Nav
   };
   useInput(
     (input, key) => {
-      if (overlay) return overlayKeys({ key, input, setScroll, close: () => open(null), kind: overlay.kind });
-      if (key.tab) return nextZone();
+      if (overlay) return overlayKeys({ key, input, setScroll, open, overlay });
+      if (key.tab || (KEYS.next && input === KEYS.next)) return nextZone();
       if (key.escape) return setZone("prompt");
       if (zone === "prompt") return;
-      const n = size[zone];
-      if (key.upArrow || key.downArrow) setSelected((s) => ({ ...s, [zone]: clamp(s[zone] + (key.upArrow ? -1 : 1), n) }));
+      const [n, step] = [size[zone], move(key, input)];
+      if (step) setSelected((s) => ({ ...s, [zone]: clamp(s[zone] + step, n) }));
       if (key.return && n > 0) pick({ zone, index: clamp(selected[zone], n), state, cwd, open });
     },
     // At the prompt, the prompt bar takes every key in every phase, Tab included.
@@ -69,16 +74,24 @@ export function useNavigation(state: State, cwd: string, showTour: boolean): Nav
   return { zone, selected, overlay, scroll, nextZone, open };
 }
 
-type OverlayKeys = { key: { escape: boolean; upArrow: boolean; downArrow: boolean; pageUp: boolean; pageDown: boolean }; input: string; setScroll: (f: (n: number) => number) => void; close: () => void; kind: NonNullable<Overlay>["kind"] };
+type OverlayKeys = { key: { escape: boolean; upArrow: boolean; downArrow: boolean; leftArrow: boolean; rightArrow: boolean; pageUp: boolean; pageDown: boolean }; input: string; setScroll: (f: (n: number) => number) => void; open: (o: Overlay) => void; overlay: NonNullable<Overlay> };
 
 /**
  * In an overlay, Esc or q closes it and arrows scroll: down is positive, up negative. Each view
- * clamps the value to what it shows. The tour handles its own keys; the model picker all of them.
+ * clamps the value to what it shows. The tour handles its own keys, the model picker all of them;
+ * in a replay, ←→ change call.
  */
-function overlayKeys({ key, input, setScroll, close, kind }: OverlayKeys): void {
-  if (kind === "models") return;
-  if (key.escape || input === "q") return close();
-  if (kind === "tour") return;
+/** Up or down in a list: the arrows, or the extra keys `ui.keys` names. */
+export function move(key: { upArrow: boolean; downArrow: boolean }, input: string): number {
+  if (key.upArrow || (KEYS.up !== "" && input === KEYS.up)) return -1;
+  return key.downArrow || (KEYS.down !== "" && input === KEYS.down) ? 1 : 0;
+}
+
+function overlayKeys({ key, input, setScroll, open, overlay }: OverlayKeys): void {
+  if (overlay.kind === "models") return;
+  if (key.escape || input === KEYS.close) return open(null);
+  if (overlay.kind === "tour") return;
+  if (overlay.kind === "replay" && (key.leftArrow || key.rightArrow)) return open({ ...overlay, index: clamp(overlay.index + (key.leftArrow ? -1 : 1), overlay.calls.length) });
   const step = key.upArrow ? -1 : key.downArrow ? 1 : key.pageUp ? -PAGE : key.pageDown ? PAGE : 0;
   if (step !== 0) setScroll((s) => s + step);
 }

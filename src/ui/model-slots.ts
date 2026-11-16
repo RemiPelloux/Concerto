@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { bundledConfigPath, configPath, userConfigPath } from "#src/config/load.js";
+import { bundledConfigPath, editableConfigPath, userConfigPath } from "#src/config/load.js";
 import { MAX_SCORE, ROLES, type ConcertoConfig, type Role, type Route } from "#src/config/types.js";
 import { BRAIN_ROLES, isCheapModel } from "#src/models/brain.js";
 import type { Catalog } from "#src/models/catalog.js";
@@ -67,7 +67,7 @@ export function assign(config: ConcertoConfig, slot: Slot, ref: string): Concert
  * The bundled default is never edited: the personal config gets the whole config instead.
  */
 export function saveChoice(cwd: string, config: ConcertoConfig, slot: Slot): string {
-  const path = configPath(cwd);
+  const path = editableConfigPath(cwd);
   if (path === bundledConfigPath() || !existsSync(path)) return writeUserConfig(config, userConfigPath());
   const raw = JSON.parse(readFileSync(path, "utf8")) as Record<string, Record<string, { models?: string[] }> | undefined>;
   const holder = slot.kind === "roles" ? raw.roles?.[slot.key] : raw[slot.kind]?.[slot.index];

@@ -1,0 +1,1 @@
+daysBetween in src/dates.js is wrong: it counts one day too many, and around daylight-saving changes it is off. It must return the number of calendar days from a to b (negative when b is before a, 0 on the same day whatever the hours), the same in every time zone, using each date's local calendar day. Fix it and add tests.

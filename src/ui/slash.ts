@@ -1,6 +1,6 @@
 import { routingLines, statsLines } from "#src/commands/info.js";
-import { configPath } from "#src/config/load.js";
-import { MAX_SCORE, ROLES, type ConcertoConfig, type Route } from "#src/config/types.js";
+import { configPath, userConfigPath } from "#src/config/load.js";
+import { ROLES, type ConcertoConfig } from "#src/config/types.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { isBroken, readHealth } from "#src/models/health.js";
 import { roleChain } from "#src/models/router.js";
@@ -21,6 +21,8 @@ export type SlashContext = {
   show: (panel: Panel | null) => void;
   exit: (reason: ExitReason) => void;
   tour: () => void;
+  /** Opens the arrow-key model picker. */
+  pick: () => void;
   log: SessionLog;
   /** Puts a saved session on screen and gets it ready to build. */
   resume: (state: State) => void;
@@ -29,7 +31,6 @@ export type SlashContext = {
 type Command = { name: string; args: string; help: string; run: (arg: string, ctx: SlashContext) => Promise<void> | void };
 
 const CENTS = 2;
-const ROUTE_NAME = 14;
 const HELP_NAME = 20;
 
 export function parseSlash(text: string): { name: string; arg: string } | null {
@@ -37,36 +38,15 @@ export function parseSlash(text: string): { name: string; arg: string } | null {
   return match ? { name: (match[1] ?? "").toLowerCase(), arg: (match[2] ?? "").trim() } : null;
 }
 
-function seedRoles(ctx: SlashContext, session: Session): void {
-  ROLES.forEach((role) => ctx.store.role(role, { model: roleChain(session.catalog, session.config, role)[0]?.ref ?? "" }));
+export function seedRoles(store: Store, session: Session): void {
+  ROLES.forEach((role) => store.role(role, { model: roleChain(session.catalog, session.config, role)[0]?.ref ?? "" }));
 }
 
 function updateConfig(ctx: SlashContext, patch: Partial<ConcertoConfig>, note: string): void {
   const session = { ...ctx.session, config: { ...ctx.session.config, ...patch } };
   ctx.setSession(session);
-  seedRoles(ctx, session);
+  seedRoles(ctx.store, session);
   ctx.show({ title: "Session updated", lines: [note, "Applies to the next request in this session. The config file is unchanged."] });
-}
-
-/** What a route takes, e.g. "tags ui,ux" or "score ≥ 55" or "score < 25". */
-function routeMatch(r: Route): string {
-  const parts = [r.tags.length ? `tags ${r.tags.join(",")}` : "", r.minScore > 0 ? `score ≥ ${r.minScore}` : "", r.maxScore <= MAX_SCORE ? `score < ${r.maxScore}` : ""];
-  return parts.filter(Boolean).join(" · ") || "any story";
-}
-
-function configLines(ctx: SlashContext): string[] {
-  const c = ctx.session.config;
-  const routes = c.routes.map((r) => `  ${r.name.padEnd(ROUTE_NAME)} ${routeMatch(r)} → ${r.models[0] ?? "-"}`);
-  return [
-    `file      ${configPath(ctx.cwd)}`,
-    `prefer    ${c.prefer.join(", ") || "(none)"}`,
-    `budget    ${c.budgetUsd === undefined ? "(none)" : `$${c.budgetUsd.toFixed(CENTS)}`}`,
-    `timeout   ${c.timeoutMinutes} min per call · swarm ${c.swarm.maxParallel} in parallel`,
-    `models    ${ctx.session.catalog.models.length} reachable of ${Object.keys(c.models).length} configured`,
-    "routes",
-    ...routes,
-    "Edit the file, then /reload. /budget and /prefer change this session only.",
-  ];
 }
 
 function doctorLines(ctx: SlashContext): string[] {
@@ -81,8 +61,27 @@ async function reload(ctx: SlashContext): Promise<void> {
   const config = loadConfig(ctx.cwd);
   const session = { config, catalog: await loadCatalog(config) };
   ctx.setSession(session);
-  seedRoles(ctx, session);
+  seedRoles(ctx.store, session);
   ctx.show({ title: "Reloaded", lines: [`${configPath(ctx.cwd)}`, `${session.catalog.models.length} models reachable`] });
+}
+
+const SCAN_LINES = 12;
+
+/** `/config auto`: scan the machine, test every model, save and apply the proposed organigram. */
+async function configAuto(ctx: SlashContext): Promise<void> {
+  const [{ autoConfig }, { loadCatalog }, { organigramLines }] = await Promise.all([import("#src/commands/setup.js"), import("#src/models/catalog.js"), import("#src/setup/organigram.js")]);
+  const tested: string[] = [];
+  ctx.show({ title: "Scanning this machine", lines: ["Claude Code, Codex, pi, their servers and your API keys…"] });
+  const auto = await autoConfig(ctx.session.config.prefer, (ref, ok) => {
+    tested.push(`${ok ? "ok  " : "FAIL"} ${ref}`);
+    ctx.show({ title: `Testing models (${tested.length})`, lines: tested.slice(-SCAN_LINES) });
+  });
+  const session = { config: auto.config, catalog: await loadCatalog(auto.config) };
+  ctx.setSession(session);
+  seedRoles(ctx.store, session);
+  const wins = configPath(ctx.cwd) !== userConfigPath() ? [`${configPath(ctx.cwd)} still wins on the next launch; this session uses the organigram.`] : [];
+  const saved = [`Saved to ${auto.path} (the previous file is in config.json.bak).`, ...wins];
+  ctx.show({ title: "Organigram", lines: [...auto.sources, "", ...organigramLines(session.catalog, session.config), "", ...saved] });
 }
 
 async function probe(ctx: SlashContext): Promise<void> {
@@ -124,7 +123,7 @@ export const COMMANDS: readonly Command[] = [
   { name: "history", args: "[n|id]", help: "saved sessions; /history 2 reopens one and builds what did not pass", run: history },
   { name: "onboarding", args: "", help: "replay the animated tour of Concerto", run: (_a, ctx) => ctx.tour() },
   { name: "setup", args: "", help: "detect and test your models again, then pick the routing", run: (_a, ctx) => ctx.exit("setup") },
-  { name: "config", args: "", help: "the config in use: file, preference, budget, routes", run: (_a, ctx) => ctx.show({ title: "Configuration", lines: configLines(ctx) }) },
+  { name: "config", args: "[auto]", help: "pick the model of every role with the arrows; /config auto scans this machine", run: (a, ctx) => (a === "auto" ? configAuto(ctx) : ctx.pick()) },
   { name: "models", args: "", help: "each role's model chain and how stories route", run: (_a, ctx) => ctx.show({ title: "Models", lines: routingLines(ctx.session.catalog, ctx.session.config) }) },
   { name: "doctor", args: "", help: "models skipped after a failed probe, and why", run: (_a, ctx) => ctx.show({ title: "Doctor", lines: doctorLines(ctx) }) },
   { name: "probe", args: "", help: "test every installed model with one tiny prompt", run: (_a, ctx) => probe(ctx) },

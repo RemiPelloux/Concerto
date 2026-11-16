@@ -31,20 +31,22 @@ function defaultCostFactor(backend: Backend, profile: string): number {
   return SUBSCRIPTIONS.has(backend) && !profile ? SUBSCRIPTION_COST_FACTOR : 1;
 }
 
+/** Every configured model, priced; the caller has already checked they answer. */
+export function catalogFrom(config: ConcertoConfig, keep: (ref: string) => boolean = () => true): Catalog {
+  const prices = loadPriceIndex();
+  const models = Object.entries(config.models)
+    .filter(([ref]) => keep(ref))
+    .map(([ref, entry]) => {
+      const parsed = parseRef(ref);
+      const costFactor = entry.costFactor ?? defaultCostFactor(parsed.backend, parsed.profile);
+      return { ref, parsed, tier: entry.tier, price: priceFor(prices, parsed), costFactor };
+    });
+  return new Catalog(models);
+}
+
 /** Configured models that are installed, logged in, and did not fail a probe in the last day. */
 export async function loadCatalog(config: ConcertoConfig, health: Health = readHealth()): Promise<Catalog> {
-  const entries = Object.entries(config.models)
-    .filter(([ref]) => !isBroken(health, ref))
-    .map(([ref, entry]) => ({ ref, entry, parsed: parseRef(ref) }));
-  const [reachable, prices] = [await reachableRefs(entries.map((e) => e.parsed)), loadPriceIndex()];
-  const models = entries
-    .filter((e) => reachable.has(e.ref))
-    .map(({ ref, entry, parsed }) => ({
-      ref,
-      parsed,
-      tier: entry.tier,
-      price: priceFor(prices, parsed),
-      costFactor: entry.costFactor ?? defaultCostFactor(parsed.backend, parsed.profile),
-    }));
-  return new Catalog(models);
+  const refs = Object.keys(config.models).filter((ref) => !isBroken(health, ref));
+  const reachable = await reachableRefs(refs.map(parseRef));
+  return catalogFrom(config, (ref) => reachable.has(ref));
 }

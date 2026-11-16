@@ -124,7 +124,8 @@ Type `/` for commands, with suggestions as you type and Tab to complete:
 | `/history`, `/history 2` | Saved sessions of this project; reopen one and build what did not pass |
 | `/onboarding` | Replay the animated tour |
 | `/setup` | Detect and test your models again, then pick the routing |
-| `/config` | The config in use: file, provider preference, budget, routes |
+| `/config` | Every role, build route and review rule with its model: ↑↓ to move, Enter to open the list of models, Enter to pick one. Applies now and saves to the config in use |
+| `/config auto` | Scan this machine (Claude Code, Codex and its servers, pi providers, API keys), test every model, save and apply the proposed organigram: who plans, scores, builds and reviews |
 | `/models` | Each role's model chain and how stories route |
 | `/doctor` | Models skipped after a failed probe, and why |
 | `/probe` | Test every installed model again |

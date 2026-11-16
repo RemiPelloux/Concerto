@@ -83,5 +83,5 @@ export function OverlayView({ overlay, state, scroll, close }: Props) {
   if (overlay.kind === "tour") return <Tour onClose={close} />;
   if (overlay.kind === "agent") return <AgentOverlay id={overlay.id} state={state} scroll={scroll} />;
   if (overlay.kind === "diff") return <DiffOverlay file={overlay.file} text={overlay.text} scroll={scroll} />;
-  return <StoryOverlay id={overlay.id} state={state} />;
+  return overlay.kind === "story" ? <StoryOverlay id={overlay.id} state={state} /> : null;
 }

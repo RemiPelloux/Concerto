@@ -1,10 +1,13 @@
 import { reachableRefs } from "#src/models/discover.js";
 import type { ConcertoConfig } from "#src/config/types.js";
+import { catalogFrom } from "#src/models/catalog.js";
 import { healthPath, saveHealth, type Health } from "#src/models/health.js";
 import { runModel } from "#src/runner/index.js";
 import { parseRef } from "#src/runner/types.js";
 import { detect, type Detection } from "#src/setup/detect.js";
+import { organigramLines } from "#src/setup/organigram.js";
 import { probeModels } from "#src/setup/probe.js";
+import { sourceLines } from "#src/setup/sources.js";
 import { buildUserConfig, candidateRefs, ROUTINGS, writeUserConfig, type Routing } from "#src/setup/user-config.js";
 
 const out = (line: string) => process.stdout.write(`${line}\n`);
@@ -29,7 +32,6 @@ export async function probeAndSave(refs: string[], onResult?: (ref: string, ok: 
   return new Set(Object.entries(results).filter(([, c]) => c.ok).map(([ref]) => ref));
 }
 
-/** `--probe`: tests every configured model that is installed, and records the result. */
 /** Configured models whose CLI or provider is installed: the ones worth a probe. */
 export async function installedTargets(config: ConcertoConfig): Promise<string[]> {
   const refs = Object.keys(config.models);
@@ -52,6 +54,22 @@ export async function runInit(routing: string | undefined): Promise<void> {
   const targets = await probeTargets(detection);
   process.stderr.write(`Probing ${targets.length} models, one tiny prompt each...\n`);
   const working = await probeAndSave(targets, (ref, ok) => process.stderr.write(`${ok ? "ok  " : "FAIL"} ${ref}\n`));
-  const path = writeUserConfig(buildUserConfig(detection, parseRouting(routing), working));
+  const config = buildUserConfig(detection, parseRouting(routing), working);
+  const path = writeUserConfig(config);
   out(`Saved ${working.size} of ${targets.length} models that answered to ${path} (${parseRouting(routing)} first).`);
+  organigramLines(catalogFrom(config), config).forEach(out);
+}
+
+export type AutoConfig = { config: ConcertoConfig; path: string; sources: string[] };
+
+/**
+ * `/config auto`: reads every source on this machine (Claude Code, Codex and its servers, pi and
+ * its providers, API keys), tests each model, and saves the organigram as the personal config.
+ */
+export async function autoConfig(prefer: readonly string[], onResult: (ref: string, ok: boolean) => void): Promise<AutoConfig> {
+  const detection = await detect();
+  const working = await probeAndSave(await probeTargets(detection), onResult);
+  const built = buildUserConfig(detection, "subscriptions", working);
+  const config = prefer.length > 0 ? { ...built, prefer: [...prefer] } : built;
+  return { config, path: writeUserConfig(config), sources: sourceLines(detection) };
 }

@@ -1,4 +1,5 @@
 import type { ConcertoConfig, Effort, Role } from "#src/config/types.js";
+import { catalogFor } from "#src/models/brain.js";
 import type { Catalog } from "#src/models/catalog.js";
 import type { ModelInfo } from "#src/models/types.js";
 
@@ -90,7 +91,8 @@ export function firstOf(catalog: Catalog, config: ConcertoConfig, role: Role): M
 
 export function roleChain(catalog: Catalog, config: ConcertoConfig, role: Role): ModelInfo[] {
   const cfg = config.roles[role];
-  return chainOf(config, catalog.reachable(cfg.models), tierChain(catalog, cfg.minTier));
+  const allowed = catalogFor(catalog, role);
+  return chainOf(config, allowed.reachable(cfg.models), tierChain(allowed, cfg.minTier));
 }
 
 type Rule = { tags: string[]; minScore: number; maxScore: number };
@@ -104,14 +106,15 @@ function matches(rule: Rule, story: StoryShape): boolean {
 export function routeStory(story: StoryShape, catalog: Catalog, config: ConcertoConfig): Assignment {
   for (const route of config.routes) {
     if (!matches(route, story)) continue;
-    const wanted = catalog.reachable(route.models);
+    const allowed = catalogFor(catalog, route.role);
+    const wanted = allowed.reachable(route.models);
     if (wanted.length === 0) continue;
-    const fallback = tierChain(catalog, Math.min(...wanted.map((m) => m.tier)));
+    const fallback = tierChain(allowed, Math.min(...wanted.map((m) => m.tier)));
     const effort = route.effort === "auto" ? effortFor(story.score) : route.effort;
     return { role: route.role, chain: chainOf(config, wanted, fallback), effort, rule: route.name };
   }
-  const fallback = tierChain(catalog, requiredTier(story.score));
   const role: Role = story.score >= FLOOR.strong ? "soloist" : "section";
+  const fallback = tierChain(catalogFor(catalog, role), requiredTier(story.score));
   return { role, chain: chainOf(config, [], fallback), effort: effortFor(story.score), rule: "cheapest-tier" };
 }
 
@@ -120,7 +123,8 @@ export function routeStory(story: StoryShape, catalog: Catalog, config: Concerto
  * a light model for small stories); the critic role's chain is the fallback and the default.
  */
 export function reviewChain(story: StoryShape, catalog: Catalog, config: ConcertoConfig): ModelInfo[] {
-  const special = config.reviews.filter((r) => matches(r, story)).map((r) => catalog.reachable(r.models)).find((m) => m.length > 0) ?? [];
+  const allowed = catalogFor(catalog, "critic");
+  const special = config.reviews.filter((r) => matches(r, story)).map((r) => allowed.reachable(r.models)).find((m) => m.length > 0) ?? [];
   const critic = roleChain(catalog, config, "critic");
   return special.length > 0 ? chainOf(config, special, critic) : critic;
 }

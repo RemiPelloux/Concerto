@@ -7,6 +7,13 @@ description: Change how Concerto routes work between models - which model builds
 
 Concerto reads the first of: `$CONCERTO_CONFIG`, `./concerto.config.json` (per project),
 `~/.config/concerto/config.json` (personal, written by `concerto --init`), the bundled default.
+`/config auto` in the TUI rescans the machine and rewrites the personal config with a proposed
+organigram (the previous file is kept as `config.json.bak`).
+
+Brain roles (conductor, scorer, critic, soloist) never run on low-cost models: ids containing
+deepseek, grok, haiku, terra, luna, flash, glm, mini or nano are skipped for them, even when a
+config names them. Those models still build light stories through the section role and routes.
+
 Edit the file that is in use (`concerto --doctor` prints which), then run `concerto --models` to
 see the result. Invalid configs fail with the file and field named.
 

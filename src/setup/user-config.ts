@@ -1,8 +1,10 @@
-import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { bundledConfigPath, parseConfig, readConfigFile, userConfigPath } from "#src/config/load.js";
 import type { ConcertoConfig } from "#src/config/types.js";
+import { catalogFrom } from "#src/models/catalog.js";
 import type { Detection } from "#src/setup/detect.js";
+import { proposeRoles } from "#src/setup/organigram.js";
 
 const DIR_MODE = 0o700;
 const FILE_MODE = 0o600;
@@ -22,8 +24,8 @@ export function candidateRefs(detection: Detection): string[] {
 
 /**
  * Every linked model that answered its probe, so the file lists exactly the AI that works on
- * this machine. Routes and roles keep the bundled defaults (unreachable entries are skipped at
- * run time); `prefer` follows the user's choice.
+ * this machine. Each role gets the best of those models (the organigram); routes keep the bundled
+ * defaults (unreachable entries are skipped at run time); `prefer` follows the user's choice.
  */
 export function buildUserConfig(detection: Detection, routing: Routing, working: ReadonlySet<string>): ConcertoConfig {
   const base = readConfigFile(bundledConfigPath());
@@ -32,12 +34,15 @@ export function buildUserConfig(detection: Detection, routing: Routing, working:
     all[m.ref] ??= { tier: m.tier };
   });
   const models = Object.fromEntries(Object.entries(all).filter(([ref]) => working.has(ref)));
-  return parseConfig({ ...base, models, prefer: [...ROUTINGS[routing].prefer] }, "the generated config");
+  const roles = proposeRoles(base.roles, catalogFrom({ ...base, models }));
+  return parseConfig({ ...base, models, roles, prefer: [...ROUTINGS[routing].prefer] }, "the generated config");
 }
 
+/** The previous file is kept next to it as `config.json.bak`, so hand edits are never lost. */
 export function writeUserConfig(config: ConcertoConfig, path = userConfigPath()): string {
   mkdirSync(dirname(path), { recursive: true, mode: DIR_MODE });
-  const comment = "Written by Concerto onboarding. Every model this machine could reach is listed; edit freely, or rerun `concerto --init`.";
+  if (existsSync(path)) copyFileSync(path, `${path}.bak`);
+  const comment = "Written by Concerto onboarding. Every model this machine could reach is listed; edit freely, or rerun `concerto --init` or `/config auto`.";
   writeFileSync(path, `${JSON.stringify({ $comment: comment, ...config }, null, 2)}\n`, { mode: FILE_MODE });
   chmodSync(path, FILE_MODE);
   return path;

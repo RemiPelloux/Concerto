@@ -3,18 +3,19 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { createConcert, type Concert } from "#src/orchestrator/concert.js";
 import { perform } from "#src/orchestrator/perform.js";
 import { scoreRequest } from "#src/orchestrator/score.js";
+import type { ConcertoConfig } from "#src/config/types.js";
 import type { Store } from "#src/state/store.js";
 import type { State } from "#src/state/types.js";
 import { resumable } from "#src/engine/history.js";
 import { unfinished } from "#src/ui/RunSummary.js";
 import type { AppDeps } from "#src/ui/App.js";
 import { submitPrompt } from "#src/ui/prompt-actions.js";
-import { runSlash, type ExitReason, type Panel, type Session } from "#src/ui/slash.js";
+import { runSlash, seedRoles, type ExitReason, type Panel, type Session } from "#src/ui/slash.js";
 
 type Run = { concert: Concert | null; abort: AbortController };
-type Controls = { panel: Panel | null; submit: (text: string) => void; enter: () => void };
+type Controls = { panel: Panel | null; submit: (text: string) => void; enter: () => void; session: Session; apply: (config: ConcertoConfig) => void };
 type KeyContext = { store: Store; run: RefObject<Run | null>; closePanel: () => boolean; active: boolean };
-export type NavHooks = { active: boolean; tour: () => void };
+export type NavHooks = { active: boolean; tour: () => void; models: () => void };
 
 /** Reads the store at keypress time, so this hook never subscribes and never re-renders the App. */
 function useKeys({ store, run, closePanel, active }: KeyContext): void {
@@ -90,6 +91,15 @@ function useEnter(store: Store, run: RefObject<Run | null>, fail: (e: unknown) =
   }, [store, run, fail, retry]);
 }
 
+/** A model picked in `/config` applies to this session at once. */
+function useApply(store: Store, session: Session, setSession: (s: Session) => void): (config: ConcertoConfig) => void {
+  return useCallback((config: ConcertoConfig) => {
+    const next = { ...session, config };
+    setSession(next);
+    seedRoles(store, next);
+  }, [store, session, setSession]);
+}
+
 /** Wires keyboard, prompt and slash commands to the orchestrator for one interactive session. */
 export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const [session, setSession] = useState<Session>({ config: deps.config, catalog: deps.catalog });
@@ -104,12 +114,12 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const submit = useCallback((text: string) => {
     const slash = (t: string) => {
       deps.log.write("command", t);
-      void runSlash(t, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, log: deps.log, resume });
+      void runSlash(t, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, pick: nav.models, log: deps.log, resume });
     };
     submitPrompt(text, { store: deps.store, log: deps.log, request, slash, show: setPanel });
-  }, [deps.cwd, deps.store, deps.log, session, request, resume, leave, nav.tour]);
+  }, [deps.cwd, deps.store, deps.log, session, request, resume, leave, nav.tour, nav.models]);
   const closePanel = () => (panel ? (setPanel(null), true) : false);
   useKeys({ store: deps.store, run, closePanel, active: nav.active });
   useStartOnce(deps.initialRequest, submit);
-  return { panel, submit, enter: useEnter(deps.store, run, fail) };
+  return { panel, submit, enter: useEnter(deps.store, run, fail), session, apply: useApply(deps.store, session, setSession) };
 }

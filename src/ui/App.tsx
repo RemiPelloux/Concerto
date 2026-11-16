@@ -14,6 +14,7 @@ import { ChangesTable } from "#src/ui/ChangesTable.js";
 import { ConductorPanel } from "#src/ui/ConductorPanel.js";
 import { CostBar } from "#src/ui/CostBar.js";
 import { LogView } from "#src/ui/LogView.js";
+import { ModelPicker, type PickerProps } from "#src/ui/ModelPicker.js";
 import { OverlayView } from "#src/ui/Overlays.js";
 import { PanelView } from "#src/ui/PanelView.js";
 import { PromptBar, promptHint } from "#src/ui/PromptBar.js";
@@ -94,6 +95,15 @@ function OverlayScreen({ state, nav, session }: { state: State; nav: Navigation;
   );
 }
 
+function PickerScreen({ state, picker }: { state: State; picker: PickerProps }) {
+  return (
+    <Box flexDirection="column" paddingX={1}>
+      <Header state={state} />
+      <ModelPicker {...picker} />
+    </Box>
+  );
+}
+
 /** The conductor and stage diagram: shown when the terminal has room for it. */
 function Diagram({ state, swarmSize }: { state: State; swarmSize: number }) {
   return (
@@ -129,8 +139,9 @@ export function App(deps: AppDeps) {
   const state = useFrameState(deps.store);
   const roomy = (useStdout().stdout.rows ?? ROOMY_ROWS) >= ROOMY_ROWS;
   const nav = useNavigation(state, deps.cwd, deps.showTour);
-  const { panel, submit, enter } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }) });
+  const { panel, submit, enter, session, apply } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }), models: () => nav.open({ kind: "models" }) });
   const brain = useMemo(() => shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? ""), [deps.catalog, deps.config]);
+  if (nav.overlay?.kind === "models") return <PickerScreen state={state} picker={{ config: session.config, catalog: session.catalog, cwd: deps.cwd, onApply: apply, onClose: () => nav.open(null) }} />;
   if (nav.overlay) return <OverlayScreen state={state} nav={nav} session={deps.log.id} />;
   return (
     <Box flexDirection="column" paddingX={1}>

@@ -5,7 +5,7 @@ import type { State } from "#src/state/types.js";
 
 export const ZONES = ["prompt", "agents", "stories", "changes"] as const;
 export type Zone = (typeof ZONES)[number];
-export type Overlay = { kind: "agent"; id: string } | { kind: "diff"; file: string; text: string } | { kind: "story"; id: string } | { kind: "tour" } | null;
+export type Overlay = { kind: "agent"; id: string } | { kind: "diff"; file: string; text: string } | { kind: "story"; id: string } | { kind: "tour" } | { kind: "models" } | null;
 
 export type Navigation = {
   zone: Zone;
@@ -55,7 +55,7 @@ export function useNavigation(state: State, cwd: string, showTour: boolean): Nav
   };
   useInput(
     (input, key) => {
-      if (overlay) return overlayKeys({ key, input, setScroll, close: () => open(null), tour: overlay.kind === "tour" });
+      if (overlay) return overlayKeys({ key, input, setScroll, close: () => open(null), kind: overlay.kind });
       if (key.tab) return nextZone();
       if (key.escape) return setZone("prompt");
       if (zone === "prompt") return;
@@ -69,15 +69,16 @@ export function useNavigation(state: State, cwd: string, showTour: boolean): Nav
   return { zone, selected, overlay, scroll, nextZone, open };
 }
 
-type OverlayKeys = { key: { escape: boolean; upArrow: boolean; downArrow: boolean; pageUp: boolean; pageDown: boolean }; input: string; setScroll: (f: (n: number) => number) => void; close: () => void; tour: boolean };
+type OverlayKeys = { key: { escape: boolean; upArrow: boolean; downArrow: boolean; pageUp: boolean; pageDown: boolean }; input: string; setScroll: (f: (n: number) => number) => void; close: () => void; kind: NonNullable<Overlay>["kind"] };
 
 /**
  * In an overlay, Esc or q closes it and arrows scroll: down is positive, up negative. Each view
- * clamps the value to what it shows (the tour handles its own keys).
+ * clamps the value to what it shows. The tour handles its own keys; the model picker all of them.
  */
-function overlayKeys({ key, input, setScroll, close, tour }: OverlayKeys): void {
+function overlayKeys({ key, input, setScroll, close, kind }: OverlayKeys): void {
+  if (kind === "models") return;
   if (key.escape || input === "q") return close();
-  if (tour) return;
+  if (kind === "tour") return;
   const step = key.upArrow ? -1 : key.downArrow ? 1 : key.pageUp ? -PAGE : key.pageDown ? PAGE : 0;
   if (step !== 0) setScroll((s) => s + step);
 }

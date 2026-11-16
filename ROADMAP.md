@@ -166,11 +166,10 @@ every call.
 ### Sprint 12 · 0.13 · editors and tools
 
 - **MCP server:** other agents can plan, run and read Concerto runs as tools.
-- **VS Code and JetBrains extensions:** start a run from a selection, watch agents in a panel,
-  accept stories from the diff view.
-- **Neovim plugin** and an **Orca plugin** once Orca's plugin API can start terminal commands.
+- **Neovim plugin:** plan or build the visual selection from a command.
 
-Done when: a run can be started, watched and accepted from VS Code without opening a terminal.
+Done when: another agent plans and builds a request through the MCP server alone, and Neovim
+starts a run from a selection.
 
 ---
 

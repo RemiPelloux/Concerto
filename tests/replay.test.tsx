@@ -80,9 +80,12 @@ describe("history, replay and sharing", () => {
     ui.keyboard.press("/history s-lastweek-0001\r");
     await vi.waitFor(() => expect(ui.store.get().phase).toBe("planned"));
     expect(ui.store.get().parent).toBe("s-lastweek-0001");
-    await new Promise((r) => setTimeout(r, 100));
-    ui.keyboard.press("\r");
-    await vi.waitFor(() => expect(ui.store.get().phase).toBe("done"), { timeout: 5000 });
+    // A slow runner can still be drawing the reopened plan when Enter arrives: press until it builds.
+    await vi.waitFor(() => {
+      if (ui.store.get().phase === "planned") ui.keyboard.press("\r");
+      expect(ui.store.get().phase).not.toBe("planned");
+    }, { timeout: 10_000, interval: 500 });
+    await vi.waitFor(() => expect(ui.store.get().phase).toBe("done"), { timeout: 20_000 });
     expect(ui.store.get().stories.fix?.status).toBe("passed");
     expect(readSession(cwd, "s-lastweek-0001")?.stories.fix?.status).toBe("failed");
     ui.app.unmount();

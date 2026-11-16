@@ -42,7 +42,7 @@ async function critique(c: Concert, job: Job, second?: ModelInfo[]): Promise<Ver
   ];
   const chain = second ?? c.catalog.reachable(view.critics);
   const key = `${story.id}-${second ? "critic2" : "critic"}${job.round > 0 ? `-r${job.round}` : ""}`;
-  const out = await callRole(c, { role: "critic", chain, segments, tags: story.tags, sessionKey: key, label: `${second ? "second review" : "review"}: ${story.title}`, cwd });
+  const out = await callRole(c, { role: "critic", chain, segments, tags: story.tags, sessionKey: key, label: `${second ? "second review" : "review"}: ${story.title}`, cwd, storyId: story.id });
   const pass = readTag(out.text, "VERDICT") === "pass";
   c.store.role("critic", { activity: "waiting", note: "waiting" });
   c.store.story(story.id, { finding: headline(out.text, "VERDICT") });

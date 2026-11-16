@@ -1,3 +1,4 @@
+import type { Calibration } from "#src/engine/calibrate.js";
 import type { ModelInfo } from "#src/models/types.js";
 
 const PER_MILLION = 1_000_000;
@@ -15,10 +16,15 @@ function callCost(points: number, model: ModelInfo | undefined): number {
   return (points * (prompt + OUTPUT_TOKENS_PER_POINT * p.output)) / PER_MILLION;
 }
 
+export type EstimateInput = { points: number; builder: ModelInfo | undefined; critic: ModelInfo | undefined; calibration?: Calibration };
+
 /**
- * API-equivalent dollars for one story: one build and one review. An order of magnitude to
- * compare stories and set a budget, not a quote. Retries and conductor consults come on top.
+ * API-equivalent dollars for one story. When the builder has a history in this repository, its
+ * measured cost per point, which already holds its reviews and retries; otherwise one build and
+ * one review at list prices. An order of magnitude to compare stories and set a budget.
  */
-export function estimateStory(points: number, builder: ModelInfo | undefined, critic: ModelInfo | undefined): number {
+export function estimateStory({ points, builder, critic, calibration }: EstimateInput): number {
+  const measured = builder ? calibration?.records.get(builder.ref)?.costPerPoint : null;
+  if (measured) return points * measured;
   return callCost(points, builder) + REVIEW_SHARE * callCost(points, critic);
 }

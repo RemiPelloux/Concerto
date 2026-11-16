@@ -49,6 +49,7 @@ async function headless(s: Setup, request: string): Promise<void> {
 /** Commands that need no model catalog. */
 async function standalone(values: Values, request: string): Promise<boolean> {
   if (values.stats) return printStats(process.cwd()), true;
+  if (values.insights) return (await import("#src/commands/insights.js")).insightsLines(process.cwd()).forEach((l) => process.stdout.write(`${l}\n`)), true;
   if (values["install-skills"]) return (await import("#src/commands/skills.js")).installSkills(), true;
   if (values.init) return await (await import("#src/commands/setup.js")).runInit(values.routing), true;
   if (values.orca) return await (await import("#src/commands/orca.js")).runInOrca(request), true;

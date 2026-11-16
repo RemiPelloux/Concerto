@@ -1,22 +1,37 @@
 import { analyzeImpact, NO_IMPACT, type Impact } from "#src/engine/impact.js";
 import { safePaths } from "#src/engine/paths.js";
-import { reviewChain, routeStory } from "#src/models/router.js";
+import { blendedPrice, reviewChain, routeStory } from "#src/models/router.js";
+import type { ModelInfo } from "#src/models/types.js";
+import { MIN_MODEL_STORIES, type Calibration } from "#src/engine/calibrate.js";
 import type { StoryView } from "#src/state/types.js";
 import { callRole } from "#src/orchestrator/call.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 import { estimateStory } from "#src/orchestrator/estimate.js";
 import { parsePlan, type Plan, type Story } from "#src/orchestrator/plan.js";
-import { scoreStory } from "#src/orchestrator/scoring.js";
+import { scoreStory, WEIGHTS, type FactorKey } from "#src/orchestrator/scoring.js";
 
 const NO_CHECKPOINTS = { "plan-lock": "", "repeat-error": "", "critics-disagree": "", "before-done": "" };
 
+/**
+ * Between models of the same price, the one that passed more stories in this repository goes
+ * first: history breaks ties, it never overrides the routing.
+ */
+export function preferProven(chain: ModelInfo[], calibration: Calibration): ModelInfo[] {
+  const rate = (m: ModelInfo) => {
+    const r = calibration.records.get(m.ref);
+    return r && r.stories >= MIN_MODEL_STORIES ? r.passRate : -1;
+  };
+  return chain.map((m, i) => ({ m, i })).sort((a, b) => (blendedPrice(a.m) === blendedPrice(b.m) ? rate(b.m) - rate(a.m) || a.i - b.i : a.i - b.i)).map(({ m }) => m);
+}
+
 function view(c: Concert, story: Story, impact: Impact): StoryView {
-  const breakdown = scoreStory(story, impact);
+  const breakdown = scoreStory(story, impact, (c.calibration.weights as Record<FactorKey, number> | null) ?? WEIGHTS);
   const { score } = breakdown;
   const route = routeStory({ score, tags: story.tags }, c.catalog, c.config);
-  const chain = route.chain.map((m) => m.ref);
-  const reviewers = reviewChain({ score, tags: story.tags }, c.catalog, c.config);
-  const estimate = estimateStory(story.points, route.chain[0], reviewers[0]);
+  const builders = preferProven(route.chain, c.calibration);
+  const chain = builders.map((m) => m.ref);
+  const reviewers = preferProven(reviewChain({ score, tags: story.tags }, c.catalog, c.config), c.calibration);
+  const estimate = estimateStory({ points: story.points, builder: builders[0], critic: reviewers[0], calibration: c.calibration });
   const critics = reviewers.map((m) => m.ref);
   const { role, effort, rule } = route;
   return { id: story.id, score, reasons: breakdown.reasons, factors: breakdown.factors, role, effort, rule, chain, model: chain[0] ?? "", critics, estimate, impact, status: "queued" };

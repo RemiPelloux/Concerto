@@ -131,6 +131,7 @@ export const COMMANDS: readonly Command[] = [
   { name: "reload", args: "", help: "read the config file again", run: (_a, ctx) => reload(ctx) },
   { name: "budget", args: "<usd|off>", help: "spending cap for this session", run: budget },
   { name: "prefer", args: "<providers|off>", help: "providers tried first, e.g. ce-*", run: prefer },
+  { name: "insights", args: "", help: "what past runs say: pass rate and cost per model, files that fail", run: async (_a, ctx) => ctx.show({ title: "Insights", lines: (await import("#src/commands/insights.js")).insightsLines(ctx.cwd) }) },
   { name: "stats", args: "", help: "tokens, cache hits and savings for this repository", run: (_a, ctx) => ctx.show({ title: "Stats", lines: statsLines(ctx.cwd) }) },
   { name: "orca", args: "<request>", help: "build a request in a new Orca worktree", run: orca },
   { name: "clear", args: "", help: "clear the plan and the log", run: (_a, ctx) => ctx.store.update(() => ({ phase: "idle", plan: null, stories: {}, order: [], log: [], error: "" })) },

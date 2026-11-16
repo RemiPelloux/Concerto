@@ -18,6 +18,7 @@ edit files in the directory Concerto runs in.
 | It built here, unattended, with a cap | `concerto --run --budget 5 "<request>"` | Yes, here |
 | To finish a run that crashed, was stopped or failed review | `concerto --resume <session id>` (opens the TUI; the user presses Enter to build) | Yes, here |
 | To check which models work | `concerto --doctor` | No |
+| What past runs say: which model passes, what it costs, which files keep failing | `concerto --insights` | No |
 
 Rules:
 

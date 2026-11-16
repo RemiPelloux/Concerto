@@ -15,6 +15,7 @@ export const USAGE = `concerto [options] [request]
   --doctor            what is installed, linked and reachable
   --models            reachable models, each role's chain and sample routes
   --stats             token and cache totals for this repository
+  --insights          what past runs say: pass rate and cost per model, files that keep failing
   --install-skills    teach the agents on this machine (Claude Code, Codex, pi) to use Concerto
   --clear-cache       drop the local response cache
   -v, --version       print the version
@@ -39,6 +40,7 @@ export const OPTIONS = {
   probe: { type: "boolean" },
   models: { type: "boolean" },
   stats: { type: "boolean" },
+  insights: { type: "boolean" },
   "install-skills": { type: "boolean" },
   "clear-cache": { type: "boolean" },
   version: { type: "boolean", short: "v" },

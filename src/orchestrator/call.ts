@@ -26,6 +26,8 @@ export type Call = {
   sessionKey?: string;
   /** What the agent view calls this call: a story title, a checkpoint. */
   label?: string;
+  /** The story this call works for: its cost and tokens are added to the story's account. */
+  storyId?: string;
   /** Where the agent works: the story's worktree. Default: the run's folder. */
   cwd?: string;
   /** Read-only calls may be answered by the local response cache. */
@@ -64,6 +66,12 @@ async function watched(c: Concert, call: Call, req: RunRequest): Promise<RunResu
   }
 }
 
+/** Adds one call's cost to its story, so runs can be learned from per story. */
+function charge(c: Concert, storyId: string, cost: number): void {
+  const spent = c.store.get().stories[storyId]?.spent ?? 0;
+  c.store.story(storyId, { spent: spent + cost });
+}
+
 async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunResult> {
   const roleCfg = c.config.roles[call.role];
   const session = call.sessionKey ? c.sessions.open(call.sessionKey, model) : undefined;
@@ -82,7 +90,9 @@ async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
   });
   if (session) c.sessions.record(session, assembled.hashes);
   const entry = { usage: result.usage, price: model.price, brain: c.brainPrice };
+  const before = c.store.get().ledger.usage.cost;
   c.store.update((s) => ({ ledger: bump(record(s.ledger, entry), "dedupedTokens", assembled.skippedTokens) }));
+  if (call.storyId) charge(c, call.storyId, c.store.get().ledger.usage.cost - before);
   return result;
 }
 

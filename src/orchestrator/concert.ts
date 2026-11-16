@@ -7,6 +7,9 @@ import { Sessions } from "#src/engine/sessions.js";
 import { SystemPrompts } from "#src/engine/system-prompts.js";
 import { claimRun, clearLeftovers } from "#src/engine/worktree.js";
 import { detectChecks, type Check } from "#src/engine/checks.js";
+import { calibrate, type Calibration } from "#src/engine/calibrate.js";
+import { readOutcomes } from "#src/engine/outcomes.js";
+import { WEIGHTS } from "#src/orchestrator/scoring.js";
 import { detectToolchain, toolchainNotes } from "#src/engine/toolchain.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { roleChain } from "#src/models/router.js";
@@ -36,6 +39,8 @@ export type Concert = {
   isolated: boolean;
   /** What every story must pass before review: the project's tests, type check and lint. */
   checks: Check[];
+  /** What this repository's past runs say: fitted score weights and each model's track record. */
+  calibration: Calibration;
   /** Conductor list price: the "one frontier model alone" baseline in the cost panel. */
   brainPrice: Price | null;
 };
@@ -69,6 +74,7 @@ export async function createConcert(init: ConcertInit): Promise<Concert> {
     blastRadius: new BlastRadius(cwd, repo.files),
     isolated,
     checks: detectChecks(cwd, config.checks),
+    calibration: calibrate(readOutcomes(cwd), WEIGHTS),
     brainPrice: roleChain(init.catalog, config, "conductor")[0]?.price ?? null,
   };
 }

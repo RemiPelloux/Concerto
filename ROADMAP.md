@@ -62,19 +62,20 @@ Done: 10 of 10 seeded weak tests caught, a real test left alone.
 
 ## Part 2 · Smarter routing and lower cost
 
-### Sprint 4 · 0.5 · learn from runs
+### Sprint 4 · learn from runs · shipped
 
-- **Run history as data.** Every story's factors, model, retries, review result, tokens and cost
-  go into a local SQLite file.
-- **Calibrated score.** Factor weights are fitted to that history per repository, with a minimum
-  sample size and the hand-set weights as the prior.
-- **Calibrated estimates.** Cost per point per model replaces the fixed constant.
-- **Per-model track record** by story type, used to break ties and to pick the reviewer.
-- **`concerto --insights`:** which models pass which kinds of stories, where money goes, which
-  files keep failing review.
+- **Run history as data:** each finished story's factors, model, critic, builds, cost and result,
+  in `.concerto/outcomes.jsonl` (JSON lines rather than SQLite: Node 22's SQLite module is still
+  experimental, and a few thousand records need no database).
+- **Calibrated score:** after 20 stories the factor weights are fitted to the repository's
+  history, within a quarter to double of the hand-set prior.
+- **Calibrated estimates:** a model's median cost per point here replaces list prices once it has
+  five paid stories.
+- **Per-model track record:** breaks price ties for builders and reviewers.
+- **`concerto --insights`** and `/insights`.
 
-Done when: on a repository with 20 recorded runs, the estimate lands within 30 % of the real cost
-for 8 runs out of 10.
+Done: with 20 recorded runs the estimate lands within 30 % for 8 of 10 new runs, where list prices
+miss by more.
 
 ### Sprint 5 · 0.6 · rate limits, budgets and quotas
 

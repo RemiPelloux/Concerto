@@ -33,7 +33,8 @@ async function play(c: Concert, { story, cwd }: Job, feedback: string): Promise<
     { name: "feedback", text: feedback ? `## Fix this before anything else\n${feedback}` : "" },
   ];
   const chain = c.catalog.reachable(view.chain);
-  const out = await callRole(c, { role: view.role, chain, segments, effort: view.effort, tags: story.tags, sessionKey: story.id, label: story.title, cwd });
+  c.store.story(story.id, { attempts: (view.attempts ?? 0) + 1 });
+  const out = await callRole(c, { role: view.role, chain, segments, effort: view.effort, tags: story.tags, sessionKey: story.id, label: story.title, cwd, storyId: story.id });
   c.store.story(story.id, { model: out.model.ref });
   if (!c.isolated) readChanges(c.cwd).then((changes) => c.store.update(() => ({ changes })), () => undefined);
   c.store.role(view.role, { activity: "done" });

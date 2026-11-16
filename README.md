@@ -87,6 +87,7 @@ pass.`, press Enter to see the scored stories, and Enter again to build them.
 | `concerto --probe` | Retest the configured models |
 | `concerto --doctor` | What is installed, linked, skipped, and why |
 | `concerto --stats` | Tokens, cache hits and savings for this repository |
+| `concerto --insights` | What past runs say: pass rate, builds and cost per point per model, files that keep failing |
 | `concerto --install-skills` | Teach the agents on this machine to use Concerto |
 
 After a build, the report is in `.concerto/runs/`, ready to paste into a pull request.
@@ -122,6 +123,7 @@ Type `/` for commands, with suggestions as you type and Tab to complete:
 
 | Command | What it does |
 |---|---|
+| `/insights` | Pass rate and cost per model in this repository, and the files that keep failing |
 | `/history`, `/history 2` | Saved sessions of this project; reopen one and build what did not pass |
 | `/onboarding` | Replay the animated tour |
 | `/setup` | Detect and test your models again, then pick the routing |
@@ -140,6 +142,15 @@ Concerto starts the agents itself. For every story it runs a builder (`claude -p
 conductor at its checkpoints. You do not open them, and they do not appear as separate tabs: you
 watch them in Concerto's screen, and their work shows up as changes in the folder. Concerto never
 commits; you review the diff.
+
+### Learning from runs
+
+Every finished story is recorded in `.concerto/outcomes.jsonl`: its factors, model, builds, cost
+and result. After 20 stories, the score's weights are fitted to this repository: a factor that
+went with failures and retries weighs more, one that did not weighs less, within a quarter to
+double of its starting weight. Once a model has five paid stories here, the estimate uses its real
+cost per point instead of list prices. Between two models of the same price, the one that passed
+more stories here goes first. `concerto --insights` shows it all.
 
 ### How each story is checked
 

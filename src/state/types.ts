@@ -32,6 +32,10 @@ export type StoryView = {
   status: StoryStatus;
   /** The critic's last finding, in one line: why a story failed, shown when the run ends. */
   finding?: string;
+  /** API-equivalent dollars this story's builds and reviews cost so far. */
+  spent?: number;
+  /** Builds this story took, rebuilds included. */
+  attempts?: number;
   /** Files this story's merge wrote into the main folder (isolated runs). */
   merged?: string[];
   /** Routes whose answer changed when Concerto ran the server before and after the story. */

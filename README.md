@@ -161,6 +161,12 @@ Orca worktree".
   the label `Concerto` and the command `concerto`. It opens the TUI in the current worktree.
 - **From your agents:** with the skills installed, Claude Code, Codex or pi running in Orca call
   `concerto --plan` or `concerto --orca` when you ask them to.
+- **The Concerto panel:** the `orca-plugin/` folder is an Orca plugin (Orca 1.4 or later). In
+  Orca, open Settings, then Plugins, and install it from that local folder. It adds a Concerto
+  panel to the right sidebar: pick Plan, Build here or New worktree, write a request, set an
+  optional budget, pick a terminal of the focused worktree that shows a shell prompt, and send.
+  Doctor, Models, Probe and Stats run from the same panel. It asks to read the worktree's terminal
+  list and to type into the terminal you pick, nothing else.
 
 ## How a story is scored
 

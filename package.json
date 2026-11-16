@@ -18,6 +18,7 @@
     ".pelloux/GUIDELINES.md",
     "concerto.config.json",
     "dist",
+    "orca-plugin",
     "prompts",
     "scripts/install.sh",
     "skills"

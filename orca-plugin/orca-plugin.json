@@ -1,0 +1,15 @@
+{
+  "manifestVersion": 1,
+  "id": "concerto",
+  "publisher": "remipelloux",
+  "name": "Concerto",
+  "version": "0.1.4",
+  "description": "Plan or build a request with Concerto from a sidebar panel, in the current worktree or a new one.",
+  "repository": "https://github.com/RemiPelloux/Concerto",
+  "engines": { "orca": ">=1.4.0" },
+  "pluginApi": 1,
+  "contributes": {
+    "panels": [{ "id": "concerto", "title": "Concerto", "icon": "layers", "entry": "panel.html" }]
+  },
+  "capabilities": [{ "kind": "workspace:read" }, { "kind": "terminal:send" }]
+}

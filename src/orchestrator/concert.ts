@@ -8,7 +8,8 @@ import { SystemPrompts } from "#src/engine/system-prompts.js";
 import { claimRun, clearLeftovers } from "#src/engine/worktree.js";
 import { detectChecks, type Check } from "#src/engine/checks.js";
 import { calibrate, type Calibration } from "#src/engine/calibrate.js";
-import { readOutcomes } from "#src/engine/outcomes.js";
+import { readOutcomes, type Outcome } from "#src/engine/outcomes.js";
+import { readStats } from "#src/engine/stats.js";
 import { WEIGHTS } from "#src/orchestrator/scoring.js";
 import { detectToolchain, toolchainNotes } from "#src/engine/toolchain.js";
 import type { Catalog } from "#src/models/catalog.js";
@@ -41,11 +42,25 @@ export type Concert = {
   checks: Check[];
   /** What this repository's past runs say: fitted score weights and each model's track record. */
   calibration: Calibration;
+  /** API-equivalent dollars spent here before this run: today, and in total. For the budgets. */
+  spentBefore: { today: number; total: number };
   /** Conductor list price: the "one frontier model alone" baseline in the cost panel. */
   brainPrice: Price | null;
 };
 
 export type ConcertInit = Pick<Concert, "config" | "catalog" | "store" | "runner" | "cwd"> & { signal?: AbortSignal };
+
+/** What finished stories cost since local midnight. */
+function spentToday(outcomes: Outcome[]): number {
+  const midnight = new Date().setHours(0, 0, 0, 0);
+  return outcomes.filter((o) => o.at >= midnight).reduce((sum, o) => sum + o.cost, 0);
+}
+
+/** What the repository's history brings to a run: the calibration and what was already spent. */
+function learned(cwd: string): Pick<Concert, "calibration" | "spentBefore"> {
+  const outcomes = readOutcomes(cwd);
+  return { calibration: calibrate(outcomes, WEIGHTS), spentBefore: { today: spentToday(outcomes), total: readStats(cwd).ledger.usage.cost } };
+}
 
 /** Claims this run's worktrees and saves, then removes, any a crashed run left behind. */
 async function prepareWorktrees(init: ConcertInit, runId: string): Promise<void> {
@@ -74,7 +89,7 @@ export async function createConcert(init: ConcertInit): Promise<Concert> {
     blastRadius: new BlastRadius(cwd, repo.files),
     isolated,
     checks: detectChecks(cwd, config.checks),
-    calibration: calibrate(readOutcomes(cwd), WEIGHTS),
+    ...learned(cwd),
     brainPrice: roleChain(init.catalog, config, "conductor")[0]?.price ?? null,
   };
 }

@@ -93,7 +93,7 @@ describe("concert", () => {
     await scoreRequest(concert, "add health and auth");
     await perform(concert);
     expect(Object.values(store.get().stories).every((s) => s.status === "skipped")).toBe(true);
-    expect(store.get().error).toMatch(/budget of \$0\.00 reached, 2 stories not started/);
+    expect(store.get().error).toMatch(/run budget reached, 2 stories not started/);
     expect(calls.filter((r) => is("builder")(r) || is("section")(r))).toHaveLength(0);
   });
 

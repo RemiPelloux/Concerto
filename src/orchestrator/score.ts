@@ -9,6 +9,7 @@ import type { Concert } from "#src/orchestrator/concert.js";
 import { estimateStory } from "#src/orchestrator/estimate.js";
 import { parsePlan, type Plan, type Story } from "#src/orchestrator/plan.js";
 import { scoreStory, WEIGHTS, type FactorKey } from "#src/orchestrator/scoring.js";
+import { pathCosts } from "#src/orchestrator/paths.js";
 
 const NO_CHECKPOINTS = { "plan-lock": "", "repeat-error": "", "critics-disagree": "", "before-done": "" };
 
@@ -57,7 +58,9 @@ export async function scoreRequest(c: Concert, request: string): Promise<void> {
   const plan = withSafeFiles(parsePlan(reply.text));
   const impacts = await analyzeImpact({ cwd: c.cwd, repoFiles: c.repo.files, cache: c.blastRadius, stories: plan.stories });
   const views = plan.stories.map((s) => view(c, s, impacts.get(s.id) ?? NO_IMPACT));
-  c.store.update(() => ({ phase: "planned", plan, stories: Object.fromEntries(views.map((v) => [v.id, v])), order: views.map((v) => v.id) }));
+  const stories = Object.fromEntries(views.map((v) => [v.id, v]));
+  const paths = pathCosts(c.catalog, { stories: plan.stories, views: stories });
+  c.store.update(() => ({ phase: "planned", plan, stories, order: views.map((v) => v.id), paths }));
   c.store.role("scorer", { activity: "done", note: `${views.length} stories` });
   const points = plan.stories.reduce((sum, s) => sum + s.points, 0);
   const tests = new Set(views.flatMap((v) => v.impact.tests)).size;

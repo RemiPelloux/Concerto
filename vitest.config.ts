@@ -10,6 +10,7 @@ export default defineConfig({
   ssr: { resolve: { conditions: ["source"] } },
   test: {
     exclude: [...configDefaults.exclude, "dist/**"],
+    setupFiles: ["tests/isolate-env.ts"],
     ...(process.platform === "win32" ? { testTimeout: WINDOWS_TIMEOUT_MS } : {}),
   },
 });

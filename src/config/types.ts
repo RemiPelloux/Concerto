@@ -7,6 +7,8 @@ const DEFAULT_TIMEOUT_MINUTES = 30;
 const DEFAULT_CACHE_ENTRIES = 500;
 const DEFAULT_CHECK_MINUTES = 10;
 const DEFAULT_READY_SECONDS = 60;
+/** Claude Code and Codex subscriptions reset over about five hours. */
+const DEFAULT_WINDOW_HOURS = 5;
 /** A command, false to turn the check off, or absent to let Concerto detect it. */
 const CheckSetting = z.string().min(1).or(z.literal(false)).optional();
 /** Model refs are checked by parseRef at load; this only keeps obvious garbage out. */
@@ -59,6 +61,13 @@ export const ConfigSchema = z.object({
   /** Providers tried first in every chain, e.g. ["ce-*"] to send everything through a proxy. */
   prefer: z.array(PREFER).default([]),
   timeoutMinutes: z.number().positive().default(DEFAULT_TIMEOUT_MINUTES),
+  /**
+   * Per account (`claude-code`, `codex`, `codex@ce-gpt`, a pi provider): API-equivalent dollars
+   * Concerto may spend there in a rolling window before it sends calls elsewhere.
+   */
+  limits: z.record(z.string(), z.object({ windowHours: z.number().positive().default(DEFAULT_WINDOW_HOURS), maxUsd: z.number().positive() })).default({}),
+  /** Caps beyond the run's budgetUsd: per story, per calendar day and for the repository in total. */
+  budgets: z.object({ story: z.number().positive().optional(), day: z.number().positive().optional(), repo: z.number().positive().optional() }).default({}),
   /** API-equivalent dollars; no new story or attempt starts once a run has spent this. */
   budgetUsd: z.number().positive().optional(),
   roles: z.object({

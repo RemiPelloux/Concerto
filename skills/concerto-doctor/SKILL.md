@@ -18,7 +18,8 @@ the config in use, what each role runs on, and every skipped model with its erro
 | `403 ... IP is not authorized` | the provider blocks this network | remove that provider's models or allow the IP |
 | `No configured model is reachable` | nothing installed or logged in | install and log into `claude`, `codex` or `pi`, then `concerto --init` |
 | `Fallback` lines in the log | a model failed mid-run; the next one took over | usually fine; `--doctor` shows if it persists |
-| `budget of $X reached` | `--budget` or `budgetUsd` hit | raise it or split the request |
+| `run budget reached` (or story, daily, repository budget) | a budget in the config or `--budget` was spent | raise it in `budgets`/`budgetUsd`, or split the request |
+| `Quota <account>: rate-limited until …` or `… window used` | the account hit its rate limit or its `limits` window | calls go to the next way of reaching the model; nothing to do unless every way is blocked |
 | `N stories failed review` | the critic rejected the work twice, plus one guided retry | read `.concerto/runs/*.md` for the critique; `concerto --resume <id>` builds only those stories again |
 | a run was interrupted (crash, Esc, closed terminal) | nothing is lost | `concerto --resume <session id>`; `/history` lists the ids; unmerged work is in `.concerto/worktrees/leftover-*.patch` |
 | `Checks ... failed` in the log | the project's tests, type check, lint or an acceptance command failed after a build | the builder gets the output and retries; to change or turn off a check, set `checks` in the config |

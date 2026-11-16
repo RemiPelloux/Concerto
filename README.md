@@ -87,6 +87,7 @@ pass.`, press Enter to see the scored stories, and Enter again to build them.
 | `concerto --probe` | Retest the configured models |
 | `concerto --doctor` | What is installed, linked, skipped, and why |
 | `concerto --stats` | Tokens, cache hits and savings for this repository |
+| `concerto --update-prices` | Fetch current model prices from models.dev for estimates and budgets |
 | `concerto --insights` | What past runs say: pass rate, builds and cost per point per model, files that keep failing |
 | `concerto --install-skills` | Teach the agents on this machine to use Concerto |
 
@@ -256,6 +257,21 @@ How stories are checked is set in the same file:
   "behaviour": { "serve": "npm run dev", "routes": ["/", "/api/health"], "readySeconds": 60 }
 }
 ```
+
+Spending is capped per run (`budgetUsd`, or `--budget`), per story, per day and per repository,
+and each budget warns once at 80 %. Per account (`claude-code`, `codex`, `codex@ce-gpt` or a pi
+provider), `limits` caps what Concerto spends in a rolling window and sends later calls
+elsewhere; an account that answers with a rate limit is paused until the reset it names:
+
+```json
+{
+  "budgets": { "story": 2, "day": 20, "repo": 200 },
+  "limits": { "claude-code": { "windowHours": 5, "maxUsd": 40 } }
+}
+```
+
+When a plan waits for Enter, Concerto shows what it would cost on your subscriptions, through
+Codex profiles and on API keys, with the `/prefer` command that picks each.
 
 Each check is a command, `false` to turn it off, or left out to let Concerto detect it.
 `"isolation": "off"` builds every story in the folder itself. `behaviour` is for web projects:

@@ -35,8 +35,8 @@ async function printPlan(s: Setup, request: string): Promise<void> {
     import("#src/orchestrator/concert.js"), import("#src/orchestrator/score.js"), import("#src/runner/index.js"),
   ]);
   await scoreRequest(await createConcert({ ...s, runner: runModel }), request);
-  const { plan, order, stories } = s.store.get();
-  process.stdout.write(`${JSON.stringify({ ...plan, routing: order.map((id) => stories[id]) }, null, 2)}\n`);
+  const { plan, order, stories, paths } = s.store.get();
+  process.stdout.write(`${JSON.stringify({ ...plan, routing: order.map((id) => stories[id]), paths }, null, 2)}\n`);
 }
 
 async function headless(s: Setup, request: string): Promise<void> {
@@ -46,9 +46,17 @@ async function headless(s: Setup, request: string): Promise<void> {
   await runHeadless(await createConcert({ ...s, runner: runModel }), request, s.log);
 }
 
+async function updatePrices(): Promise<void> {
+  const { updatePriceBook, priceBookPath } = await import("#src/models/price-book.js");
+  const book = await updatePriceBook();
+  const count = Object.values(book.providers).reduce((n, models) => n + Object.keys(models).length, 0);
+  process.stdout.write(`${count} model prices from ${book.source}, saved in ${priceBookPath()}\n`);
+}
+
 /** Commands that need no model catalog. */
 async function standalone(values: Values, request: string): Promise<boolean> {
   if (values.stats) return printStats(process.cwd()), true;
+  if (values["update-prices"]) return await updatePrices(), true;
   if (values.insights) return (await import("#src/commands/insights.js")).insightsLines(process.cwd()).forEach((l) => process.stdout.write(`${l}\n`)), true;
   if (values["install-skills"]) return (await import("#src/commands/skills.js")).installSkills(), true;
   if (values.init) return await (await import("#src/commands/setup.js")).runInit(values.routing), true;

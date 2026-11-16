@@ -16,6 +16,7 @@ export const USAGE = `concerto [options] [request]
   --models            reachable models, each role's chain and sample routes
   --stats             token and cache totals for this repository
   --insights          what past runs say: pass rate and cost per model, files that keep failing
+  --update-prices     fetch current model prices from models.dev for estimates and budgets
   --install-skills    teach the agents on this machine (Claude Code, Codex, pi) to use Concerto
   --clear-cache       drop the local response cache
   -v, --version       print the version
@@ -41,6 +42,7 @@ export const OPTIONS = {
   models: { type: "boolean" },
   stats: { type: "boolean" },
   insights: { type: "boolean" },
+  "update-prices": { type: "boolean" },
   "install-skills": { type: "boolean" },
   "clear-cache": { type: "boolean" },
   version: { type: "boolean", short: "v" },

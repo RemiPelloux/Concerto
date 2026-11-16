@@ -28,6 +28,7 @@ export function initialState(): State {
     changes: [],
     ledger: EMPTY_LEDGER,
     error: "",
+    paths: [],
   };
 }
 

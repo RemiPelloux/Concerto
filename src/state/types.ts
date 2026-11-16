@@ -87,4 +87,9 @@ export type State = {
   changes: FileChange[];
   ledger: Ledger;
   error: string;
+  /** What the plan would cost on each way of reaching the models, for picking one before building. */
+  paths: PathCost[];
 };
+
+/** The plan's cost if every story ran one way; `prefer` is the /prefer value that picks it. */
+export type PathCost = { path: "subscriptions" | "profiles" | "api"; label: string; cost: number; missing: number; prefer: string };

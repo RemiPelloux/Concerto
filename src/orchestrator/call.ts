@@ -5,6 +5,7 @@ import { roleChain } from "#src/models/router.js";
 import type { ModelInfo } from "#src/models/types.js";
 import type { RunEvent } from "#src/runner/events.js";
 import type { RunRequest, RunResult } from "#src/runner/types.js";
+import { blocked, pauseOnLimit, recordSpend } from "#src/models/quota.js";
 import { AgentFeed } from "#src/orchestrator/feed.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 
@@ -66,6 +67,26 @@ async function watched(c: Concert, call: Call, req: RunRequest): Promise<RunResu
   }
 }
 
+const quotaNoted = new WeakMap<Concert, Set<string>>();
+
+/**
+ * The chain without the accounts that are rate-limited or have spent their window, logged once
+ * per account and run. When every way is blocked, the whole chain is tried anyway.
+ */
+function available(c: Concert, chain: ModelInfo[]): ModelInfo[] {
+  const noted = quotaNoted.get(c) ?? new Set<string>();
+  quotaNoted.set(c, noted);
+  const open = chain.filter((m) => {
+    const why = blocked(m.parsed.prefix, c.config.limits[m.parsed.prefix]);
+    if (why && !noted.has(m.parsed.prefix)) {
+      noted.add(m.parsed.prefix);
+      c.store.log({ role: "conductor", label: "Quota", detail: `${m.parsed.prefix}: ${why}`, result: "skipped" });
+    }
+    return !why;
+  });
+  return open.length > 0 ? open : chain;
+}
+
 /** Adds one call's cost to its story, so runs can be learned from per story. */
 function charge(c: Concert, storyId: string, cost: number): void {
   const spent = c.store.get().stories[storyId]?.spent ?? 0;
@@ -92,7 +113,9 @@ async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
   const entry = { usage: result.usage, price: model.price, brain: c.brainPrice };
   const before = c.store.get().ledger.usage.cost;
   c.store.update((s) => ({ ledger: bump(record(s.ledger, entry), "dedupedTokens", assembled.skippedTokens) }));
-  if (call.storyId) charge(c, call.storyId, c.store.get().ledger.usage.cost - before);
+  const cost = c.store.get().ledger.usage.cost - before;
+  if (call.storyId) charge(c, call.storyId, cost);
+  recordSpend(model.parsed.prefix, cost);
   return result;
 }
 
@@ -108,7 +131,7 @@ async function attempt(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
 
 /** One model call with fallbacks: a failure moves to the next model in the chain. */
 export async function callRole(c: Concert, call: Call): Promise<CallResult> {
-  const chain = call.chain ?? roleChain(c.catalog, c.config, call.role);
+  const chain = available(c, call.chain ?? roleChain(c.catalog, c.config, call.role));
   let lastError: unknown = new Error(`No model to run the ${call.role}.`);
   for (const [i, model] of chain.entries()) {
     try {
@@ -116,6 +139,7 @@ export async function callRole(c: Concert, call: Call): Promise<CallResult> {
     } catch (error) {
       if (c.signal.aborted) throw error;
       lastError = error;
+      pauseOnLimit(model.parsed.prefix, errorMessage(error));
       const next = chain[i + 1];
       c.store.update((s) => ({ ledger: bump(s.ledger, "fallbacks") }));
       const detail = `${model.ref}: ${errorMessage(error).split("\n")[0]}`;

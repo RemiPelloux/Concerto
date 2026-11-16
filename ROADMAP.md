@@ -77,17 +77,19 @@ Done: 10 of 10 seeded weak tests caught, a real test left alone.
 Done: with 20 recorded runs the estimate lands within 30 % for 8 of 10 new runs, where list prices
 miss by more.
 
-### Sprint 5 · 0.6 · rate limits, budgets and quotas
+### Sprint 5 · rate limits, budgets and quotas · shipped
 
-- **Subscription awareness.** Read Claude Code's 5-hour window and Codex's usage, and move work to
-  the next way of reaching a model before the limit hits.
-- **Budgets per story, per run, per day** and per repository, with a warning at 80 %.
-- **Price book updates** from the providers' public pricing, cached, with the date shown.
-- **Cheapest-path planner.** Before building, show what the plan would cost on subscriptions,
-  through a proxy and on API keys, and let the user pick.
+- **Account awareness:** Claude Code and Codex do not expose their windows to other programs, so
+  Concerto keeps its own account of what it spent per account in a rolling window (`limits`), and
+  an account that answers with a rate limit is paused until the reset it names. Either way, later
+  calls go to the next way of reaching the model instead of failing first.
+- **Budgets** per run, story, day and repository, each warning once at 80 %.
+- **Price book:** `concerto --update-prices` fetches models.dev; the doctor shows its date.
+- **Cheapest path:** a waiting plan shows its cost on subscriptions, Codex profiles and API keys,
+  with the `/prefer` that picks each.
 
-Done when: a run that would cross the Claude Code window moves the remaining stories to the next
-provider without a single failed call.
+Done: a run whose account window is spent mid-run moves the remaining calls to another account
+with no failed call.
 
 ### Sprint 6 · 0.7 · deeper token engine
 

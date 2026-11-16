@@ -38,6 +38,10 @@ Every model used must be listed under `models` with a `tier` (1 bulk work to 5 f
 - **What every story must pass:** `"checks": {"test": "pnpm test", "typecheck": false}`. Each of
   `test`, `typecheck` and `lint` is a command, `false` to turn it off, or left out to detect it;
   `timeoutMinutes` caps each run (10 by default).
+- **Budgets:** `"budgets": {"story": 2, "day": 20, "repo": 200}` on top of `budgetUsd` (the run).
+- **Account limits:** `"limits": {"claude-code": {"windowHours": 5, "maxUsd": 40}}` sends calls to
+  the next way of reaching the model once that account's window is spent.
+- **Prices:** `concerto --update-prices` fetches current prices from models.dev.
 - **Worktrees:** `"isolation": "worktree"` (default) builds each story in its own git worktree and
   merges it back; `"off"` builds in the folder itself.
 - **Web projects:** `"behaviour": {"serve": "npm run dev", "routes": ["/"]}` starts the server

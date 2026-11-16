@@ -8,7 +8,7 @@ import { estimateStory } from "#src/orchestrator/estimate.js";
 import { parsePlan, type Plan, type Story } from "#src/orchestrator/plan.js";
 import { scoreStory } from "#src/orchestrator/scoring.js";
 
-const NO_CHECKPOINTS = { "plan-lock": "", "repeat-error": "", "before-done": "" };
+const NO_CHECKPOINTS = { "plan-lock": "", "repeat-error": "", "critics-disagree": "", "before-done": "" };
 
 function view(c: Concert, story: Story, impact: Impact): StoryView {
   const breakdown = scoreStory(story, impact);

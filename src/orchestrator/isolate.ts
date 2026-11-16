@@ -21,6 +21,17 @@ export async function openWorkspace(c: Concert, storyId: string): Promise<Worksp
   return { storyId, cwd: tree.dir, tree };
 }
 
+/** A second worktree of the story's starting snapshot, for "before" runs; removed after `use`. */
+export async function withBefore<T>(c: Concert, job: { story: { id: string }; tree: Worktree }, use: (dir: string) => Promise<T>): Promise<T> {
+  const tree = job.tree;
+  const before = await serial(c, () => openWorktree(c.cwd, `${c.runId}/${job.story.id}-before`, tree.base));
+  try {
+    return await use(before.dir);
+  } finally {
+    await serial(c, () => closeWorktree(c.cwd, before));
+  }
+}
+
 async function merge(c: Concert, storyId: string, tree: Worktree): Promise<boolean> {
   const result = await serial(c, async () => mergeBack(c.cwd, tree, await changesIn(tree)));
   if (result.conflicts.length === 0) {

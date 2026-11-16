@@ -22,6 +22,12 @@ For each story give:
   repository snapshot. Up to 20. Concerto measures their importers and covering tests and folds
   that blast radius into the score, so list real files, not guesses. Every story touches at least
   one file: never leave `files` empty. Include the test files the story should add or change.
+- `checks`: up to 5 shell commands, run from the repository root, that exit 0 when an acceptance
+  item is met and fail otherwise, for example `node -e "require('./dist/a.js').total(2) === 4 ||
+  process.exit(1)"` or `grep -q "export function total" src/a.ts`. Concerto runs them after each
+  build, before review. Only write a check you are sure is right for the finished story; leave
+  `checks` empty rather than guess. Never write a check that installs, deletes, or reaches the
+  network.
 
 Rules:
 

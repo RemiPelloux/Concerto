@@ -5,6 +5,7 @@ import { ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 const LABEL: Record<Checkpoint, [string, string]> = {
   "plan-lock": ["before a plan locks", "what did the plan miss?"],
   "repeat-error": ["error repeats twice", "root cause or rabbit hole?"],
+  "critics-disagree": ["critics disagree", "who is right on a risky story?"],
   "before-done": ["before calling done", "did the diff break anything?"],
 };
 

@@ -6,6 +6,7 @@ const TIER = z.number().int().min(1).max(MAX_TIER);
 const DEFAULT_TIMEOUT_MINUTES = 30;
 const DEFAULT_CACHE_ENTRIES = 500;
 const DEFAULT_CHECK_MINUTES = 10;
+const DEFAULT_READY_SECONDS = 60;
 /** A command, false to turn the check off, or absent to let Concerto detect it. */
 const CheckSetting = z.string().min(1).or(z.literal(false)).optional();
 /** Model refs are checked by parseRef at load; this only keeps obvious garbage out. */
@@ -73,6 +74,10 @@ export const ConfigSchema = z.object({
   swarm: z.object({ maxParallel: z.number().int().min(1) }),
   /** "worktree": every story builds in its own git worktree and is merged back when it passes. */
   isolation: z.enum(["worktree", "off"]).default("worktree"),
+  /** Web projects: start the server before and after each story and show the critic which routes changed. */
+  behaviour: z
+    .object({ serve: z.string().min(1), routes: z.array(z.string().startsWith("/")).min(1), readySeconds: z.number().positive().default(DEFAULT_READY_SECONDS) })
+    .optional(),
   /** Run after every build, before the critic: a red check sends the story back to its builder. */
   checks: z
     .object({ test: CheckSetting, typecheck: CheckSetting, lint: CheckSetting, timeoutMinutes: z.number().positive().default(DEFAULT_CHECK_MINUTES) })

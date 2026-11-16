@@ -34,6 +34,10 @@ export type StoryView = {
   finding?: string;
   /** Files this story's merge wrote into the main folder (isolated runs). */
   merged?: string[];
+  /** Routes whose answer changed when Concerto ran the server before and after the story. */
+  behaviour?: string[];
+  /** The flipped condition Concerto tried on the last attempt, and whether a test caught it. */
+  mutation?: { file: string; line: number; from: string; to: string; caught: boolean };
   /** The checks Concerto ran on the last attempt: command, result, time, and whether a rerun passed. */
   checks?: { name: string; command: string; ok: boolean; ms: number; flaky?: boolean }[];
 };
@@ -57,7 +61,7 @@ export type AgentView = {
 /** One file the run changed, from git. Untracked files count all their lines as added. */
 export type FileChange = { file: string; added: number; removed: number; status: "modified" | "added" | "deleted" };
 
-export const CHECKPOINTS = ["plan-lock", "repeat-error", "before-done"] as const;
+export const CHECKPOINTS = ["plan-lock", "repeat-error", "critics-disagree", "before-done"] as const;
 export type Checkpoint = (typeof CHECKPOINTS)[number];
 
 export type State = {

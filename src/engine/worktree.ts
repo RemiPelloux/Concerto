@@ -82,6 +82,13 @@ async function stage(w: Pick<Worktree, "dir" | "links">): Promise<void> {
   if (w.links.length > 0) await git(w.dir, ["rm", "-r", "-q", "--cached", "--ignore-unmatch", "--", ...w.links]);
 }
 
+/** The story's changes as a unified diff without context lines, the linked dependencies left out. */
+export async function diffText(w: Worktree): Promise<string> {
+  await stage(w);
+  // --no-prefix: paths as they are, whatever prefixes (a/, b/ or mnemonic) the user configured.
+  return git(w.dir, ["diff", "--cached", "-U0", "--no-color", "--no-renames", "--no-prefix", w.base]);
+}
+
 /** What the story changed in its worktree since `base`, the linked dependencies left out. */
 export async function changesIn(w: Worktree): Promise<Change[]> {
   await stage(w);

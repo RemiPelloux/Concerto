@@ -24,11 +24,13 @@ export function checksBrief(c: Concert, storyId: string): string {
 }
 
 /**
- * Runs the project's checks in the story's folder after a build, before the critic. Returns ""
- * when they pass (or there are none), otherwise the feedback for the builder's next attempt.
+ * Runs the project's checks, then the story's acceptance checks, in the story's folder after a
+ * build, before the critic. Returns "" when they pass (or there are none), otherwise the
+ * feedback for the builder's next attempt.
  */
-export async function gate(c: Concert, job: { story: Story; cwd: string; extra?: Check[] }): Promise<string> {
-  const checks = [...c.checks, ...(job.extra ?? [])];
+export async function gate(c: Concert, job: { story: Story; cwd: string }): Promise<string> {
+  const acceptance = job.story.checks.map((command): Check => ({ name: "acceptance", command }));
+  const checks = [...c.checks, ...acceptance];
   if (checks.length === 0) return "";
   c.store.story(job.story.id, { status: "checking" });
   const timeoutMs = c.config.checks.timeoutMinutes * MS_PER_MINUTE;

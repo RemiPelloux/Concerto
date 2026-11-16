@@ -41,6 +41,7 @@ export function testConfig(): ConcertoConfig {
     routes: [],
     reviews: [],
     prefer: [],
+    gates: [],
     timeoutMinutes: 1,
     skills: [],
     swarm: { maxParallel: 3 },

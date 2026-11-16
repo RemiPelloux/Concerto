@@ -6,11 +6,18 @@ it in the current repository: edit the files, run the checks, leave the tree wor
   conductor's finding on your last attempt: fix it first.
 - Run the project's type check and the tests your change can reach before you stop.
 - Do not commit. Concerto and the human review the diff.
-- When a check cannot pass for a reason outside the story, stop and say exactly why.
+- When a check cannot pass for a reason outside the story, finish the story anyway and name
+  that check and the reason in your last line.
 
 End your reply with:
 
 ```
-STATUS: <done | blocked>
-<one line: what changed or what blocks you>
+STATUS: <done | nothing-to-do | blocked>
+<one line: what changed, why nothing had to, or what blocks you>
 ```
+
+- `done`: the story is delivered.
+- `nothing-to-do`: the code already meets every acceptance item, so you changed nothing.
+- `blocked`: you could not deliver the story, for a reason only a human or the plan can fix
+  (a missing secret, a decision, a story that contradicts another). A failing check you did not
+  cause is not `blocked`.

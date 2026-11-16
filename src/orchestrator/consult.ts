@@ -5,7 +5,7 @@ import type { Concert } from "#src/orchestrator/concert.js";
 
 const QUESTIONS: Record<Checkpoint, string> = {
   "plan-lock": "Checkpoint: before the plan locks. What did the plan miss?",
-  "repeat-error": "Checkpoint: the same story failed review twice. Root cause or rabbit hole? Give the one change that unblocks it.",
+  "repeat-error": "Checkpoint: the same story failed twice, or its builder is blocked. Root cause or rabbit hole? Give the one change that unblocks it.",
   "before-done": "Checkpoint: before calling done. Did the diff break anything? Read the files; run nothing.",
 };
 

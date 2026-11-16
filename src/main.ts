@@ -14,7 +14,8 @@ function overrides(values: Values): Partial<ConcertoConfig> {
   const budget = values.budget === undefined ? undefined : Number(values.budget);
   if (budget !== undefined && !(budget > 0)) throw new Error("--budget takes a positive number of dollars.");
   const prefer = values.prefer?.split(",").map((p) => p.trim()).filter(Boolean);
-  return { ...(prefer ? { prefer } : {}), ...(budget ? { budgetUsd: budget } : {}) };
+  const gates = values.gate?.map((g) => g.trim()).filter(Boolean);
+  return { ...(prefer ? { prefer } : {}), ...(budget ? { budgetUsd: budget } : {}), ...(gates?.length ? { gates } : {}) };
 }
 
 async function setup(values: Values): Promise<Setup> {

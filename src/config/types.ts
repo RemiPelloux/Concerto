@@ -57,6 +57,8 @@ export const ConfigSchema = z.object({
   timeoutMinutes: z.number().positive().default(DEFAULT_TIMEOUT_MINUTES),
   /** API-equivalent dollars; no new story or attempt starts once a run has spent this. */
   budgetUsd: z.number().positive().optional(),
+  /** Shell commands every story must pass before the critic sees it, e.g. ["pnpm test"]. */
+  gates: z.array(z.string().min(1)).default([]),
   roles: z.object({
     conductor: RoleConfigSchema,
     scorer: RoleConfigSchema,

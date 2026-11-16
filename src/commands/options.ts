@@ -7,6 +7,7 @@ export const USAGE = `concerto [options] [request]
   --yes               build right after scoring, without the confirm step
   --orca              start the run in a new Orca worktree, in its own terminal tab
   --budget <usd>      stop starting stories once a run has spent this (API-equivalent)
+  --gate <command>    a check every story must pass before review, e.g. "pnpm test" (repeatable)
   --prefer <list>     providers to try first, e.g. ce-* or ce-gpt,openai
   --resume <id>       reopen a saved session (see /history) and build what did not pass
   --init              detect every linked AI and write your personal config
@@ -31,6 +32,7 @@ export const OPTIONS = {
   yes: { type: "boolean" },
   orca: { type: "boolean" },
   budget: { type: "string" },
+  gate: { type: "string", multiple: true },
   resume: { type: "string" },
   prefer: { type: "string" },
   init: { type: "boolean" },

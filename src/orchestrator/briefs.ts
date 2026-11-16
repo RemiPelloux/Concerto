@@ -45,7 +45,7 @@ export function runSegments(state: State, repoMap: string): Segment[] {
 
 /** First `KEY: value` line in a reply, lowercased. */
 export function readTag(reply: string, key: string): string {
-  const match = new RegExp(`^\\s*${key}:\\s*(\\w+)`, "im").exec(reply);
+  const match = new RegExp(`^\\s*${key}:\\s*([\\w-]+)`, "im").exec(reply);
   return match?.[1]?.toLowerCase() ?? "";
 }
 

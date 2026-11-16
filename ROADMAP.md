@@ -14,6 +14,7 @@ one goal, the work that serves it, and a test that says when it is done.
 | 0.1.2 | Tab works in every phase, a visible "enter to build" |
 | 0.1.3 | Windows support, release packages and installers, `/history` and `--resume`, a live agent panel, an end-of-run summary with retry |
 | 0.1.4 | The prompt works in every phase: type a change to re-plan, a note for running agents, any command |
+| Unreleased | An Orca plugin: a Concerto panel in the right sidebar that plans or builds a request; gates: your own checks run after each build, before the critic |
 
 ---
 
@@ -29,6 +30,8 @@ for someone else's edit.
 - **Merge back in dependency order.** A story whose dependencies passed is merged with a
   three-way merge; a conflict fails that story with the conflicting files and hunks.
 - **Per-story diff.** The critic, the changes table and the report see only the story's own diff.
+  The critic already gets the change made while its story was built; worktrees remove what a
+  parallel story adds in that window.
 - **Cleanup on crash.** Leftover worktrees from an interrupted run are found and offered for
   removal at the next start.
 
@@ -36,6 +39,10 @@ Done when: six section stories editing neighbouring lines of the same files run 
 critic sees only its story, and the merged result passes the tests.
 
 ### Sprint 2 · 0.3 · a test gate Concerto runs itself
+
+Shipped first: configured gates (`gates` in the config, `--gate`) run after each build, a red gate
+goes back to the builder without a review, and a build that changed nothing is not checked again.
+The sprint makes the gate automatic.
 
 - **Run the covering tests after each build,** before the critic: SmartTest when the repository
   has it, the import graph otherwise, the project's own test command as the fallback.
@@ -88,6 +95,8 @@ for 8 runs out of 10.
   the next way of reaching a model before the limit hits.
 - **Budgets per story, per run, per day** and per repository, with a warning at 80 %.
 - **Price book updates** from the providers' public pricing, cached, with the date shown.
+- **Wait out a quota.** When every model in a chain is out of quota and the provider says when it
+  resets, park the story and resume it at that time instead of failing it.
 - **Cheapest-path planner.** Before building, show what the plan would cost on subscriptions,
   through a proxy and on API keys, and let the user pick.
 

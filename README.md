@@ -81,6 +81,7 @@ pass.`, press Enter to see the scored stories, and Enter again to build them.
 | `concerto --orca "request"` | Start the run in a new Orca worktree, in its own tab |
 | `concerto --resume <id>` | Reopen a saved session and build what did not pass |
 | `concerto --budget 5 ...` | Stop starting stories after $5 of API-equivalent spend |
+| `concerto --gate 'pnpm test' ...` | A check every story must pass before review (repeatable) |
 | `concerto --prefer 'ce-*' ...` | Try your proxy first for every model |
 | `concerto --init` | Detect and test your models again, rewrite your config |
 | `concerto --probe` | Retest the configured models |
@@ -140,6 +141,23 @@ Concerto starts the agents itself. For every story it runs a builder (`claude -p
 conductor at its checkpoints. You do not open them, and they do not appear as separate tabs: you
 watch them in Concerto's screen, and their work shows up as changes in the folder. Concerto never
 commits; you review the diff.
+
+**Gates.** List your own checks in the config (`"gates": ["pnpm typecheck", "pnpm test"]`) or pass
+`--gate` once per command. After each build they run in order, in the project folder. A failing
+check goes straight back to the builder with the last 6,000 characters of its output, and the
+critic is not called. When the builder changed no file since a check failed, the check is not run
+again and the attempt fails at once, so a stuck builder cannot spend attempts. Only a story whose
+gates pass reaches the critic.
+
+**The critic judges the story's own change.** Concerto snapshots the working tree before a story
+and after each build, and gives the critic the files that changed in between and the `git diff`
+that shows them. Your own edits and other work already in the folder are not held against the
+story.
+
+**Builders end with `done`, `nothing-to-do` or `blocked`.** When the code already meets the story,
+the builder changes nothing and says so, and the critic passes it if the acceptance items hold. A
+builder that is `blocked` and changed no file goes straight to the conductor: no review of an
+empty build, no blind retry.
 
 ## Teach your agents
 

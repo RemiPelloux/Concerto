@@ -91,4 +91,33 @@ describe("story isolation", () => {
     expect(patches).toHaveLength(1);
     expect(readFileSync(join(root, patches[0]!), "utf8")).toContain("+s0: after");
   });
+
+  it("rebuilds a passing story on top of the current code when its merge conflicts, keeping both", async () => {
+    const cwd = repo();
+    const two = JSON.stringify({ ...JSON.parse(PLAN), stories: JSON.parse(PLAN).stories.slice(0, 2) });
+    const prompts: string[] = [];
+    const scripted = scriptedRunner((r) => {
+      if (is("scorer")(r)) return two;
+      if (is("conductor")(r)) return "VERDICT: ok\nfine";
+      if (is("critic")(r)) return "VERDICT: pass\nchecked";
+      const id = storyOf(r);
+      prompts.push(r.prompt);
+      const lines = readFileSync(join(r.cwd, "app.txt"), "utf8").split("\n");
+      const rebuild = r.prompt.includes("Your change no longer applies");
+      lines[0] = rebuild ? `${lines[0]}+${id}` : `exports: ${id}`;
+      writeFileSync(join(r.cwd, "app.txt"), lines.join("\n"));
+      return "STATUS: done\nedited";
+    });
+    const store = new Store();
+    const concert = await createConcert({ config: testConfig(), catalog: CATALOG, store, runner: scripted.runner, cwd });
+    await scoreRequest(concert, "two edits of one line");
+    await perform(concert);
+    const first = readFileSync(join(cwd, "app.txt"), "utf8").split("\n")[0] ?? "";
+    expect(["exports: s0+s1", "exports: s1+s0"]).toContain(first);
+    expect([store.get().stories.s0?.status, store.get().stories.s1?.status]).toEqual(["passed", "passed"]);
+    expect(prompts.filter((p) => p.includes("Your change no longer applies"))).toHaveLength(1);
+    const critics = scripted.calls.filter(is("critic")).map((r) => r.session?.id ?? "");
+    expect(critics.filter((id) => /-critic-r1-/.test(id))).toHaveLength(1);
+    expect(readdirSync(join(cwd, ".concerto", "worktrees")).filter((f) => f.endsWith(".patch"))).toEqual([]);
+  });
 });

@@ -13,6 +13,8 @@ import type { Story } from "#src/orchestrator/plan.js";
 import { judge, mutationProbe, type Job } from "#src/orchestrator/review.js";
 
 const REVIEWED_ATTEMPTS = 2;
+/** Times a story that passed but conflicted on merge is rebuilt on top of the current code. */
+const REBUILDS = 2;
 
 /** Condenses feedback before it goes back into a prompt and counts what that saved. */
 function compact(c: Concert, text: string): string {
@@ -54,8 +56,8 @@ async function verify(c: Concert, job: Job): Promise<string> {
  * critic; a red gate sends the attempt back without the critic. Two failures wake the conductor;
  * unless it says stop, one last attempt runs with its guidance. Null: stopped by the budget.
  */
-async function attempts(c: Concert, job: Job): Promise<boolean | null> {
-  let feedback = "";
+async function attempts(c: Concert, job: Job, start: string): Promise<boolean | null> {
+  let feedback = start;
   for (let attempt = 1; attempt <= REVIEWED_ATTEMPTS; attempt += 1) {
     if (overBudget(c, job.story.id)) return null;
     await play(c, job, feedback);
@@ -76,13 +78,28 @@ async function attempts(c: Concert, job: Job): Promise<boolean | null> {
   return (await judge(c, job)).pass;
 }
 
-/** Builds a story in its own workspace; it passes once its work is merged into the main folder. */
+/** What a builder reads when its passing change no longer applies to the main folder. */
+function rebuildFeedback(conflict: string): string {
+  return `## Your change no longer applies\nWhile you worked, other stories changed the same lines. You are now on the current code, which includes their work: redo your story on top of it and keep their changes.\n\n${conflict}`;
+}
+
+/**
+ * Builds a story in its own workspace; it passes once its work is merged into the main folder.
+ * A passing story whose merge conflicts with work that landed meanwhile is rebuilt on top of the
+ * current code, up to REBUILDS times, as a developer would rebase.
+ */
 export async function buildStory(c: Concert, story: Story): Promise<boolean> {
-  const ws = await openWorkspace(c, story.id);
-  const result = await attempts(c, { story, cwd: ws.cwd, tree: ws.tree }).catch(async (error: unknown) => {
-    await closeWorkspace(c, ws, false);
-    throw error;
-  });
-  const merged = await closeWorkspace(c, ws, result === true);
-  return result === null ? false : finish(c, story, merged);
+  let feedback = "";
+  for (let round = 0; ; round += 1) {
+    const ws = await openWorkspace(c, story.id);
+    const rebuild = round < REBUILDS;
+    const result = await attempts(c, { story, cwd: ws.cwd, tree: ws.tree, round }, feedback).catch(async (error: unknown) => {
+      await closeWorkspace(c, ws, { pass: false, rebuild: false });
+      throw error;
+    });
+    const ending = await closeWorkspace(c, ws, { pass: result === true, rebuild });
+    if (result === null) return false;
+    if (!ending.conflict || !rebuild) return finish(c, story, ending.merged);
+    feedback = rebuildFeedback(ending.conflict);
+  }
 }

@@ -32,29 +32,32 @@ export async function withBefore<T>(c: Concert, job: { story: { id: string }; tr
   }
 }
 
-async function merge(c: Concert, storyId: string, tree: Worktree): Promise<boolean> {
+/** How a workspace ended: merged, or not; `conflict` holds the conflicting files and hunks. */
+export type Ending = { merged: boolean; conflict?: string };
+
+async function merge(c: Concert, storyId: string, tree: Worktree): Promise<Ending> {
   const result = await serial(c, async () => mergeBack(c.cwd, tree, await changesIn(tree)));
   if (result.conflicts.length === 0) {
     c.store.story(storyId, { merged: result.merged });
-    await serial(c, () => closeWorktree(c.cwd, tree));
-    return true;
+    return { merged: true };
   }
   const files = result.conflicts.join(", ");
   c.store.story(storyId, { finding: `merge conflict in ${files}` });
-  c.store.log({ role: "conductor", label: "Merge", detail: `${storyId}: conflict in ${files}`, result: "failed" });
-  return false;
+  c.store.log({ role: "conductor", label: "Merge", detail: `${storyId}: conflict in ${files}`, result: "conflict" });
+  return { merged: false, conflict: result.detail };
 }
 
 /**
- * Ends a story's workspace. A story that passed is merged into the main folder; one that failed,
- * or could not merge, has its work saved as a patch in .concerto/worktrees/ before the worktree
- * goes. Returns whether the story's work is now in the main folder.
+ * Ends a story's workspace. A story that passed is merged into the main folder. A conflict that
+ * will be rebuilt just drops the worktree; any other story that did not land has its work saved
+ * as a patch in .concerto/worktrees/ first.
  */
-export async function closeWorkspace(c: Concert, ws: Workspace, pass: boolean): Promise<boolean> {
-  if (!ws.tree) return pass;
+export async function closeWorkspace(c: Concert, ws: Workspace, end: { pass: boolean; rebuild: boolean }): Promise<Ending> {
+  if (!ws.tree) return { merged: end.pass };
   const tree = ws.tree;
-  const merged = pass && (await merge(c, ws.storyId, tree));
-  if (!merged) await serial(c, () => retire(c.cwd, tree.dir, "failed"));
+  const ending = end.pass ? await merge(c, ws.storyId, tree) : { merged: false };
+  const keep = !ending.merged && !(ending.conflict && end.rebuild);
+  await serial(c, () => (keep ? retire(c.cwd, tree.dir, "failed").then(() => undefined) : closeWorktree(c.cwd, tree)));
   readChanges(c.cwd).then((changes) => c.store.update(() => ({ changes })), () => undefined);
-  return merged;
+  return ending;
 }

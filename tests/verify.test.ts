@@ -62,7 +62,7 @@ describe("mutation spot checks", () => {
     mkdirSync(join(ws.cwd, "test"), { recursive: true });
     writeFileSync(join(ws.cwd, "src", "feature.js"), `const f = ${feature};\nmodule.exports = { f, isAdult: f };\n`);
     writeFileSync(join(ws.cwd, "test", "feature.test.js"), `const m = require("../src/feature.js");\n${assertion}\n`);
-    return mutationProbe(c, { story: story({}) as never, cwd: ws.cwd, tree: ws.tree });
+    return mutationProbe(c, { story: story({}) as never, cwd: ws.cwd, tree: ws.tree, round: 0 });
   }
 
   it("catches a test that passes with the feature broken on at least 9 of 10 seeded examples", async () => {

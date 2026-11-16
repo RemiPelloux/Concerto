@@ -18,8 +18,11 @@ const HIGH_SCORE = 75;
 const CRITIC_TIER = 3;
 const MS_PER_MINUTE = 60_000;
 
-/** One story, the folder its agents work in, and its worktree in an isolated run. */
-export type Job = { story: Story; cwd: string; tree: Worktree | null };
+/**
+ * One story, the folder its agents work in, its worktree in an isolated run, and which build of it
+ * this is: a rebuild after a merge conflict is new code, so its critics start fresh sessions.
+ */
+export type Job = { story: Story; cwd: string; tree: Worktree | null; round: number };
 /** `stop`: the conductor said the story cannot be fixed in this run. */
 export type Verdict = { pass: boolean; text: string; model: string; stop?: boolean };
 
@@ -38,7 +41,7 @@ async function critique(c: Concert, job: Job, second?: ModelInfo[]): Promise<Ver
     { name: "behaviour", text: behaviourBrief(c, story.id) },
   ];
   const chain = second ?? c.catalog.reachable(view.critics);
-  const key = second ? `${story.id}-critic2` : `${story.id}-critic`;
+  const key = `${story.id}-${second ? "critic2" : "critic"}${job.round > 0 ? `-r${job.round}` : ""}`;
   const out = await callRole(c, { role: "critic", chain, segments, tags: story.tags, sessionKey: key, label: `${second ? "second review" : "review"}: ${story.title}`, cwd });
   const pass = readTag(out.text, "VERDICT") === "pass";
   c.store.role("critic", { activity: "waiting", note: "waiting" });

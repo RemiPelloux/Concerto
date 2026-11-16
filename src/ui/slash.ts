@@ -9,6 +9,8 @@ import type { Store } from "#src/state/store.js";
 import type { State } from "#src/state/types.js";
 import { history } from "#src/ui/history.js";
 import type { Edit } from "#src/orchestrator/edit.js";
+import type { Concert } from "#src/orchestrator/concert.js";
+import { REVIEW_COMMANDS } from "#src/ui/review-commands.js";
 import { parseEdit, PLAN_EDITS } from "#src/ui/plan-commands.js";
 import { listTemplates, saveTemplate, templateBrief } from "#src/engine/templates.js";
 
@@ -30,6 +32,8 @@ export type SlashContext = {
   resume: (state: State) => void;
   /** Changes the plan waiting for Enter; returns what was done. */
   edit: (edit: Edit) => Promise<string>;
+  /** The run of this session, for reviewing its work: null before the first request. */
+  concert: () => Concert | null;
 };
 
 type Command = { name: string; args: string; help: string; run: (arg: string, ctx: SlashContext) => Promise<void> | void };
@@ -154,6 +158,7 @@ function template(arg: string, ctx: SlashContext): void {
 
 export const COMMANDS: readonly Command[] = [
   ...editCommands,
+  ...REVIEW_COMMANDS,
   { name: "template", args: "save|use <name>", help: "save a plan's shape, or plan the next requests in one", run: template },
   { name: "help", args: "", help: "list these commands", run: (_a, ctx) => ctx.show({ title: "Commands", lines: COMMANDS.map((c) => `/${`${c.name} ${c.args}`.trim().padEnd(HELP_NAME)} ${c.help}`) }) },
   { name: "session", args: "", help: "this session's id and its log file, for debugging", run: (_a, ctx) => ctx.show({ title: "Session", lines: [`id    ${ctx.log.id}`, `log   ${ctx.log.shownPath}`, "Every phase, agent line and error with its stack is in that file. Attach it to a bug report."] }) },

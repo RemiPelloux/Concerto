@@ -117,7 +117,7 @@ stories that passed stay passed, and Enter builds the rest.
 | Enter on an agent | Its live output: what it reads, runs and says, as it happens |
 | Enter on a story | Why it got its score: every factor, the files, the covering tests |
 | d, m, s on a story | While a plan waits: drop it, merge the next story into it, split it |
-| Enter on a file | Its diff |
+| Enter on a file | Its diff: side by side with the changed words marked on a wide terminal |
 | Esc | Close, go back to the prompt, discard a plan, or stop a build |
 
 While agents work, their clocks tick every second and a preview shows the last lines of one of them
@@ -129,6 +129,9 @@ Type `/` for commands, with suggestions as you type and Tab to complete:
 |---|---|
 | `/drop`, `/merge`, `/split`, `/retitle`, `/after` | Change the waiting plan: `/merge s4 s3` folds s4 into s3 |
 | `/route`, `/reviewer`, `/effort` | Pick who builds or reviews a story, and how hard: `/route s1 claude-code/claude-opus-5-5` |
+| `/hunks <story>`, `/reject <story> [n]` | After a run: list a story's hunks; take the whole story, or hunk n, back out (saved as a patch) |
+| `/ask <story> <message>` | After a run: send a story back to its builder with a comment; only that story is rebuilt |
+| `/pause`, `/continue` | Let the stories building finish and start no new one, then go on |
 | `/template save <name>`, `/template use <name>` | Keep a plan's shape, or plan the next requests in it |
 | `/insights` | Pass rate and cost per model in this repository, and the files that keep failing |
 | `/history`, `/history 2` | Saved sessions of this project; reopen one and build what did not pass |

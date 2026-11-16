@@ -1,5 +1,6 @@
 import { readChanges } from "#src/engine/changes.js";
 import { mergeBack } from "#src/engine/merge.js";
+import { saveMerge } from "#src/engine/review-work.js";
 import { changesIn, closeWorktree, openWorktree, retire, snapshot, type Worktree } from "#src/engine/worktree.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 
@@ -38,6 +39,7 @@ export type Ending = { merged: boolean; conflict?: string };
 async function merge(c: Concert, storyId: string, tree: Worktree): Promise<Ending> {
   const result = await serial(c, async () => mergeBack(c.cwd, tree, await changesIn(tree)));
   if (result.conflicts.length === 0) {
+    saveMerge(c.cwd, { runId: c.runId, storyId }, result.records);
     c.store.story(storyId, { merged: result.merged });
     return { merged: true };
   }

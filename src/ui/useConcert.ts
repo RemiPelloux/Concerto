@@ -116,7 +116,7 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const submit = useCallback((text: string) => {
     const slash = (t: string) => {
       deps.log.write("command", t);
-      void runSlash(t, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, log: deps.log, resume, edit: editPlan });
+      void runSlash(t, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, log: deps.log, resume, edit: editPlan, concert: () => run.current?.concert ?? null });
     };
     submitPrompt(text, { store: deps.store, log: deps.log, request, slash, show: setPanel });
   }, [deps.cwd, deps.store, deps.log, session, request, resume, leave, nav.tour, editPlan]);

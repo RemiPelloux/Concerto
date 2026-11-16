@@ -13,7 +13,9 @@ const CONFLICT_HUNK_LINES = 12;
 /** What to do to one file of the main folder: write these bytes, delete it, or leave it. */
 type Step = { file: string; write?: { bytes: Buffer; mode: number }; remove?: boolean };
 type Planned = { step: Step | null; conflict: string | null };
-export type MergeResult = { merged: string[]; conflicts: string[]; detail: string };
+/** One file a merge wrote: its bytes before and after, null where it did not exist. */
+export type FileRecord = { file: string; before: Buffer | null; after: Buffer | null };
+export type MergeResult = { merged: string[]; conflicts: string[]; detail: string; records: FileRecord[] };
 
 const read = (path: string): Buffer | null => (existsSync(path) ? readFileSync(path) : null);
 
@@ -67,6 +69,20 @@ function lineMerged(ours: Buffer, base: Buffer, theirs: Buffer): Buffer | null {
 }
 
 const CRLF = Buffer.from("\r\n");
+
+/**
+ * Applies the change from `base` to `theirs` onto `ours`, in `ours`' line endings: the merged
+ * bytes, or null with the conflicting hunk. Run backwards (after to before), it reverts a change.
+ */
+export async function mergeThree(ours: Buffer, base: Buffer, theirs: Buffer): Promise<{ bytes: Buffer | null; hunk: string }> {
+  const crlf = ours.includes(CRLF);
+  const [o, b, t] = [lf(ours), lf(base), lf(theirs)].map((x) => x ?? Buffer.alloc(0)) as [Buffer, Buffer, Buffer];
+  if (o.equals(t)) return { bytes: ours, hunk: "" };
+  if (o.equals(b)) return { bytes: inStyle(t, crlf), hunk: "" };
+  const merged = await threeWay(o, b, t);
+  const text = merged.text ?? lineMerged(o, b, t);
+  return { bytes: text ? inStyle(text, crlf) : null, hunk: merged.hunk };
+}
 
 /** Text with LF endings, so endings a checkout converted (Windows, autocrlf) never read as changes. */
 function lf(bytes: Buffer | null): Buffer | null {
@@ -122,9 +138,10 @@ function apply(main: string, step: Step): void {
 export async function mergeBack(main: string, w: Worktree, changes: Change[]): Promise<MergeResult> {
   const planned = await Promise.all(changes.map((change) => plan(main, w, change)));
   const conflicts = planned.flatMap((p) => (p.conflict ? [p.conflict] : []));
-  if (conflicts.length > 0) return { merged: [], conflicts: conflicts.map((c) => c.split(":")[0] ?? c), detail: conflicts.join("\n\n") };
+  if (conflicts.length > 0) return { merged: [], conflicts: conflicts.map((c) => c.split(":")[0] ?? c), detail: conflicts.join("\n\n"), records: [] };
   const steps = planned.flatMap((p) => (p.step ? [p.step] : []));
+  const records = steps.map((s) => ({ file: s.file, before: read(join(main, s.file)), after: s.remove ? null : (s.write?.bytes ?? null) }));
   steps.forEach((step) => apply(main, step));
-  return { merged: steps.map((s) => s.file), conflicts: [], detail: "" };
+  return { merged: steps.map((s) => s.file), conflicts: [], detail: "", records };
 }
 

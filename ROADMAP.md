@@ -120,15 +120,19 @@ on real runs, and the context packs aim at exactly that.
 
 Done: a five-story plan trimmed to three, one story rerouted, and built, all from the TUI.
 
-### Sprint 8 · 0.9 · review and accept
+### Sprint 8 · review and accept · shipped
 
-- **Accept or reject per story,** and per hunk, after a run; rejected work is stashed, not lost.
-- **Side-by-side diff view** with syntax colours and word-level changes.
-- **Ask the builder:** a follow-up message to one story's builder session from its agent view.
-- **Pause and continue** a run between stories.
+- **Accept or reject per story, and per hunk:** every merge keeps each file's before and after;
+  `/reject <story>` reverts the story with a three-way merge, so later stories stay, and
+  `/reject <story> <n>` takes back one hunk (`/hunks <story>` numbers them). Rejected work is
+  saved in `.concerto/rejected/` as a patch that `git apply` brings back.
+- **Side-by-side diff** on wide terminals, changed words marked, light syntax colour.
+- **Ask the builder:** `/ask <story> <message>` resumes the builder's session with the comment;
+  the story goes through the gate, critic and merge again, alone.
+- **Pause and continue** between stories.
 
-Done when: after a 4-story run, two stories are kept, one is kept in part, one is sent back with a
-comment, and the second attempt only touches that story.
+Done: after a 4-story run, two stories kept, one kept in part, one sent back with a comment and
+rebuilt without touching the others.
 
 ### Sprint 9 · 0.10 · history and replay
 

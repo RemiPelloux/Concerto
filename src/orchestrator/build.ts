@@ -12,6 +12,7 @@ import { gate } from "#src/orchestrator/gate.js";
 import { closeWorkspace, openWorkspace } from "#src/orchestrator/isolate.js";
 import type { Story } from "#src/orchestrator/plan.js";
 import { judge, mutationProbe, type Job } from "#src/orchestrator/review.js";
+import { whilePaused } from "#src/orchestrator/pause.js";
 
 const REVIEWED_ATTEMPTS = 2;
 /** Times a story that passed but conflicted on merge is rebuilt on top of the current code. */
@@ -91,8 +92,9 @@ function rebuildFeedback(conflict: string): string {
  * A passing story whose merge conflicts with work that landed meanwhile is rebuilt on top of the
  * current code, up to REBUILDS times, as a developer would rebase.
  */
-export async function buildStory(c: Concert, story: Story): Promise<boolean> {
-  let feedback = "";
+export async function buildStory(c: Concert, story: Story, opening = ""): Promise<boolean> {
+  await whilePaused(c);
+  let feedback = opening;
   for (let round = 0; ; round += 1) {
     const ws = await openWorkspace(c, story.id);
     const rebuild = round < REBUILDS;

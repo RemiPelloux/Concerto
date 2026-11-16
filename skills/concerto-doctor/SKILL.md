@@ -24,6 +24,7 @@ the config in use, what each role runs on, and every skipped model with its erro
 | a run was interrupted (crash, Esc, closed terminal) | nothing is lost | `concerto --resume <session id>`; `/history` lists the ids; unmerged work is in `.concerto/worktrees/leftover-*.patch` |
 | `Checks ... failed` in the log | the project's tests, type check, lint or an acceptance command failed after a build | the builder gets the output and retries; to change or turn off a check, set `checks` in the config |
 | `Mutation ... survived` | a condition the story added can be broken without any test failing | the builder is asked for a test that catches it; nothing to fix by hand |
+| `/reject` says "Not rejected" | work that landed after the story changed the same lines | take back the later story first, or one hunk with `/reject <story> <n>` |
 | `Merge ... conflict` in the log | the story and work that landed meanwhile changed the same lines | Concerto rebuilds the story on the current code, up to twice; if it still fails, its work is in `.concerto/worktrees/failed-*.patch` (`git apply` it, or retry the story) |
 | `2nd critic` failed, then `critics-disagree` | on a high-risk story, critics from two vendors disagreed | the conductor decides; its finding is in the log and the report |
 | an agent shows no output for minutes | it is usually running tests; the preview says how long since it last printed | wait, or Tab to the agent and Enter for its live output |

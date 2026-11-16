@@ -1,4 +1,5 @@
-import { Box, Text } from "ink";
+import { Box, Text, useStdout } from "ink";
+import { SIDE_BY_SIDE_COLUMNS, SideBySide } from "#src/ui/DiffView.js";
 import type { State } from "#src/state/types.js";
 import { COLOR, ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 import { Tour } from "#src/ui/Tour.js";
@@ -51,10 +52,13 @@ function diffColor(line: string): string | undefined {
   return line.startsWith("@@") ? COLOR.brass : undefined;
 }
 
+/** Side by side, changed words marked, on a wide terminal; the unified diff on a narrow one. */
 function DiffOverlay({ file, text, scroll }: { file: string; text: string; scroll: number }) {
+  const columns = useStdout().stdout.columns ?? 0;
+  const from = Math.max(0, scroll);
   return (
     <Frame title={file} hint="↑↓ pgup pgdn scroll · esc back">
-      {visible(text.split("\n"), scroll, false).map((l, i) => (
+      {columns >= SIDE_BY_SIDE_COLUMNS ? <SideBySide text={text} columns={columns} from={from} height={HEIGHT} /> : visible(text.split("\n"), scroll, false).map((l, i) => (
         <Text key={i} color={diffColor(l)} wrap="truncate-end">{l || " "}</Text>
       ))}
     </Frame>

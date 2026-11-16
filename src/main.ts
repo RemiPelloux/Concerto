@@ -49,6 +49,13 @@ async function headless(s: Setup, request: string, values: Values): Promise<void
   await runHeadless(await createConcert({ ...s, runner: runModel, template: values.template }), request, s.log);
 }
 
+async function shareSession(id: string): Promise<void> {
+  const [{ readSession }, { writeShare }] = await Promise.all([import("#src/engine/history.js"), import("#src/engine/share.js")]);
+  const state = readSession(process.cwd(), id);
+  if (!state) throw new Error(`No saved session "${id}" in this project.`);
+  process.stdout.write(`${writeShare(process.cwd(), id, state)}\n`);
+}
+
 async function updatePrices(): Promise<void> {
   const { updatePriceBook, priceBookPath } = await import("#src/models/price-book.js");
   const book = await updatePriceBook();
@@ -60,6 +67,7 @@ async function updatePrices(): Promise<void> {
 async function standalone(values: Values, request: string): Promise<boolean> {
   if (values.stats) return printStats(process.cwd()), true;
   if (values["update-prices"]) return await updatePrices(), true;
+  if (values.share) return await shareSession(values.share), true;
   if (values.insights) return (await import("#src/commands/insights.js")).insightsLines(process.cwd()).forEach((l) => process.stdout.write(`${l}\n`)), true;
   if (values["install-skills"]) return (await import("#src/commands/skills.js")).installSkills(), true;
   if (values.init) return await (await import("#src/commands/setup.js")).runInit(values.routing), true;

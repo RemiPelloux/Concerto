@@ -10,6 +10,10 @@ import type { State } from "#src/state/types.js";
 import { history } from "#src/ui/history.js";
 import type { Edit } from "#src/orchestrator/edit.js";
 import type { Concert } from "#src/orchestrator/concert.js";
+import { readCalls, type CallRecord } from "#src/engine/session-log.js";
+import { listSessions, readSession } from "#src/engine/history.js";
+import { writeShare } from "#src/engine/share.js";
+import { join } from "node:path";
 import { REVIEW_COMMANDS } from "#src/ui/review-commands.js";
 import { parseEdit, PLAN_EDITS } from "#src/ui/plan-commands.js";
 import { listTemplates, saveTemplate, templateBrief } from "#src/engine/templates.js";
@@ -27,6 +31,8 @@ export type SlashContext = {
   show: (panel: Panel | null) => void;
   exit: (reason: ExitReason) => void;
   tour: () => void;
+  /** Opens the replay of a session's recorded calls. */
+  replay: (calls: CallRecord[]) => void;
   log: SessionLog;
   /** Puts a saved session on screen and gets it ready to build. */
   resume: (state: State) => void;
@@ -156,8 +162,28 @@ function template(arg: string, ctx: SlashContext): void {
   ctx.show({ title: "Templates", lines: [`Saved: ${listTemplates().join(", ") || "none"}`, "/template save <name> · /template use <name> · /template off"] });
 }
 
+/** `/replay`: this session's calls; `/replay 2` or `/replay <id>`: a saved session's. */
+function replay(arg: string, ctx: SlashContext): void {
+  const n = Number(arg);
+  const id = !arg ? ctx.log.id : Number.isInteger(n) && n >= 1 ? (listSessions(ctx.cwd)[n - 1]?.id ?? arg) : arg;
+  const calls = readCalls(id === ctx.log.id ? ctx.log.callsPath : join(ctx.cwd, ".concerto", "logs", `${id}.calls.jsonl`));
+  if (calls.length === 0) return ctx.show({ title: "Replay", lines: [`No recorded calls for ${id}. Calls are recorded from version 0.10 on.`] });
+  ctx.replay(calls);
+}
+
+/** `/share`: this session as one HTML page; `/share 2` or `/share <id>`: a saved one. */
+function share(arg: string, ctx: SlashContext): void {
+  const n = Number(arg);
+  const id = !arg ? ctx.log.id : Number.isInteger(n) && n >= 1 ? (listSessions(ctx.cwd)[n - 1]?.id ?? arg) : arg;
+  const state = id === ctx.log.id ? ctx.store.get() : readSession(ctx.cwd, id);
+  if (!state) return ctx.show({ title: "Share", lines: [`No saved session "${arg}". /history lists them.`] });
+  ctx.show({ title: "Share", lines: [`Written to ${writeShare(ctx.cwd, id, state)}`, "One HTML file: request, stories, log and agent output. Anything shaped like a key or token is redacted; read it before you send it."] });
+}
+
 export const COMMANDS: readonly Command[] = [
   ...editCommands,
+  { name: "share", args: "[n|id]", help: "a run as one HTML file to send someone, secrets redacted", run: share },
+  { name: "replay", args: "[n|id]", help: "step through a session's model calls: what each was asked and answered", run: replay },
   ...REVIEW_COMMANDS,
   { name: "template", args: "save|use <name>", help: "save a plan's shape, or plan the next requests in one", run: template },
   { name: "help", args: "", help: "list these commands", run: (_a, ctx) => ctx.show({ title: "Commands", lines: COMMANDS.map((c) => `/${`${c.name} ${c.args}`.trim().padEnd(HELP_NAME)} ${c.help}`) }) },

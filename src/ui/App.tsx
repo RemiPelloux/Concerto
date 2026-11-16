@@ -26,6 +26,7 @@ import { ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 import { useConcert } from "#src/ui/useConcert.js";
 import { useNavigation, type Navigation } from "#src/ui/useNavigation.js";
 import { usePlanKeys } from "#src/ui/usePlanKeys.js";
+import type { CallRecord } from "#src/engine/session-log.js";
 
 /** Below this many rows the decorative diagram is left out, so the useful parts fit. */
 const ROOMY_ROWS = 72;
@@ -130,7 +131,8 @@ export function App(deps: AppDeps) {
   const state = useFrameState(deps.store);
   const roomy = (useStdout().stdout.rows ?? ROOMY_ROWS) >= ROOMY_ROWS;
   const nav = useNavigation(state, deps.cwd, deps.showTour);
-  const { panel, submit, enter } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }) });
+  const hooks = { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }), replay: (calls: CallRecord[]) => nav.open({ kind: "replay", calls, index: 0 }) };
+  const { panel, submit, enter } = useConcert(deps, hooks);
   usePlanKeys(state, nav, submit);
   const brain = useMemo(() => shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? ""), [deps.catalog, deps.config]);
   if (nav.overlay) return <OverlayScreen state={state} nav={nav} session={deps.log.id} />;

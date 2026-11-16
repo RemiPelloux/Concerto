@@ -49,6 +49,13 @@ export const REVIEW_COMMANDS: ReviewCommand[] = [
     const pass = await askBuilder(current(ctx), storyId, words.join(" "));
     ctx.show({ title: "Ask", lines: [`${storyId} ${pass ? "was rebuilt, passed and merged" : "did not pass this time; its work is saved as a patch"}.`] });
   } },
+  { name: "redo", args: "<story>", help: "queue a story to build again: Enter builds it, with the plan edits you make", run: async (arg, ctx) => {
+    const c = current(ctx);
+    if (!c.store.get().stories[arg]) return ctx.show({ title: "Redo", lines: [`No story "${arg}" in this run.`] });
+    c.store.story(arg, { status: "queued" });
+    c.store.update((s) => ({ phase: s.phase === "running" ? s.phase : "planned", error: "" }));
+    ctx.show({ title: "Redo", lines: [`${arg} will build again. Edit the plan if you like (/retitle, /route…), then Enter.`] });
+  } },
   { name: "pause", args: "", help: "let the stories building finish and start no new one", run: async (_a, ctx) => pause(current(ctx)) },
   { name: "continue", args: "", help: "start the next stories after /pause", run: async (_a, ctx) => resume(current(ctx)) },
 ];

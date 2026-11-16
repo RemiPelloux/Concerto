@@ -9,7 +9,8 @@ const SAVE_EVERY_MS = 1000;
 const LISTED = 15;
 const LOGS = [".concerto", "logs"];
 
-export type SessionSummary = { id: string; at: number; prompt: string; phase: State["phase"]; passed: number; total: number };
+/** `parent`: the session this one was reopened from. `words`: what a search matches against. */
+export type SessionSummary = { id: string; at: number; prompt: string; phase: State["phase"]; passed: number; total: number; parent?: string; words: string };
 
 function dir(cwd: string): string {
   return join(cwd, ...LOGS);
@@ -55,14 +56,31 @@ function summary(cwd: string, id: string): SessionSummary | null {
   if (!state) return null;
   const total = state.order?.length ?? 0;
   const passed = (state.order ?? []).filter((s) => state.stories[s]?.status === "passed").length;
-  return { id, at: statSync(join(dir(cwd), `${id}.json`)).mtimeMs, prompt: state.prompt ?? "", phase: state.phase, passed, total };
+  const views = Object.values(state.stories ?? {});
+  const results: string[] = [...views.map((v) => v.status), state.phase, state.error ?? ""];
+  const files = (state.plan?.stories ?? []).flatMap((s) => s.files).concat(views.flatMap((v) => v.merged ?? []));
+  const words = [state.prompt ?? "", ...files, ...views.flatMap((v) => [v.model, ...v.critics]), ...results].join(" ").toLowerCase();
+  return { id, at: statSync(join(dir(cwd), `${id}.json`)).mtimeMs, prompt: state.prompt ?? "", phase: state.phase, passed, total, parent: state.parent, words };
+}
+
+function allSessions(cwd: string): SessionSummary[] {
+  if (!existsSync(dir(cwd))) return [];
+  const ids = readdirSync(dir(cwd)).filter((f) => f.endsWith(".json")).map((f) => f.slice(0, -".json".length));
+  return ids.map((id) => summary(cwd, id)).filter((s): s is SessionSummary => s !== null).sort((a, b) => b.at - a.at);
 }
 
 /** Saved sessions of this project, newest first. */
 export function listSessions(cwd: string): SessionSummary[] {
-  if (!existsSync(dir(cwd))) return [];
-  const ids = readdirSync(dir(cwd)).filter((f) => f.endsWith(".json")).map((f) => f.slice(0, -".json".length));
-  return ids.map((id) => summary(cwd, id)).filter((s): s is SessionSummary => s !== null).sort((a, b) => b.at - a.at).slice(0, LISTED);
+  return allSessions(cwd).slice(0, LISTED);
+}
+
+/**
+ * Saved sessions whose request, files, models or result hold every one of the words, newest first:
+ * `/history billing.ts failed` finds the failed run that touched billing.ts.
+ */
+export function searchSessions(cwd: string, query: string): SessionSummary[] {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  return allSessions(cwd).filter((s) => words.every((w) => s.words.includes(w))).slice(0, LISTED);
 }
 
 /**

@@ -10,13 +10,14 @@ import { unfinished } from "#src/ui/RunSummary.js";
 import type { AppDeps } from "#src/ui/App.js";
 import { submitPrompt } from "#src/ui/prompt-actions.js";
 import type { Edit } from "#src/orchestrator/edit.js";
+import type { CallRecord } from "#src/engine/session-log.js";
 import { applyEdit } from "#src/orchestrator/replan.js";
 import { runSlash, type ExitReason, type Panel, type Session } from "#src/ui/slash.js";
 
 type Run = { concert: Concert | null; abort: AbortController };
 type Controls = { panel: Panel | null; submit: (text: string) => void; enter: () => void };
 type KeyContext = { store: Store; run: RefObject<Run | null>; closePanel: () => boolean; active: boolean };
-export type NavHooks = { active: boolean; tour: () => void };
+export type NavHooks = { active: boolean; tour: () => void; replay: (calls: CallRecord[]) => void };
 
 /** Reads the store at keypress time, so this hook never subscribes and never re-renders the App. */
 function useKeys({ store, run, closePanel, active }: KeyContext): void {
@@ -116,10 +117,10 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const submit = useCallback((text: string) => {
     const slash = (t: string) => {
       deps.log.write("command", t);
-      void runSlash(t, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, log: deps.log, resume, edit: editPlan, concert: () => run.current?.concert ?? null });
+      void runSlash(t, { cwd: deps.cwd, store: deps.store, session, setSession, show: setPanel, exit: leave, tour: nav.tour, replay: nav.replay, log: deps.log, resume, edit: editPlan, concert: () => run.current?.concert ?? null });
     };
     submitPrompt(text, { store: deps.store, log: deps.log, request, slash, show: setPanel });
-  }, [deps.cwd, deps.store, deps.log, session, request, resume, leave, nav.tour, editPlan]);
+  }, [deps.cwd, deps.store, deps.log, session, request, resume, leave, nav.tour, nav.replay, editPlan]);
   const closePanel = () => (panel ? (setPanel(null), true) : false);
   useKeys({ store: deps.store, run, closePanel, active: nav.active });
   useStartOnce(deps.initialRequest, submit);

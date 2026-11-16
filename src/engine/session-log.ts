@@ -23,11 +23,26 @@ export function excludeLocally(cwd: string): void {
   }
 }
 
+/** One model call as /replay shows it. */
+export type CallRecord = { at: number; role: string; label: string; model: string; prompt: string; answer: string; ms: number; ok: boolean };
+
+/** The calls a session recorded, oldest first; [] when it recorded none. */
+export function readCalls(path: string): CallRecord[] {
+  if (!existsSync(path)) return [];
+  return readFileSync(path, "utf8").split("\n").flatMap((line) => {
+    try {
+      return line ? [JSON.parse(line) as CallRecord] : [];
+    } catch {
+      return [];
+    }
+  });
+}
+
 /** The newest `KEEP` logs stay; older ones go, with their saved session. */
 function prune(dir: string): void {
   const logs = readdirSync(dir).filter((f) => f.endsWith(".log")).map((f) => join(dir, f));
   const old = logs.sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs).slice(KEEP);
-  old.forEach((f) => [f, f.replace(/\.log$/, ".json")].forEach((path) => rmSync(path, { force: true })));
+  old.forEach((f) => [f, f.replace(/\.log$/, ".json"), f.replace(/\.log$/, ".calls.jsonl")].forEach((path) => rmSync(path, { force: true })));
 }
 
 /**
@@ -65,6 +80,20 @@ export class SessionLog {
       if (fresh) chmodSync(this.path, FILE_MODE);
     } catch {
       // Logging must never be the reason a run fails.
+    }
+  }
+
+  /** Where every model call of this session is kept, prompt and answer, for /replay. */
+  get callsPath(): string {
+    return this.path.replace(/\.log$/, ".calls.jsonl");
+  }
+
+  /** Records one model call: who, what it was asked, what it answered, how long it took. Never throws. */
+  call(record: CallRecord): void {
+    try {
+      appendFileSync(this.callsPath, `${JSON.stringify(record)}\n`, { mode: FILE_MODE });
+    } catch {
+      // Replay is a convenience; a call that cannot be recorded still runs.
     }
   }
 

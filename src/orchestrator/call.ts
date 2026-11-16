@@ -7,6 +7,7 @@ import type { RunEvent } from "#src/runner/events.js";
 import type { RunRequest, RunResult } from "#src/runner/types.js";
 import { blocked, pauseOnLimit, recordSpend } from "#src/models/quota.js";
 import { AgentFeed } from "#src/orchestrator/feed.js";
+import { SessionLog } from "#src/engine/session-log.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 
 const MS_PER_MINUTE = 60_000;
@@ -51,6 +52,8 @@ async function watched(c: Concert, call: Call, req: RunRequest): Promise<RunResu
   const feed = new AgentFeed(c.store, id);
   const notes = onEvent(c, call.role);
   c.store.agentStart({ id, role: call.role, model: req.model, label: call.label ?? call.role });
+  const record = (answer: string, ok: boolean) => SessionLog.current?.call({ at: started, role: call.role, label: call.label ?? call.role, model: req.model, prompt: req.prompt, answer, ms: Date.now() - started, ok });
+  const started = Date.now();
   try {
     const result = await c.runner(req, (e) => {
       notes(e);
@@ -58,11 +61,13 @@ async function watched(c: Concert, call: Call, req: RunRequest): Promise<RunResu
     });
     feed.flush();
     c.store.agentEnd(id, "done");
+    record(result.text, true);
     return result;
   } catch (error) {
     feed.push({ kind: "error", message: errorMessage(error).split("\n")[0] ?? "failed" });
     feed.flush();
     c.store.agentEnd(id, "failed");
+    record(errorMessage(error), false);
     throw error;
   }
 }

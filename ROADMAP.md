@@ -134,15 +134,17 @@ Done: a five-story plan trimmed to three, one story rerouted, and built, all fro
 Done: after a 4-story run, two stories kept, one kept in part, one sent back with a comment and
 rebuilt without touching the others.
 
-### Sprint 9 · 0.10 · history and replay
+### Sprint 9 · history and replay · shipped
 
-- **Session branching:** reopen a session, change one story, and run it as a new branch of the
-  history.
-- **Replay** a finished run step by step in the TUI, with every prompt and answer.
-- **Search** `/history` by request, file, model or result.
-- **Share a run:** export the report and the session as one HTML file without secrets.
+- **Session branching:** a reopened session continues as a new one that remembers its parent;
+  `/redo <story>` queues a passed story again, so one story can be changed and rebuilt.
+- **Replay:** every model call is recorded next to the session log; `/replay` steps through
+  them with ←→, each prompt and answer in full.
+- **Search:** `/history billing.ts failed` matches requests, files, models and results.
+- **Share a run:** `/share` or `concerto --share <id>` writes one HTML file, with anything
+  shaped like a key, token or password redacted.
 
-Done when: a failed run from last week can be found by a file name, opened, branched and rebuilt.
+Done: a failed run from last week was found by a file name, opened as a branch and rebuilt.
 
 ---
 

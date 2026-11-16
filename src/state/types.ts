@@ -87,6 +87,8 @@ export type State = {
   changes: FileChange[];
   ledger: Ledger;
   error: string;
+  /** The saved session this one was reopened from: sessions form a history with branches. */
+  parent?: string;
   /** What the plan would cost on each way of reaching the models, for picking one before building. */
   paths: PathCost[];
 };

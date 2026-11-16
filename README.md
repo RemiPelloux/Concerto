@@ -135,6 +135,10 @@ Type `/` for commands, with suggestions as you type and Tab to complete:
 | `/template save <name>`, `/template use <name>` | Keep a plan's shape, or plan the next requests in it |
 | `/insights` | Pass rate and cost per model in this repository, and the files that keep failing |
 | `/history`, `/history 2` | Saved sessions of this project; reopen one and build what did not pass |
+| `/history <words>` | Search saved sessions by request, file, model or result: `/history billing.ts failed` |
+| `/redo <story>` | Queue a passed story to build again, after editing the plan if you like |
+| `/replay [n\|id]` | Step through a session's model calls, ←→ between calls, each prompt and answer |
+| `/share [n\|id]` | The run as one HTML file in `.concerto/share/`, keys and tokens redacted (`concerto --share <id>` too) |
 | `/onboarding` | Replay the animated tour |
 | `/setup` | Detect and test your models again, then pick the routing |
 | `/config` | The config in use: file, provider preference, budget, routes |

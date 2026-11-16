@@ -11,6 +11,7 @@ export const USAGE = `concerto [options] [request]
   --budget <usd>      stop starting stories once a run has spent this (API-equivalent)
   --prefer <list>     providers to try first, e.g. ce-* or ce-gpt,openai
   --resume <id>       reopen a saved session (see /history) and build what did not pass
+  --share <id>        write a saved session as one HTML file, secrets redacted
   --init              detect every linked AI and write your personal config
   --routing <choice>  with --init outside a terminal: subscriptions, proxy or api
   --probe             send each configured model a tiny prompt; failures are skipped for a day
@@ -38,6 +39,7 @@ export const OPTIONS = {
   orca: { type: "boolean" },
   budget: { type: "string" },
   resume: { type: "string" },
+  share: { type: "string" },
   prefer: { type: "string" },
   init: { type: "boolean" },
   routing: { type: "string" },

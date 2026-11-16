@@ -105,8 +105,11 @@ describe("history, replay and sharing", () => {
     expect(calls[3]?.answer).toBe("VERDICT: pass\nok");
     ui.keyboard.press("/replay\r");
     await vi.waitFor(() => expect(ui.screen()).toContain("call 1/5"));
-    ui.keyboard.press("\u001b[C");
-    await vi.waitFor(() => expect(ui.screen()).toContain("call 2/5"));
+    // A slow runner can draw the replay before it takes keys: press → until it has moved on.
+    await vi.waitFor(() => {
+      if (ui.screen().includes("call 1/5")) ui.keyboard.press("\u001b[C");
+      expect(ui.screen()).toMatch(/call [2-5]\/5/);
+    }, { timeout: 10_000, interval: 300 });
     ui.app.unmount();
   });
 

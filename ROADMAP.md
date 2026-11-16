@@ -18,6 +18,7 @@ one goal, the work that serves it, and a test that says when it is done.
 | 0.10.0 | Parts 2 and 3: learning from runs, account windows and budgets, a leaner token engine, a plan editor, reject and ask per story, search, replay and share |
 | 0.13.0 | Part 4: import graphs for eight more languages and monorepos, five more agent CLIs, local models, custom roles, an MCP server, a Neovim plugin |
 | 0.16.0 | Part 5: commits per story, pull requests, a GitHub Action, shared config and policy, notifications, traces, cost reports and a dashboard |
+| 0.19.0 | Part 6: standalone executables and package managers, a Docker image, a sandbox, secret scanning and a signed audit log, themes, a plain mode, French, full docs, performance budgets |
 
 ---
 
@@ -174,7 +175,7 @@ release, the graph finds the importer and the test a person checked by reading t
   in each CLI's own way; token use and cost come from each CLI's output. OpenCode was run for
   real; the others are read the way their installed code or source writes their output.
 - **Local models** through Ollama and LM Studio, free, with a small tool set of Concerto's own
-  (read, list, write inside the story's folder, no shell); `--setup` adds them at tier 1.
+  (read, list, write inside the story's folder, no shell); `/setup` (or `--init`) adds them at tier 1.
 - **Custom roles** in `customRoles`: reviewers that can send a story back, and builders that
   work on a passed story before its merge, each with its own instructions, models and tools.
 - **The report lists every call** by model, with tokens and cost.
@@ -236,9 +237,9 @@ and the dashboard, read from the run log alone; a run's trace reaches a collecto
 
 ---
 
-## Part 6 · Ready for everyone
+## Part 6 · Ready for everyone · shipped in 0.19
 
-### Sprint 16 · distribution · built, live test at the next release
+### Sprint 16 · distribution · shipped
 
 - **Standalone executables** with Node's single executable applications, for Linux (x64, arm64),
   macOS (arm64, x64) and Windows (x64): Concerto's files are embedded and unpacked once.
@@ -269,17 +270,23 @@ image. Every push already builds the five executables and runs the .deb in a con
 Done: a builder process told to read `~/.ssh` and to call example.com is stopped by the sandbox,
 reaches only the host it is allowed, and both attempts are in the signed audit log.
 
-### Sprint 18 · 0.19 · polish
+### Sprint 18 · polish · shipped
 
-- **Themes,** including high contrast and colour-blind safe palettes; full keyboard remapping.
-- **Accessibility:** a screen-reader friendly plain mode that prints events as sentences.
-- **Translations** of the TUI and docs.
-- **Docs:** every flag, slash command, config key and failure message, with recipes and a public
-  benchmark against single-model runs.
-- **Performance budgets in CI:** startup, scoring and frame time fail the build when they regress.
+- **Themes:** default, high contrast, colour-blind safe and mono (NO_COLOR); every single-key
+  action remappable, with extra keys for Tab and the arrows.
+- **Accessibility:** `--plain` says the plan and every event as sentences, for screen readers.
+- **Translations:** the TUI's guiding lines in English and French; the essentials of the docs in
+  [French](docs/fr/README.md).
+- **Docs:** a [reference](docs/reference.md) of every flag, slash command and config key,
+  generated from the code and tested against it; [recipes](docs/recipes.md); every
+  [failure message](docs/failures.md); a [benchmark against one model alone](docs/benchmark-single.md),
+  rerun with `pnpm bench:single`. It found Concerto slower and costlier than one model on
+  one-file tasks, with one more hidden test passed.
+- **Performance budgets in CI:** startup, scoring and frame time fail the build when they pass
+  their budgets.
 
-Done when: every documented failure message has a test, and the benchmark is reproducible from
-one command.
+Done: each of the 39 documented failure messages is triggered by a test, and a new error without a
+row fails the build; the benchmark runs from one command.
 
 ## 1.0 · stable
 

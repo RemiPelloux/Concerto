@@ -6,7 +6,7 @@
   <a href="https://github.com/RemiPelloux/Concerto/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/RemiPelloux/Concerto/ci.yml?branch=main&style=flat-square&label=CI&labelColor=111113"></a>
   <a href="https://remipelloux.github.io/Concerto/"><img alt="Docs" src="https://img.shields.io/badge/docs-github%20pages-E0A458?style=flat-square&labelColor=111113"></a>
   <img alt="Node 22+" src="https://img.shields.io/badge/node-22%2B-4FD08A?style=flat-square&labelColor=111113">
-  <img alt="Backends: Claude Code, Codex, pi" src="https://img.shields.io/badge/backends-Claude%20Code%20%7C%20Codex%20%7C%20pi-B48CFF?style=flat-square&labelColor=111113">
+  <img alt="Backends: Claude Code, Codex, Gemini CLI, Cursor, OpenCode, Goose, Aider, pi, local" src="https://img.shields.io/badge/backends-9-B48CFF?style=flat-square&labelColor=111113">
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-F3F1EC?style=flat-square&labelColor=111113"></a>
 </p>
 
@@ -379,7 +379,7 @@ the login or providers it is set up with:
 |---|---|---|
 | `gemini/<model>` | Gemini CLI | plan mode |
 | `cursor/<model>` | Cursor's agent | plan mode |
-| `opencode/<provider>/<model>` | OpenCode (`concerto --setup` lists its models) | the plan agent |
+| `opencode/<provider>/<model>` | OpenCode (`/setup` or `concerto --init` lists its models) | the plan agent |
 | `goose/<provider>/<model>` | Goose | chat mode, no tools |
 | `aider/<model>` | Aider, which never commits | ask mode |
 
@@ -388,7 +388,7 @@ result. Prompts go in on stdin, and token use and cost are read from each CLI's 
 
 Models on your own machine work too: `ollama/qwen3:8b` through Ollama (port 11434, or
 `OLLAMA_HOST`) and `lmstudio/<model>` through LM Studio (port 1234, or `LMSTUDIO_HOST`). They cost
-nothing, `concerto --setup` adds the ones the server has at tier 1, and they get a small tool set of
+nothing, `/setup` (or `concerto --init`) adds the ones the server has at tier 1, and they get a small tool set of
 their own: read and list files, and write them when building, inside the story's folder, with no
 shell. That suits scoring, diff reviews and small stories.
 
@@ -443,6 +443,25 @@ When your subscriptions run out, an API gateway that serves GPT, Claude, DeepSee
 one key is the simplest fallback. I use [CodexEverywhere](https://codex-everywhere.com/home?aff=H9TB6LJQJMEU).
 Add it to pi or as a Codex profile with providers named `ce-gpt`, `ce-claude`, `ce-deepseek` and
 `ce-grok`, and Concerto picks them up.
+
+## Accessibility and languages
+
+- `concerto --plain "…"` says the plan and every event as plain sentences, one per line, and asks
+  before building: for screen readers, braille displays and logs.
+- Themes: `"ui": { "theme": "high-contrast" }`, `"colorblind"` (pass in blue, fail in vermilion,
+  never red against green) or `"mono"`; `NO_COLOR=1` always gives mono.
+- Every single-key action can be remapped, and Tab and the arrows can get extra keys:
+  `"ui": { "keys": { "drop": "x", "down": "j", "up": "k" } }`.
+- The TUI speaks English and French (`"ui": { "language": "fr" }`, or `"auto"` to follow `LANG`);
+  [docs/fr](docs/fr/README.md) has the essentials in French.
+
+## Documentation
+
+- [Reference](docs/reference.md): every flag, slash command and config key, generated from the code.
+- [Recipes](docs/recipes.md): spend less, work as a team, build issues in CI, run untrusted work safely…
+- [Failures](docs/failures.md): every error message, why it happens and what to do; each one is tested.
+- [Security](docs/security.md), the [language benchmark](docs/language-benchmark.md) and the
+  [benchmark against one model alone](docs/benchmark-single.md).
 
 ## Roadmap
 

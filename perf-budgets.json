@@ -1,0 +1,8 @@
+{
+  "_about": "Medians, in milliseconds, that scripts/perf-budgets.ts must stay under: about four times what a laptop measures, so CI runners pass and a real regression does not. Lower a budget when a change makes Concerto faster.",
+  "startup --version (ms)": 150,
+  "startup --help (ms)": 150,
+  "startup --doctor (ms)": 600,
+  "scoring 256 files (ms)": 400,
+  "frame (ms)": 160
+}

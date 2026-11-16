@@ -1,4 +1,5 @@
 import { Box, Text, useInput } from "ink";
+import { t } from "#src/i18n/index.js";
 import { useRef, useState } from "react";
 import type { State } from "#src/state/types.js";
 import { unfinished } from "#src/ui/RunSummary.js";
@@ -70,12 +71,10 @@ function usePromptInput({ enabled, onSubmit, onTab, onEmpty }: Props): string {
 
 /** What typing does in each phase, shown in the empty prompt. */
 export function promptHint(state: State): string {
-  if (state.phase === "scoring") return "Scoring… type / for commands; a change to the request waits for the plan.";
-  if (state.phase === "planned") return "Enter builds the plan · or type a change and Enter to re-plan · / for commands";
-  if (state.phase === "running") return "Type a note for the agents: they read it from their next step · / for commands";
+  const p = t().prompt;
+  if (state.phase === "scoring" || state.phase === "planned" || state.phase === "running") return p[state.phase];
   const left = state.phase === "idle" ? 0 : unfinished(state).length;
-  if (left) return `Enter retries the ${left} that did not pass · or type a new request · / for commands`;
-  return "Describe the job and what done means, or type / for commands.";
+  return left ? p.retry(left) : p.idle;
 }
 
 /** The request line. A leading "/" turns it into a command, with suggestions and tab completion. */

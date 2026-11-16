@@ -10,7 +10,8 @@ export default defineConfig({
   resolve: { conditions: ["source"] },
   ssr: { resolve: { conditions: ["source"] } },
   test: {
-    exclude: [...configDefaults.exclude, "dist/**"],
+    // bench/: the benchmark tasks carry their own tests, run against an agent's work, not Concerto's.
+    exclude: [...configDefaults.exclude, "dist/**", "bench/**"],
     setupFiles: ["tests/isolate-env.ts"],
     ...(slowMachine ? { testTimeout: SLOW_MACHINE_TIMEOUT_MS } : {}),
   },

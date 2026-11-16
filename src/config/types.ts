@@ -16,6 +16,8 @@ const CheckSetting = z.string().min(1).or(z.literal(false)).optional();
 /** Model refs are checked by parseRef at load; this only keeps obvious garbage out. */
 /** The model id may itself contain slashes (pi lists `z-ai/glm-5.3`); the prefix may not. */
 const REF = z.string().regex(/^[\w.@-]+\/[\w.:/[\]-]+$/, "model refs look like <backend>/<model>");
+/** One printable character, or "" for no extra key. */
+const KEY = z.string().max(1);
 const PREFER = z.string().regex(/^[\w.@-]+\*?$/, "prefer entries are provider names, optionally ending in *");
 
 export const ROLES = ["conductor", "scorer", "soloist", "critic", "section"] as const;
@@ -134,6 +136,12 @@ export const ConfigSchema = z.object({
    * Every agent CLI in the platform's sandbox (bubblewrap on Linux, sandbox-exec on macOS): the
    * system read-only, credentials hidden, and network only to the model providers and allowHosts.
    */
+  /** How the TUI looks and listens: a theme, remapped keys, its language, and plain sentences for screen readers. */
+  ui: z.object({
+    theme: z.enum(["default", "high-contrast", "colorblind", "mono"]).default("default"),
+    keys: z.object({ drop: KEY, split: KEY, merge: KEY, close: KEY, next: KEY, up: KEY, down: KEY }).partial().default({}),
+    language: z.enum(["auto", "en", "fr"]).default("auto"),
+  }).default({ theme: "default", keys: {}, language: "auto" }),
   sandbox: z.object({ enabled: z.boolean().default(false), allowHosts: z.array(z.string()).default([]), hide: z.array(z.string()).default([]) }).default({ enabled: false, allowHosts: [], hide: [] }),
   skills: z.array(SkillRuleSchema),
   swarm: z.object({ maxParallel: z.number().int().min(1) }),

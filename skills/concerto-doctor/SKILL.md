@@ -8,6 +8,9 @@ description: Diagnose and fix Concerto problems - models skipped or failing, "No
 Start with `concerto --doctor`. It shows which CLIs are installed, how many models each links,
 the config in use, what each role runs on, and every skipped model with its error.
 
+Every error message Concerto prints is listed, with its cause and fix, in
+[docs/failures.md](https://github.com/RemiPelloux/Concerto/blob/main/docs/failures.md).
+
 ## Common causes
 
 | Symptom | Cause | Fix |

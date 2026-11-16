@@ -44,6 +44,11 @@ async function printPlan(s: Setup, request: string, values: Values): Promise<voi
   explainLines(s.store.get(), concert.calibration).forEach((line) => process.stdout.write(`${line}\n`));
 }
 
+async function plain(s: Setup, request: string, values: Values): Promise<void> {
+  const [{ createConcert }, { runPlain }, { runModel }] = await Promise.all([import("#src/orchestrator/concert.js"), import("#src/commands/plain.js"), import("#src/runner/index.js")]);
+  await runPlain(await createConcert({ ...s, runner: runModel, template: values.template }), request, Boolean(values.yes));
+}
+
 async function headless(s: Setup, request: string, values: Values): Promise<void> {
   const [{ createConcert }, { runHeadless }, { runModel }, publish] = await Promise.all([
     import("#src/orchestrator/concert.js"), import("#src/headless.js"), import("#src/runner/index.js"), import("#src/commands/publish.js"),
@@ -88,16 +93,17 @@ async function standalone(values: Values, request: string): Promise<boolean> {
 /** Every command after argument parsing; modules load only for the command that runs. */
 export async function run(values: Values, request: string): Promise<void> {
   if (await standalone(values, request)) return;
-  const tui = !values.plan && !values.run && !values.models && !values.doctor && !values["clear-cache"];
+  const tui = !values.plan && !values.run && !values.plain && !values.models && !values.doctor && !values["clear-cache"];
   const firstLaunch = tui && process.stdin.isTTY && isFirstLaunch(process.cwd());
   if (firstLaunch) await (await import("#src/ui/launch.js")).runOnboarding();
   const s = await setup(values);
   if (values.doctor) return (await import("#src/setup/doctor.js")).printDoctor(s.cwd, await (await import("#src/setup/detect.js")).detect(), s);
   if (values["clear-cache"]) return clearCache(s.cwd, s.config);
   if (values.models) return printModels(s.catalog, s.config);
-  if ((values.plan || values.run) && !request) throw new Error("--plan and --run need a request.");
+  if ((values.plan || values.run || values.plain) && !request) throw new Error("--plan, --run and --plain need a request.");
   if (values.plan) return printPlan(s, request, values);
   if (values.run) return headless(s, request, values);
+  if (values.plain) return plain(s, request, values);
   return interactive(values, s, { request: values.resume ? `/history ${values.resume}` : request, tour: firstLaunch });
 }
 

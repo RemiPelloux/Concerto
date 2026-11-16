@@ -44,6 +44,7 @@ export function testConfig(): ConcertoConfig {
     policy: { protectedPaths: [], blockedModels: [], requireReview: [] },
     notify: [],
     sandbox: { enabled: false, allowHosts: [], hide: [] },
+    ui: { theme: "default", keys: {}, language: "auto" },
     prefer: [],
     timeoutMinutes: 1,
     skills: [],

@@ -1,4 +1,5 @@
 import { useInput } from "ink";
+import { KEYS } from "#src/ui/keys.js";
 import { scrub } from "#src/engine/secrets.js";
 import { useState } from "react";
 import { fileDiff } from "#src/engine/changes.js";
@@ -60,11 +61,11 @@ export function useNavigation(state: State, cwd: string, showTour: boolean): Nav
   useInput(
     (input, key) => {
       if (overlay) return overlayKeys({ key, input, setScroll, open, overlay });
-      if (key.tab) return nextZone();
+      if (key.tab || (KEYS.next && input === KEYS.next)) return nextZone();
       if (key.escape) return setZone("prompt");
       if (zone === "prompt") return;
-      const n = size[zone];
-      if (key.upArrow || key.downArrow) setSelected((s) => ({ ...s, [zone]: clamp(s[zone] + (key.upArrow ? -1 : 1), n) }));
+      const [n, step] = [size[zone], move(key, input)];
+      if (step) setSelected((s) => ({ ...s, [zone]: clamp(s[zone] + step, n) }));
       if (key.return && n > 0) pick({ zone, index: clamp(selected[zone], n), state, cwd, open });
     },
     // At the prompt, the prompt bar takes every key in every phase, Tab included.
@@ -79,8 +80,14 @@ type OverlayKeys = { key: { escape: boolean; upArrow: boolean; downArrow: boolea
  * In an overlay, Esc or q closes it and arrows scroll: down is positive, up negative. Each view
  * clamps the value to what it shows (the tour handles its own keys). In a replay, ←→ change call.
  */
+/** Up or down in a list: the arrows, or the extra keys `ui.keys` names. */
+function move(key: { upArrow: boolean; downArrow: boolean }, input: string): number {
+  if (key.upArrow || (KEYS.up !== "" && input === KEYS.up)) return -1;
+  return key.downArrow || (KEYS.down !== "" && input === KEYS.down) ? 1 : 0;
+}
+
 function overlayKeys({ key, input, setScroll, open, overlay }: OverlayKeys): void {
-  if (key.escape || input === "q") return open(null);
+  if (key.escape || input === KEYS.close) return open(null);
   if (overlay.kind === "tour") return;
   if (overlay.kind === "replay" && (key.leftArrow || key.rightArrow)) return open({ ...overlay, index: clamp(overlay.index + (key.leftArrow ? -1 : 1), overlay.calls.length) });
   const step = key.upArrow ? -1 : key.downArrow ? 1 : key.pageUp ? -PAGE : key.pageDown ? PAGE : 0;

@@ -58,6 +58,18 @@ describe("story worktrees", () => {
     expect(git(cwd, "worktree", "list")).not.toContain("story-a");
   });
 
+  it("cleans up when a builder replaced a linked folder with its own, and leaves the main one alone", async () => {
+    const cwd = repo();
+    const w = await openWorktree(cwd, "reinstall", await snapshot(cwd));
+    // `pnpm install` in the worktree swaps the node_modules link for a real folder.
+    rmSync(join(w.dir, "node_modules"));
+    mkdirSync(join(w.dir, "node_modules", "dep"), { recursive: true });
+    writeFileSync(join(w.dir, "node_modules", "dep", "index.js"), "module.exports = 2;\n");
+    await closeWorktree(cwd, w);
+    expect(existsSync(w.dir)).toBe(false);
+    expect(readFileSync(join(cwd, "node_modules", "dep", "index.js"), "utf8")).toBe("module.exports = 1;\n");
+  });
+
   it("merges stories that edit neighbouring lines of one file, and refuses a real conflict whole", async () => {
     const cwd = repo();
     const base = await snapshot(cwd);

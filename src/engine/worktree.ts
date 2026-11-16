@@ -116,9 +116,18 @@ export async function changesIn(w: Worktree): Promise<Change[]> {
   return changes;
 }
 
+/**
+ * Removes a link without following it. A builder that ran `pnpm install` in its worktree replaced
+ * the link with a folder of its own, inside the worktree: that folder goes whole.
+ */
+function unlink(path: string): void {
+  const own = existsSync(path) && !lstatSync(path).isSymbolicLink() && lstatSync(path).isDirectory();
+  rmSync(path, own ? REMOVE : { force: true });
+}
+
 /** Removes the worktree: links first, so nothing they point at is touched, then git's record. */
 export async function closeWorktree(main: string, w: Pick<Worktree, "dir" | "links">): Promise<void> {
-  w.links.forEach((path) => rmSync(join(w.dir, path), { force: true }));
+  w.links.forEach((path) => unlink(join(w.dir, path)));
   await oneAtATime(main, () => git(main, ["worktree", "remove", "--force", w.dir])).catch(() => rmSync(w.dir, REMOVE));
   rmSync(`${w.dir}.links.json`, { force: true });
   await oneAtATime(main, () => git(main, ["worktree", "prune"])).catch(() => "");

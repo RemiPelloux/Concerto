@@ -42,7 +42,7 @@
       </div>
       <figure class="hero-figure reveal">
         <a class="zoom" href="assets/hero.svg"><img src="assets/hero.svg" width="1200" height="560" alt="The Concerto screen: a conductor panel with three checkpoints on the left; a task node dispatching stories to Opus 5.5, GPT-6.1 Sol and a swarm of small builders, then to the critic and to verify and ship; a bar comparing the cost of the conductor alone with the conductor used only as the brain."></a>
-        <figcaption>One run: stories go out to builders, come back through the critic, then get verified. The conductor only wakes at its three checkpoints.</figcaption>
+        <figcaption>One run: stories go out to builders, come back through the critic, then get verified. The conductor only wakes at its checkpoints.</figcaption>
       </figure>
     </section>
 
@@ -181,13 +181,15 @@ model's four factors are reweighted.</code></pre>
       <div class="wrap conductor-inner">
         <div class="conductor-text">
           <h2 id="conductor-title" class="head reveal">The conductor wakes three times</h2>
-          <p class="reveal">Claude Fable 5.2 is the conductor. It can read the whole session and has no tool that writes. It stays asleep while the builders work and is called at three fixed moments, each with one question. When it asks for changes, its notes go into every builder's and critic's prompt for the rest of the run.</p>
+          <p class="reveal">Claude Fable 5.2 is the conductor. It can read the whole session and has no tool that writes. It stays asleep while the builders work and is called at four fixed moments, each with one question: before the plan locks, when a story fails review twice, when two critics disagree on a risky story, and before the run is called done. When it asks for changes, its notes go into every builder's and critic's prompt for the rest of the run.</p>
         </div>
         <ol class="gates">
           <li class="reveal"><h3>Before a plan locks</h3><p>What did the plan miss?</p></li>
           <li class="reveal"><h3>When an error repeats twice</h3><p>Is this the root cause, or a rabbit hole?</p></li>
+          <li class="reveal"><h3>When two critics disagree</h3><p>On a risky story, which one is right?</p></li>
           <li class="reveal"><h3>Before calling it done</h3><p>Did the diff break anything?</p></li>
         </ol>
+        <p class="reveal">Between the checkpoints, every story is checked without asking a model first. It builds in its own git worktree, from a snapshot of your folder. Concerto then runs your tests, type check and lint, and the acceptance commands the scorer wrote. On a story that adds tests, it flips one condition the story added and expects a test to fail. Only then does the critic review it, with a critic from another vendor on high-risk stories. A story that passes is merged back with a three-way merge. If other stories changed the same lines meanwhile, it is rebuilt on top of their work, up to twice. A story that still fails leaves your folder untouched and its work saved as a patch.</p>
         <p class="conductor-cost reveal">The cost panel in the terminal shows what the same tokens would have cost on the conductor model alone, next to what the run cost with the conductor used only as the brain.</p>
       </div>
     </section>

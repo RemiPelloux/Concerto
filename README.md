@@ -14,8 +14,9 @@
 
 You describe a coding job in your terminal. Concerto splits it into user stories, measures how much
 of your repository each one touches, and sends each story to the model that fits it. Opus 5.5
-builds the hard and UI stories, GPT-6.1 Sol the middle ones, Haiku 5.5 the small ones. A critic tries to break every story, and
-Fable 5.2 checks the plan at three checkpoints.
+builds the hard and UI stories, GPT-6.1 Sol the middle ones, Haiku 5.5 the small ones. Every story
+builds in its own git worktree and must pass your tests before a critic tries to break it, and
+Fable 5.2 checks the plan at four checkpoints.
 
 It runs on your Claude Code and ChatGPT subscriptions, and on any API key pi holds. Concerto never
 sees a key. Full documentation: [remipelloux.github.io/Concerto](https://remipelloux.github.io/Concerto/)
@@ -140,6 +141,27 @@ conductor at its checkpoints. You do not open them, and they do not appear as se
 watch them in Concerto's screen, and their work shows up as changes in the folder. Concerto never
 commits; you review the diff.
 
+### How each story is checked
+
+1. **Its own worktree.** The story starts from a snapshot of your folder, uncommitted work
+   included, in a git worktree under `.concerto/worktrees/`, with `node_modules`, `.venv` and
+   `.env` files linked in. Your index, HEAD and branches are not touched, and parallel stories
+   cannot see each other's edits.
+2. **Your tests.** After each build Concerto runs the project's test command (SmartTest, npm,
+   pnpm, yarn, bun, pytest, go, cargo, PHPUnit, Maven or Gradle), then the `typecheck` and `lint`
+   scripts, then the acceptance commands the scorer wrote. A red check goes back to the builder
+   with its output; a test that passes on a rerun is reported as flaky.
+3. **A broken condition.** On a story that adds tests, Concerto flips one condition the story
+   added and runs the tests again. If they still pass, nothing tests that condition, and the
+   builder is told to add a test that does.
+4. **The critic,** with what already passed in hand. On a high-risk story a critic from another
+   vendor reviews it too, and the conductor settles a disagreement.
+5. **The merge.** A story that passes is merged into your folder with a three-way merge, so work
+   that landed meanwhile is kept. When it conflicts with that work, as when several stories add to
+   the same export list, the story is rebuilt on top of the current code, up to twice, as a
+   developer would rebase. Your folder only ever receives a clean merge. The work of a story that
+   still fails is saved as a patch in `.concerto/worktrees/`.
+
 ## Teach your agents
 
 `concerto --install-skills` (the installer runs it) adds three skills to Claude Code, Codex and pi:
@@ -213,6 +235,21 @@ one with 37 working models.
 Model names look like `claude-code/claude-opus-5-5` (Claude subscription), `codex/gpt-6.1-sol`
 (ChatGPT subscription), `codex@ce-gpt/gpt-6.1-sol` (a Codex profile, such as a proxy), or
 `openai/gpt-6.1-sol` (any provider in pi).
+
+How stories are checked is set in the same file:
+
+```json
+{
+  "checks": { "test": "pnpm test", "typecheck": "pnpm typecheck", "lint": false, "timeoutMinutes": 10 },
+  "isolation": "worktree",
+  "behaviour": { "serve": "npm run dev", "routes": ["/", "/api/health"], "readySeconds": 60 }
+}
+```
+
+Each check is a command, `false` to turn it off, or left out to let Concerto detect it.
+`"isolation": "off"` builds every story in the folder itself. `behaviour` is for web projects:
+the server (which must read `PORT`) is started before and after each story, and the critic sees
+which routes changed.
 
 ## Cheaper API access
 

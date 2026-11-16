@@ -35,5 +35,12 @@ Every model used must be listed under `models` with a `tier` (1 bulk work to 5 f
 - **Spending:** `"budgetUsd": 5`, or `--budget 5` for one run. `"swarm": {"maxParallel": 1}`
   stops parallel builds.
 - **Prepaid models:** `costFactor` (default 0.25 for subscriptions) makes routing favor them.
+- **What every story must pass:** `"checks": {"test": "pnpm test", "typecheck": false}`. Each of
+  `test`, `typecheck` and `lint` is a command, `false` to turn it off, or left out to detect it;
+  `timeoutMinutes` caps each run (10 by default).
+- **Worktrees:** `"isolation": "worktree"` (default) builds each story in its own git worktree and
+  merges it back; `"off"` builds in the folder itself.
+- **Web projects:** `"behaviour": {"serve": "npm run dev", "routes": ["/"]}` starts the server
+  (it must read `PORT`) before and after each story so the critic sees which routes changed.
 
 After editing, run `concerto --probe` if you added models, so failing ones are skipped.

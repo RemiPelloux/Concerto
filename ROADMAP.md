@@ -15,6 +15,7 @@ one goal, the work that serves it, and a test that says when it is done.
 | 0.1.3 | Windows support, release packages and installers, `/history` and `--resume`, a live agent panel, an end-of-run summary with retry |
 | 0.1.4 | The prompt works in every phase: type a change to re-plan, a note for running agents, any command |
 | 0.4.0 | Part 1: every story in its own worktree with rebuild on conflict, a test gate, acceptance commands, mutation spot checks, a second critic, a behaviour diff |
+| 0.10.0 | Parts 2 and 3: learning from runs, account windows and budgets, a leaner token engine, a plan editor, reject and ask per story, search, replay and share |
 
 ---
 
@@ -60,7 +61,7 @@ Done: 10 of 10 seeded weak tests caught, a real test left alone.
 
 ---
 
-## Part 2 · Smarter routing and lower cost
+## Part 2 · Smarter routing and lower cost · shipped in 0.10
 
 ### Sprint 4 · learn from runs · shipped
 
@@ -107,7 +108,7 @@ on real runs, and the context packs aim at exactly that.
 
 ---
 
-## Part 3 · Control during a run
+## Part 3 · Control during a run · shipped in 0.10
 
 ### Sprint 7 · edit the plan · shipped
 

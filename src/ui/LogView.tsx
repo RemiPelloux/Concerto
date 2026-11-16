@@ -18,7 +18,8 @@ export function LogView({ log }: { log: LogEntry[] }) {
         <Box key={i} justifyContent="space-between">
           <Box flexShrink={1}>
             <Text wrap="truncate-end">
-              <Text color={ROLE_COLOR[e.role]}>● {e.label.padEnd(LABEL_WIDTH)}</Text>
+              {/* A space after the label always, so a full-width one never runs into its detail. */}
+              <Text color={ROLE_COLOR[e.role]}>● {`${e.label.padEnd(LABEL_WIDTH)} `}</Text>
               <Text>{e.detail}</Text>
             </Text>
           </Box>

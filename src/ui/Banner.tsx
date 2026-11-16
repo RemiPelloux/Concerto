@@ -21,12 +21,18 @@ function row(index: number): string {
   return [...WORD].map((ch) => GLYPHS[ch]?.[index] ?? "").join(" ");
 }
 
+/** When the first banner appeared: the welcome counts from there, however often the layout redraws the banner. */
+let firstShown: number | null = null;
+
 function useWelcome(): boolean {
-  const [shown, setShown] = useState(true);
+  firstShown ??= Date.now();
+  const left = WELCOME_MS - (Date.now() - firstShown);
+  const [shown, setShown] = useState(left > 0);
   useEffect(() => {
-    const timer = setTimeout(() => setShown(false), WELCOME_MS);
+    if (left <= 0) return undefined;
+    const timer = setTimeout(() => setShown(false), left);
     return () => clearTimeout(timer);
-  }, []);
+  }, [left]);
   return shown;
 }
 

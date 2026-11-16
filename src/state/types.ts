@@ -32,6 +32,8 @@ export type StoryView = {
   status: StoryStatus;
   /** The critic's last finding, in one line: why a story failed, shown when the run ends. */
   finding?: string;
+  /** Files this story's merge wrote into the main folder (isolated runs). */
+  merged?: string[];
 };
 
 export type LogEntry = { role: Role; label: string; detail: string; result: string };

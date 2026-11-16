@@ -12,7 +12,7 @@ const SUFFIX_BYTES = 2;
 const OWN_STATE = ".concerto/";
 
 /** Keeps `.concerto/` out of commits without touching the project's .gitignore. */
-function excludeLocally(cwd: string): void {
+export function excludeLocally(cwd: string): void {
   try {
     const path = execFileSync("git", ["rev-parse", "--git-path", "info/exclude"], { cwd, env: gitEnv(), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
     const file = join(cwd, path);

@@ -18,6 +18,18 @@ function storyRows(s: State): string[] {
   return ["| Story | Points | Reach | Score and why | Built by | Reviewed by | Status |", "|---|---|---|---|---|---|---|", ...rows];
 }
 
+/** Per story: the files its merge wrote, and why it did not pass when it did not. */
+function storyDetails(s: State): string[] {
+  const lines = (s.plan?.stories ?? []).flatMap((story) => {
+    const v = s.stories[story.id];
+    if (!v) return [];
+    const merged = v.merged?.length ? [`- Merged: ${v.merged.map((f) => `\`${f}\``).join(", ")}`] : [];
+    const why = v.status !== "passed" && v.finding ? [`- Why it did not pass: ${v.finding}`] : [];
+    return merged.length + why.length > 0 ? [`### ${story.title}`, "", ...merged, ...why, ""] : [];
+  });
+  return lines.length > 0 ? ["## Stories", "", ...lines] : [];
+}
+
 function totals(s: State): string[] {
   const { usage, soloCost, cacheSaved, localHits, condensedTokens, dedupedTokens, fallbacks } = s.ledger;
   return [
@@ -37,6 +49,7 @@ function render(s: State): string {
     "",
     ...storyRows(s),
     "",
+    ...storyDetails(s),
     ...(s.notes.length > 0 ? ["## Conductor notes", "", ...s.notes, ""] : []),
     "## Totals",
     "",

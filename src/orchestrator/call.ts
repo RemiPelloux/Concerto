@@ -26,6 +26,8 @@ export type Call = {
   sessionKey?: string;
   /** What the agent view calls this call: a story title, a checkpoint. */
   label?: string;
+  /** Where the agent works: the story's worktree. Default: the run's folder. */
+  cwd?: string;
   /** Read-only calls may be answered by the local response cache. */
   cacheable?: boolean;
 };
@@ -74,7 +76,7 @@ async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
     tools: roleCfg.tools,
     effort: call.effort ?? roleCfg.effort,
     skills: c.skills.for(call.tags ?? []),
-    cwd: c.cwd,
+    cwd: call.cwd ?? c.cwd,
     session,
     signal: AbortSignal.any([c.signal, timeout]),
   });

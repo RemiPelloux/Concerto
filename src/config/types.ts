@@ -68,6 +68,8 @@ export const ConfigSchema = z.object({
   reviews: z.array(ReviewSchema).default([]),
   skills: z.array(SkillRuleSchema),
   swarm: z.object({ maxParallel: z.number().int().min(1) }),
+  /** "worktree": every story builds in its own git worktree and is merged back when it passes. */
+  isolation: z.enum(["worktree", "off"]).default("worktree"),
   cache: z.object({
     dir: z.string(),
     ttlHours: z.number().positive(),

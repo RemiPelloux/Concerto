@@ -24,6 +24,7 @@ is done.
 | 1.0.2 | A plan waiting for Enter says so: a big ENTER TO BUILD in moving colours above the prompt |
 | 1.0.3 | A rewriter role that sharpens requests, asks questions and writes a design brief; an effort floor and score-scaled critics; Concerto no longer floods a short terminal, so Orca stops freezing |
 | 1.0.4 | A builder that reinstalls dependencies in its worktree no longer fails the whole run at cleanup |
+| 1.0.5 | Sessions saved before the rewriter existed reopen with --resume instead of crashing |
 
 ---
 

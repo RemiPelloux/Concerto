@@ -219,6 +219,22 @@ report each log line as MCP progress. For Claude Code:
 claude mcp add concerto -- concerto --mcp
 ```
 
+## CI and pull requests
+
+- `concerto --run --json "…"` prints one JSON event per line: `session`, `log`, `story`, `done`.
+- `--commit` commits each merged story on its own: its title as the subject, the user story and
+  who built and reviewed it in the body, only its files. Without it Concerto never commits.
+- `--pr` starts a branch from a clean tree, commits per story, then pushes and opens a pull
+  request with `gh`, the run report as its body.
+
+On GitHub, the Concerto Action does this for an issue: copy
+[examples/github/concerto.yml](examples/github/concerto.yml) to `.github/workflows/`, add
+`CLAUDE_CODE_OAUTH_TOKEN` (from `claude setup-token`) as a secret, then label an issue `concerto`
+or comment `/concerto <more instructions>`. Only people with write access can start a run, the
+budget caps it, and the issue gets a link to the pull request. On GitLab,
+[examples/gitlab/concerto.gitlab-ci.yml](examples/gitlab/concerto.gitlab-ci.yml) builds the
+`CONCERTO_REQUEST` of a pipeline and pushes a merge request.
+
 ## Neovim
 
 [`editors/nvim`](editors/nvim) adds `:Concerto` and `:ConcertoPlan`. Over a visual selection,

@@ -1,4 +1,5 @@
 import { readChanges } from "#src/engine/changes.js";
+import { commitStory } from "#src/engine/publish.js";
 import { mergeBack } from "#src/engine/merge.js";
 import { saveMerge } from "#src/engine/review-work.js";
 import { changesIn, closeWorktree, openWorktree, retire, snapshot, type Worktree } from "#src/engine/worktree.js";
@@ -36,11 +37,22 @@ export async function withBefore<T>(c: Concert, job: { story: { id: string }; tr
 /** How a workspace ended: merged, or not; `conflict` holds the conflicting files and hunks. */
 export type Ending = { merged: boolean; conflict?: string };
 
+/** One commit per merged story: its title, the user story, who built and reviewed it. */
+async function commit(c: Concert, storyId: string, files: string[]): Promise<void> {
+  const story = c.store.get().plan?.stories.find((s) => s.id === storyId);
+  const view = c.store.view(storyId);
+  if (!story) return;
+  const body = `As ${story.asA}, I want ${story.iWant}, so that ${story.soThat}.\n\nBuilt by ${view.model}, reviewed by ${view.critics[0] ?? "-"}.\nConcerto-Run: ${c.runId}`;
+  const sha = await commitStory(c.cwd, { files, title: story.title, body });
+  if (sha) c.store.log({ role: "conductor", label: "Commit", detail: `${sha} ${story.title}`, result: "committed" });
+}
+
 async function merge(c: Concert, storyId: string, tree: Worktree): Promise<Ending> {
   const result = await serial(c, async () => mergeBack(c.cwd, tree, await changesIn(tree)));
   if (result.conflicts.length === 0) {
     saveMerge(c.cwd, { runId: c.runId, storyId }, result.records);
     c.store.story(storyId, { merged: result.merged });
+    if (c.commit) await serial(c, () => commit(c, storyId, result.merged));
     return { merged: true };
   }
   const files = result.conflicts.join(", ");

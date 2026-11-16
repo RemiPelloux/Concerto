@@ -49,10 +49,12 @@ export type Concert = {
   spentBefore: { today: number; total: number };
   /** Conductor list price: the "one frontier model alone" baseline in the cost panel. */
   brainPrice: Price | null;
+  /** Commit each story's merged files on its own (`--commit`, `--pr`). Unset: Concerto never commits. */
+  commit?: boolean;
 };
 
 /** `template`: the name of a saved plan shape the scorer should follow. */
-export type ConcertInit = Pick<Concert, "config" | "catalog" | "store" | "runner" | "cwd"> & { signal?: AbortSignal; template?: string };
+export type ConcertInit = Pick<Concert, "config" | "catalog" | "store" | "runner" | "cwd"> & { signal?: AbortSignal; template?: string; commit?: boolean };
 
 /** What finished stories cost since local midnight. */
 function spentToday(outcomes: Outcome[]): number {
@@ -73,13 +75,20 @@ async function prepareWorktrees(init: ConcertInit, runId: string): Promise<void>
   if (patches.length > 0) init.store.log({ role: "conductor", label: "Cleanup", detail: `unmerged work of an interrupted run saved in ${patches.length} patch file(s) in .concerto/worktrees/`, result: "saved" });
 }
 
+/** Whether stories build in worktrees; a run that commits needs them, to know each story's files. */
+function isolatedFor(init: ConcertInit, repoKey: string): boolean {
+  const isolated = init.config.isolation === "worktree" && repoKey !== "no-git";
+  if (init.commit && !isolated) throw new Error("--commit and --pr need a git repository with isolation on: a commit holds one story's merged files.");
+  return isolated;
+}
+
 export async function createConcert(init: ConcertInit): Promise<Concert> {
   const { config, cwd } = init;
   const runId = `run-${Date.now().toString(BASE36)}`;
   const cache = new ResponseCache({ ...config.cache, dir: join(cwd, config.cache.dir) });
   cache.prune();
   const repo = await buildRepoMap(cwd);
-  const isolated = config.isolation === "worktree" && repo.key !== "no-git";
+  const isolated = isolatedFor(init, repo.key);
   if (isolated) await prepareWorktrees(init, runId);
   return {
     ...init,

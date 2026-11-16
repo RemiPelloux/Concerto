@@ -1,0 +1,58 @@
+name: Concerto
+description: Build an issue with Concerto, a scored and reviewed run of coding agents, and open a pull request with the report.
+author: RemiPelloux
+branding:
+  icon: git-pull-request
+  color: orange
+inputs:
+  request:
+    description: What to build. Default - the issue's title and body, and what follows /concerto in the comment.
+    required: false
+    default: ""
+  budget:
+    description: API-equivalent dollars the run may spend before it stops starting stories.
+    required: false
+    default: "5"
+  agents:
+    description: Agent CLIs to install, comma-separated - claude-code, codex.
+    required: false
+    default: claude-code
+  version:
+    description: Concerto release to install, such as v0.14.0, or latest.
+    required: false
+    default: latest
+outputs:
+  pr:
+    description: URL of the pull request, or empty when nothing was merged.
+    value: ${{ steps.run.outputs.pr }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: 22
+    - name: Install Concerto and the agents
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        AGENTS: ${{ inputs.agents }}
+      run: |
+        archive=https://github.com/RemiPelloux/Concerto/releases/latest/download/concerto.tar.gz
+        if [ "$VERSION" != latest ]; then archive="https://github.com/RemiPelloux/Concerto/releases/download/$VERSION/concerto.tar.gz"; fi
+        curl -fsSL https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.sh | CONCERTO_ARCHIVE="$archive" sh
+        echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+        case ",$AGENTS," in *,claude-code,*) npm install -g @anthropic-ai/claude-code ;; esac
+        case ",$AGENTS," in *,codex,*) npm install -g @openai/codex ;; esac
+    - id: run
+      name: Run Concerto and open the pull request
+      shell: bash
+      env:
+        REQUEST: ${{ inputs.request }}
+        TITLE: ${{ github.event.issue.title }}
+        BODY: ${{ github.event.issue.body }}
+        COMMENT: ${{ github.event.comment.body }}
+        ISSUE: ${{ github.event.issue.number }}
+        BUDGET: ${{ inputs.budget }}
+        EVENTS: ${{ runner.temp }}/concerto-events.jsonl
+        GH_TOKEN: ${{ github.token }}
+      run: sh "$GITHUB_ACTION_PATH/scripts/ci/run-issue.sh"

@@ -43,10 +43,13 @@ async function printPlan(s: Setup, request: string, values: Values): Promise<voi
 }
 
 async function headless(s: Setup, request: string, values: Values): Promise<void> {
-  const [{ createConcert }, { runHeadless }, { runModel }] = await Promise.all([
-    import("#src/orchestrator/concert.js"), import("#src/headless.js"), import("#src/runner/index.js"),
+  const [{ createConcert }, { runHeadless }, { runModel }, publish] = await Promise.all([
+    import("#src/orchestrator/concert.js"), import("#src/headless.js"), import("#src/runner/index.js"), import("#src/commands/publish.js"),
   ]);
-  await runHeadless(await createConcert({ ...s, runner: runModel, template: values.template }), request, s.log);
+  const pr = await publish.prBranch(Boolean(values.pr), { cwd: s.cwd, request, session: s.log.id });
+  const concert = await createConcert({ ...s, runner: runModel, template: values.template, commit: Boolean(values.commit || values.pr) });
+  await runHeadless(concert, request, { log: s.log, json: Boolean(values.json) });
+  if (pr) await publish.finishPr(concert, pr, Boolean(values.json));
 }
 
 async function shareSession(id: string): Promise<void> {

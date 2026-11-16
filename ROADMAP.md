@@ -197,16 +197,19 @@ a run from a selection, tested in a real headless Neovim.
 
 ## Part 5 · Teams
 
-### Sprint 13 · 0.14 · CI and pull requests
+### Sprint 13 · CI and pull requests · built, live test pending
 
-- **GitHub Action:** label an issue or comment `/concerto`, and a run opens a pull request with
-  the report as its body, inside a budget.
-- **GitLab CI** template.
-- **Optional commit per story** and `--pr`; Concerto still never commits unless asked.
+- **GitHub Action** (`action.yml`): label an issue `concerto` or comment `/concerto`, and a run
+  opens a pull request with the report as its body, inside a budget, started only by people with
+  write access. The issue's text reaches the run through the environment only.
+- **GitLab CI** template that pushes a merge request.
+- **Optional commit per story** (`--commit`) and `--pr`; Concerto still never commits unless asked.
 - **Machine-readable output:** `--run --json` streams one event per line.
 
 Done when: labelling an issue in a test repository opens a reviewable pull request within the
-budget, with the tests green.
+budget, with the tests green. Tested so far: commits, the branch, the push and the `gh` call
+against a local remote, and the Action's script with stand-ins for `concerto` and `gh`. The live
+test needs a test repository with an agent token as a secret.
 
 ### Sprint 14 · 0.15 · shared configuration and policy
 

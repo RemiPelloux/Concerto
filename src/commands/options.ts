@@ -13,6 +13,9 @@ export const USAGE = `concerto [options] [request]
   --resume <id>       reopen a saved session (see /history) and build what did not pass
   --share <id>        write a saved session as one HTML file, secrets redacted
   --mcp               serve Concerto to other agents as MCP tools on stdio
+  --json              with --run: one JSON event per line (session, log, story, done, pr)
+  --commit            with --run: commit each merged story on its own (clean tree needed)
+  --pr                with --run: a new branch, a commit per story, then a pull request (gh)
   --init              detect every linked AI and write your personal config
   --routing <choice>  with --init outside a terminal: subscriptions, proxy or api
   --probe             send each configured model a tiny prompt; failures are skipped for a day
@@ -42,6 +45,9 @@ export const OPTIONS = {
   resume: { type: "string" },
   share: { type: "string" },
   mcp: { type: "boolean" },
+  json: { type: "boolean" },
+  commit: { type: "boolean" },
+  pr: { type: "boolean" },
   prefer: { type: "string" },
   init: { type: "boolean" },
   routing: { type: "string" },

@@ -37,7 +37,7 @@ function config(cwd: string) {
     ...base,
     models: Object.fromEntries(CATALOG.models.map((m) => [m.ref, { tier: m.tier }])),
     roles: { ...base.roles, conductor: { ...base.roles.conductor, models: [REFS.conductor] }, scorer: { ...base.roles.scorer, minTier: 1, models: [REFS.scorer] }, critic: { ...base.roles.critic, models: [REFS.critic] }, soloist: { ...base.roles.soloist, models: [REFS.builder] }, section: { ...base.roles.section, minTier: 4, models: [REFS.builder] } },
-    reviews: [{ tags: [], minScore: 0, maxScore: 101, models: [REFS.critic] }],
+    reviews: [{ tags: [], minScore: 0, maxScore: 101, models: [REFS.critic], effort: "auto" as const }],
     routes: [{ name: "every story", tags: [], minScore: 0, maxScore: 101, role: "section" as const, models: [REFS.builder], effort: "auto" as const }],
     customRoles: [
       { name: "security", kind: "review" as const, instructions: "SECURITY_REVIEW.md", tags: ["auth"], paths: [], minScore: 0, models: [REFS.security], minTier: 3, effort: "medium" as const },

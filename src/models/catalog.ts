@@ -1,4 +1,4 @@
-import type { ConcertoConfig } from "#src/config/types.js";
+import { EffortSchema, type ConcertoConfig, type Effort } from "#src/config/types.js";
 import { parseRef, type Backend } from "#src/runner/types.js";
 import { reachableRefs } from "#src/models/discover.js";
 import { isBroken, readHealth, type Health } from "#src/models/health.js";
@@ -10,6 +10,19 @@ const SUBSCRIPTION_COST_FACTOR = 0.25;
 const FREE = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 const SUBSCRIPTIONS = new Set<Backend>(["claude-code", "codex", "gemini", "cursor"]);
 
+/** `claude-code/claude-opus-5-5#high` -> the ref and the effort it is pinned to. */
+export function splitPin(entry: string): { ref: string; effort?: Effort } {
+  const at = entry.lastIndexOf("#");
+  if (at < 0) return { ref: entry };
+  const effort = EffortSchema.safeParse(entry.slice(at + 1));
+  return effort.success ? { ref: entry.slice(0, at), effort: effort.data } : { ref: entry };
+}
+
+/** The chain entry for a model: its ref, with its pinned effort when it has one. */
+export function pinnedRef(m: ModelInfo): string {
+  return m.effort ? `${m.ref}#${m.effort}` : m.ref;
+}
+
 /** Reachable models, indexed by ref so lookups never scan the list. */
 export class Catalog {
   private readonly byRef: ReadonlyMap<string, ModelInfo>;
@@ -18,13 +31,20 @@ export class Catalog {
     this.byRef = new Map(models.map((m) => [m.ref, m]));
   }
 
-  get(ref: string): ModelInfo | undefined {
-    return this.byRef.get(ref);
+  get(entry: string): ModelInfo | undefined {
+    return this.byRef.get(splitPin(entry).ref);
   }
 
-  /** The reachable ones among `refs`, in order, without duplicates. */
-  reachable(refs: readonly string[]): ModelInfo[] {
-    return [...new Set(refs)].flatMap((ref) => this.byRef.get(ref) ?? []);
+  /** The reachable ones among `entries`, in order, one per model; a pinned entry carries its effort. */
+  reachable(entries: readonly string[]): ModelInfo[] {
+    const seen = new Set<string>();
+    return entries.flatMap((entry) => {
+      const { ref, effort } = splitPin(entry);
+      const model = this.byRef.get(ref);
+      if (!model || seen.has(ref)) return [];
+      seen.add(ref);
+      return [effort ? { ...model, effort } : model];
+    });
   }
 }
 

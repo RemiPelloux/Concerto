@@ -1,4 +1,4 @@
-import type { ConcertoConfig, Effort, Role } from "#src/config/types.js";
+import { EffortSchema, type ConcertoConfig, type Effort, type Role } from "#src/config/types.js";
 import { catalogFor } from "#src/models/brain.js";
 import type { Catalog } from "#src/models/catalog.js";
 import type { ModelInfo } from "#src/models/types.js";
@@ -26,6 +26,12 @@ const EFFORT_BANDS: ReadonlyArray<[number, Effort]> = [
 
 export function effortFor(score: number): Effort {
   return EFFORT_BANDS.find(([min]) => score >= min)?.[1] ?? "low";
+}
+
+/** The higher of two efforts, in the order the config lists them (off … max). */
+export function atLeast(a: Effort, b: Effort): Effort {
+  const order = EffortSchema.options;
+  return order.indexOf(a) >= order.indexOf(b) ? a : b;
 }
 
 export type Assignment = { role: Role; chain: ModelInfo[]; effort: Effort; rule: string };
@@ -74,7 +80,7 @@ export function preferFirst(models: ModelInfo[], prefer: readonly string[]): Mod
 }
 
 function chainOf(config: ConcertoConfig, wanted: ModelInfo[], fallback: ModelInfo[]): ModelInfo[] {
-  const rest = fallback.filter((m) => !wanted.includes(m));
+  const rest = fallback.filter((m) => !wanted.some((w) => w.ref === m.ref));
   const chain = [...preferFirst(wanted, config.prefer), ...preferFirst(rest, config.prefer)].slice(0, MAX_CHAIN);
   if (chain.length === 0) throw new Error("No configured model is reachable. Run `concerto --models`.");
   return chain;
@@ -127,4 +133,14 @@ export function reviewChain(story: StoryShape, catalog: Catalog, config: Concert
   const special = config.reviews.filter((r) => matches(r, story)).map((r) => allowed.reachable(r.models)).find((m) => m.length > 0) ?? [];
   const critic = roleChain(catalog, config, "critic");
   return special.length > 0 ? chainOf(config, special, critic) : critic;
+}
+
+/**
+ * How hard the critic thinks about a story: the first matching review rule's effort when it names
+ * one, else the critic role's effort or the one the score calls for, whichever is higher.
+ */
+export function reviewEffort(story: StoryShape, config: ConcertoConfig): Effort {
+  const rule = config.reviews.find((r) => matches(r, story));
+  if (rule && rule.effort !== "auto") return rule.effort;
+  return atLeast(config.roles.critic.effort, effortFor(story.score));
 }

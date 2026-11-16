@@ -12,6 +12,7 @@ import { writeUserConfig } from "#src/setup/user-config.js";
 export type Slot = { kind: "roles" | "routes" | "reviews"; key: string; index: number; label: string; duty: string; brain: boolean };
 
 const DUTY: Record<Role, string> = {
+  rewriter: "sharpens the request, asks, writes the design brief",
   conductor: "plans the request and splits it into stories",
   scorer: "scores each story",
   soloist: "builds the hard stories",

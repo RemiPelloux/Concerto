@@ -21,6 +21,7 @@ import { editPlan } from "#src/orchestrator/edit.js";
 import { askBuilder } from "#src/orchestrator/follow-up.js";
 import { perform } from "#src/orchestrator/perform.js";
 import { parsePlan } from "#src/orchestrator/plan.js";
+import { parseRewrite } from "#src/orchestrator/rewrite.js";
 import { applyEdit } from "#src/orchestrator/replan.js";
 import { scoreRequest } from "#src/orchestrator/score.js";
 import { gitEnv } from "#src/runner/env.js";
@@ -170,6 +171,7 @@ const CASES: Case[] = [
   { doc: "invalid config in <file>: <field>: <problem>", trigger: () => parseConfig({ ...testConfig(), timeoutMinutes: "soon" }, "bad.json"), match: /^invalid config in bad\.json:\n {2}timeoutMinutes: / },
   { doc: "invalid config in <file>: policy.requireReview: no custom review role named <role> in customRoles", trigger: () => parseConfig({ ...testConfig(), policy: { protectedPaths: [], blockedModels: [], requireReview: [{ role: "security", paths: ["src/**"] }] } }, "team.json"), match: /^invalid config in team\.json:\n {2}policy\.requireReview: no custom review role named security in customRoles$/ },
   // Plans and edits
+  { doc: "The rewriter did not return JSON.", trigger: () => parseRewrite("Sure, here is a better prompt."), match: /^The rewriter did not return JSON\.$/ },
   { doc: "The scorer did not return a JSON plan.", trigger: () => parsePlan("I would rather not."), match: /^The scorer did not return a JSON plan\.$/ },
   { doc: "Template names are lowercase letters, digits and dashes, 48 at most.", trigger: () => templateBrief("My Template"), match: /^Template names are lowercase letters, digits and dashes, 48 at most\.$/ },
   { doc: "No template \"<name>\". Saved: <templates>.", trigger: () => templateBrief("api-endpoint"), match: /^No template "api-endpoint"\. Saved: none\.$/ },

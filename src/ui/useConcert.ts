@@ -2,7 +2,7 @@ import { useApp, useInput } from "ink";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { createConcert, type Concert } from "#src/orchestrator/concert.js";
 import { perform } from "#src/orchestrator/perform.js";
-import { scoreRequest } from "#src/orchestrator/score.js";
+import { planRequest, withAnswers } from "#src/orchestrator/rewrite.js";
 import type { ConcertoConfig } from "#src/config/types.js";
 import type { Store } from "#src/state/store.js";
 import type { State } from "#src/state/types.js";
@@ -27,7 +27,7 @@ function useKeys({ store, run, closePanel, active }: KeyContext): void {
     if (!active) return;
     const state = store.get();
     if (key.escape && closePanel()) return;
-    if (key.escape && state.phase === "planned") return store.update(() => ({ phase: "idle", plan: null, stories: {}, order: [] }));
+    if (key.escape && (state.phase === "planned" || state.phase === "clarifying")) return store.update(() => ({ phase: "idle", plan: null, stories: {}, order: [], questions: [] }));
     if (key.escape) run.current?.abort.abort();
   });
 }
@@ -62,11 +62,13 @@ function useRequest(deps: AppDeps, session: Session, run: RefObject<Run | null>)
   const request = useCallback((text: string) => {
     const current: Run = { concert: null, abort: new AbortController() };
     run.current = current;
+    // A new request may get questions; answers and changes to a plan are planned on what is known.
+    const ask = !["clarifying", "planned"].includes(deps.store.get().phase);
     deps.store.update(() => ({ phase: "scoring", prompt: text, error: "" }));
     createConcert({ ...deps, ...session, signal: current.abort.signal })
       .then(async (concert) => {
         current.concert = concert;
-        await scoreRequest(concert, text);
+        if (!(await planRequest(concert, text, ask))) return;
         if (deps.autoPerform) await perform(concert);
         else await announcePlan(concert);
       })
@@ -86,14 +88,21 @@ function useRetry(store: Store, run: RefObject<Run | null>, fail: (e: unknown) =
   }, [store, run, fail]);
 }
 
-/** Enter on an empty prompt: build the waiting plan, or after a run retry what did not pass. */
-function useEnter(store: Store, run: RefObject<Run | null>, fail: (e: unknown) => void): () => void {
+type EnterHooks = { fail: (e: unknown) => void; request: (text: string) => void };
+
+/**
+ * Enter on an empty prompt: build the waiting plan, let the rewriter answer its own questions, or
+ * after a run retry what did not pass.
+ */
+function useEnter(store: Store, run: RefObject<Run | null>, { fail, request }: EnterHooks): () => void {
   const retry = useRetry(store, run, fail);
   return useCallback(() => {
     const concert = run.current?.concert;
-    if (store.get().phase !== "planned") return retry();
+    const state = store.get();
+    if (state.phase === "clarifying") return request(withAnswers(state, ""));
+    if (state.phase !== "planned") return retry();
     if (concert) perform(concert).catch(fail);
-  }, [store, run, fail, retry]);
+  }, [store, run, fail, request, retry]);
 }
 
 /** A model picked in `/config` applies to this session at once. */
@@ -136,5 +145,5 @@ export function useConcert(deps: AppDeps, nav: NavHooks): Controls {
   const closePanel = () => (panel ? (setPanel(null), true) : false);
   useKeys({ store: deps.store, run, closePanel, active: nav.active });
   useStartOnce(deps.initialRequest, submit);
-  return { panel, submit, enter: useEnter(deps.store, run, fail), session, apply: useApply(deps.store, session, setSession) };
+  return { panel, submit, enter: useEnter(deps.store, run, { fail, request }), session, apply: useApply(deps.store, session, setSession) };
 }

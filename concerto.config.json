@@ -146,6 +146,16 @@
     }
   ],
   "roles": {
+    "rewriter": {
+      "minTier": 3,
+      "effort": "low",
+      "tools": [],
+      "models": [
+        "claude-code/claude-sonnet-5-5",
+        "anthropic/claude-sonnet-5-5",
+        "ce-claude/claude-sonnet-5"
+      ]
+    },
     "conductor": {
       "minTier": 5,
       "effort": "high",

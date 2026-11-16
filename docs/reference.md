@@ -14,6 +14,7 @@ See [recipes](recipes.md) for what to do with them, and [failures](failures.md) 
 | `--template <name>` | plan in the shape of a saved template (see /template) |
 | `--run` | score and build without the TUI, printing the log (scripts, CI) |
 | `--yes` | build right after scoring, without the confirm step |
+| `--no-rewrite` | score the request as typed: no rewriter, questions or design brief |
 | `--orca` | start the run in a new Orca worktree, in its own terminal tab |
 | `--budget <usd>` | stop starting stories once a run has spent this (API-equivalent) |
 | `--gate <command>` | a check every story must pass before review, e.g. "pnpm test" (repeatable) |
@@ -104,7 +105,13 @@ In `~/.config/concerto/config.json`, with a project's `concerto.config.json` mer
 | `budgetUsd` | number, optional |  |
 | `gates` | list of string | `[]` |
 | `codexFullAccess` | boolean | `false` |
+| `rewrite` | boolean | `true` |
 | `roles` | object |  |
+| `roles.rewriter` | object | `{"minTier":3,"effort":"low","tools":[],"models":[]}` |
+| `roles.rewriter.minTier` | number |  |
+| `roles.rewriter.effort` | "off" \| "minimal" \| "low" \| "medium" \| "high" \| "xhigh" \| "max" |  |
+| `roles.rewriter.tools` | list of string |  |
+| `roles.rewriter.models` | list of string | `[]` |
 | `roles.conductor` | object |  |
 | `roles.conductor.minTier` | number |  |
 | `roles.conductor.effort` | "off" \| "minimal" \| "low" \| "medium" \| "high" \| "xhigh" \| "max" |  |
@@ -143,6 +150,7 @@ In `~/.config/concerto/config.json`, with a project's `concerto.config.json` mer
 | `reviews[].minScore` | number | `0` |
 | `reviews[].maxScore` | number | `101` |
 | `reviews[].models` | list of string |  |
+| `reviews[].effort` | "off" \| "minimal" \| "low" \| "medium" \| "high" \| "xhigh" \| "max" or "auto" | `"auto"` |
 | `customRoles` | list of object | `[]` |
 | `customRoles[].name` | string |  |
 | `customRoles[].kind` | "review" \| "build" |  |

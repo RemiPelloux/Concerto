@@ -16,7 +16,8 @@ function overrides(values: Values): Partial<ConcertoConfig> {
   if (budget !== undefined && !(budget > 0)) throw new Error("--budget takes a positive number of dollars.");
   const prefer = values.prefer?.split(",").map((p) => p.trim()).filter(Boolean);
   const gates = values.gate?.map((g) => g.trim()).filter(Boolean);
-  return { ...(prefer ? { prefer } : {}), ...(budget ? { budgetUsd: budget } : {}), ...(gates?.length ? { gates } : {}) };
+  const rewrite = values["no-rewrite"] ? { rewrite: false } : {};
+  return { ...(prefer ? { prefer } : {}), ...(budget ? { budgetUsd: budget } : {}), ...(gates?.length ? { gates } : {}), ...rewrite };
 }
 
 async function setup(values: Values): Promise<Setup> {
@@ -35,11 +36,11 @@ async function setup(values: Values): Promise<Setup> {
 }
 
 async function printPlan(s: Setup, request: string, values: Values): Promise<void> {
-  const [{ createConcert }, { scoreRequest }, { runModel }] = await Promise.all([
-    import("#src/orchestrator/concert.js"), import("#src/orchestrator/score.js"), import("#src/runner/index.js"),
+  const [{ createConcert }, { planRequest }, { runModel }] = await Promise.all([
+    import("#src/orchestrator/concert.js"), import("#src/orchestrator/rewrite.js"), import("#src/runner/index.js"),
   ]);
   const concert = await createConcert({ ...s, runner: runModel, template: values.template });
-  await scoreRequest(concert, request);
+  await planRequest(concert, request);
   const { plan, order, stories, paths } = s.store.get();
   if (!values.explain) return void process.stdout.write(`${JSON.stringify({ ...plan, routing: order.map((id) => stories[id]), paths }, null, 2)}\n`);
   const { explainLines } = await import("#src/commands/explain.js");

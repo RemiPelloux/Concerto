@@ -2,8 +2,8 @@ import type { Role } from "#src/config/types.js";
 import { Catalog } from "#src/models/catalog.js";
 import type { ModelInfo } from "#src/models/types.js";
 
-/** Roles that think: they plan, score, review and build the hard stories. */
-export const BRAIN_ROLES: ReadonlySet<Role> = new Set(["conductor", "scorer", "critic", "soloist"]);
+/** Roles that think: they rewrite, plan, score, review and build the hard stories. */
+export const BRAIN_ROLES: ReadonlySet<Role> = new Set(["rewriter", "conductor", "scorer", "critic", "soloist"]);
 
 /**
  * Low-cost families. They build light stories; they never plan, score, review or build hard ones.

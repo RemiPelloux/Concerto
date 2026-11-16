@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { EVENT_FORMAT } from "#src/events.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 import { perform } from "#src/orchestrator/perform.js";
-import { scoreRequest } from "#src/orchestrator/score.js";
+import { planRequest } from "#src/orchestrator/rewrite.js";
 
 const LABEL = 12;
 const DOLLAR_DIGITS = 3;
@@ -41,13 +41,13 @@ function summary(concert: Concert, json: boolean): void {
   write(`${phase}${error ? `: ${error}` : ""} · $${ledger.usage.cost.toFixed(DOLLAR_DIGITS)} · ${savings} tokens`);
 }
 
-/** Scores and performs without the TUI, printing the log as it grows. Exit code 1 on failure. */
+/** Rewrites, scores and performs without the TUI, printing the log as it grows. Exit code 1 on failure. */
 export async function runHeadless(concert: Concert, request: string, opts: { log: { id: string; shownPath: string }; json: boolean }): Promise<void> {
   if (opts.json) emit("session", { format: EVENT_FORMAT, session: opts.log.id, log: opts.log.shownPath });
   else write(`session ${opts.log.id} · log ${opts.log.shownPath}`);
   const unsubscribe = follow(concert, opts.json);
   try {
-    await scoreRequest(concert, request);
+    await planRequest(concert, request);
     await perform(concert);
   } finally {
     unsubscribe();

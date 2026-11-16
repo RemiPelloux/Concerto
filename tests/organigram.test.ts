@@ -25,7 +25,7 @@ describe("brain roles", () => {
   it("skips a low-cost model a config names for a brain role or a review", () => {
     const config = testConfig();
     config.roles.critic.models = ["ce-grok/grok-4.7", "a/checker"];
-    config.reviews = [{ tags: [], minScore: 0, maxScore: ANY, models: ["codex/gpt-6.1-terra"] }];
+    config.reviews = [{ tags: [], minScore: 0, maxScore: ANY, models: ["codex/gpt-6.1-terra"], effort: "auto" }];
     expect(roleChain(MIXED, config, "critic")[0]?.ref).toBe("a/checker");
     expect(reviewChain({ score: 10, tags: [] }, MIXED, config).map((m) => m.ref).filter(isCheap)).toEqual([]);
   });
@@ -54,7 +54,7 @@ describe("organigram", () => {
     const config = { ...testConfig(), roles: proposeRoles(testConfig().roles, MIXED) };
     const lines = organigramLines(MIXED, config);
     expect(lines[0]).toMatch(/^conductor\s+a\/brain\s+plans/);
-    expect(lines[4]).toMatch(/^└─ section/);
+    expect(lines.at(-2)).toMatch(/^└─ section/);
     expect(organigramLines(new Catalog(CHEAP), testConfig())[0]).toContain("(none reachable)");
   });
 });

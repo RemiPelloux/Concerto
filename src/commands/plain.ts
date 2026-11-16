@@ -1,7 +1,7 @@
 import { createInterface } from "node:readline/promises";
 import type { Concert } from "#src/orchestrator/concert.js";
 import { perform } from "#src/orchestrator/perform.js";
-import { scoreRequest } from "#src/orchestrator/score.js";
+import { planRequest } from "#src/orchestrator/rewrite.js";
 import type { State } from "#src/state/types.js";
 
 const CENTS = 2;
@@ -60,7 +60,7 @@ async function confirmed(yes: boolean): Promise<boolean> {
  */
 export async function runPlain(c: Concert, request: string, yes: boolean): Promise<void> {
   say(`Planning: ${request}`);
-  await scoreRequest(c, request);
+  await planRequest(c, request);
   planSentences(c.store.get()).forEach(say);
   if (!(await confirmed(yes))) return;
   const stop = follow(c);

@@ -38,7 +38,9 @@ export function testConfig(): ConcertoConfig {
   return {
     version: 1,
     models: Object.fromEntries(MODELS.map((m) => [m.ref, { tier: m.tier }])),
-    roles: { conductor: role(5), scorer: role(3), soloist: role(4), critic: role(3), section: role(1) },
+    // Off here so each test scripts only the roles it is about; tests/rewrite.test.ts turns it on.
+    rewrite: false,
+    roles: { rewriter: role(3), conductor: role(5), scorer: role(3), soloist: role(4), critic: role(3), section: role(1) },
     routes: [],
     reviews: [],
     customRoles: [],

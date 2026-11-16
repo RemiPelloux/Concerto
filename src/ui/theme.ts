@@ -11,19 +11,19 @@ type Theme = { color: Palette; roles: Record<Role, string> };
 export const THEMES: Record<"default" | "high-contrast" | "colorblind" | "mono", Theme> = {
   default: {
     color: { brass: "#E0A458", brassDeep: "#9C6B2E", dim: "gray", text: "white", good: "#4FD08A", bad: "#F06A6A" },
-    roles: { conductor: "#B48CFF", scorer: "#E0B450", soloist: "#E8826A", critic: "#6AA5FF", section: "#4FD08A" },
+    roles: { rewriter: "#E87FB0", conductor: "#B48CFF", scorer: "#E0B450", soloist: "#E8826A", critic: "#6AA5FF", section: "#4FD08A" },
   },
   "high-contrast": {
     color: { brass: "#FFD75F", brassDeep: "#FFAF00", dim: "white", text: "white", good: "#00FF87", bad: "#FF5F5F" },
-    roles: { conductor: "#FF87FF", scorer: "#FFFF5F", soloist: "#FFAF5F", critic: "#5FD7FF", section: "#87FF87" },
+    roles: { rewriter: "#FF87AF", conductor: "#FF87FF", scorer: "#FFFF5F", soloist: "#FFAF5F", critic: "#5FD7FF", section: "#87FF87" },
   },
   colorblind: {
     color: { brass: "#E69F00", brassDeep: "#B07800", dim: "gray", text: "white", good: "#56B4E9", bad: "#D55E00" },
-    roles: { conductor: "#CC79A7", scorer: "#F0E442", soloist: "#D55E00", critic: "#0072B2", section: "#009E73" },
+    roles: { rewriter: "#56B4E9", conductor: "#CC79A7", scorer: "#F0E442", soloist: "#D55E00", critic: "#0072B2", section: "#009E73" },
   },
   mono: {
     color: { brass: "white", brassDeep: "white", dim: "gray", text: "white", good: "white", bad: "white" },
-    roles: { conductor: "white", scorer: "white", soloist: "white", critic: "white", section: "white" },
+    roles: { rewriter: "white", conductor: "white", scorer: "white", soloist: "white", critic: "white", section: "white" },
   },
 };
 export type ThemeName = keyof typeof THEMES;
@@ -41,6 +41,7 @@ export function applyTheme(name: ThemeName, env: NodeJS.ProcessEnv = process.env
 }
 
 export const ROLE_DUTY: Record<Role, string> = {
+  rewriter: "sharpens",
   conductor: "reads, on call",
   scorer: "scores",
   soloist: "builds",

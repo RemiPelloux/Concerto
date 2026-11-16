@@ -1,6 +1,7 @@
 import { analyzeImpact, NO_IMPACT, type Impact } from "#src/engine/impact.js";
 import { safePaths } from "#src/engine/paths.js";
-import { blendedPrice, reviewChain, routeStory } from "#src/models/router.js";
+import { atLeast, blendedPrice, reviewChain, reviewEffort, routeStory } from "#src/models/router.js";
+import { pinnedRef } from "#src/models/catalog.js";
 import type { ModelInfo } from "#src/models/types.js";
 import { MIN_MODEL_STORIES, type Calibration } from "#src/engine/calibrate.js";
 import type { StoryView } from "#src/state/types.js";
@@ -10,6 +11,7 @@ import { estimateStory } from "#src/orchestrator/estimate.js";
 import { parsePlan, type Plan, type Story } from "#src/orchestrator/plan.js";
 import { scoreStory, WEIGHTS, type FactorKey } from "#src/orchestrator/scoring.js";
 import { pathCosts } from "#src/orchestrator/paths.js";
+import { briefText } from "#src/orchestrator/briefs.js";
 import { planForSimilar, rememberPlan } from "#src/engine/similar.js";
 import { bump } from "#src/engine/ledger.js";
 import type { Segment } from "#src/engine/segments.js";
@@ -33,12 +35,15 @@ export function storyView(c: Concert, story: Story, impact: Impact): StoryView {
   const { score } = breakdown;
   const route = routeStory({ score, tags: story.tags }, c.catalog, c.config);
   const builders = preferProven(route.chain, c.calibration);
-  const chain = builders.map((m) => m.ref);
+  const chain = builders.map(pinnedRef);
   const reviewers = preferProven(reviewChain({ score, tags: story.tags }, c.catalog, c.config), c.calibration);
   const estimate = estimateStory({ points: story.points, builder: builders[0], critic: reviewers[0], calibration: c.calibration });
-  const critics = reviewers.map((m) => m.ref);
-  const { role, effort, rule } = route;
-  return { id: story.id, score, reasons: breakdown.reasons, factors: breakdown.factors, role, effort, rule, chain, model: chain[0] ?? "", critics, estimate, impact, status: "queued" };
+  const critics = reviewers.map(pinnedRef);
+  const floor = c.store.get().floor ?? "off";
+  const { role, rule } = route;
+  const effort = atLeast(route.effort, floor);
+  const reviewAt = atLeast(reviewEffort({ score, tags: story.tags }, c.config), floor);
+  return { id: story.id, score, reasons: breakdown.reasons, factors: breakdown.factors, role, effort, reviewEffort: reviewAt, rule, chain, model: chain[0] ?? "", critics, estimate, impact, status: "queued" };
 }
 
 /** The scorer's file paths are model output: normalized and kept inside the repository. */
@@ -73,6 +78,7 @@ export async function scoreRequest(c: Concert, request: string): Promise<void> {
   const segments = [
     { name: "repository snapshot", text: c.repo.text },
     { name: "plan shape", text: c.template },
+    { name: "design brief", text: briefText(c.store.get().brief) },
     { name: "request", text: `## Request\n${request}` },
   ];
   const plan = withSafeFiles(parsePlan(await planText(c, request, segments)));

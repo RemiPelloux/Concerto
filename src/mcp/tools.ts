@@ -7,7 +7,7 @@ import type { Catalog } from "#src/models/catalog.js";
 import type { Progress, Tool } from "#src/mcp/server.js";
 import { createConcert, type Concert } from "#src/orchestrator/concert.js";
 import { perform } from "#src/orchestrator/perform.js";
-import { scoreRequest } from "#src/orchestrator/score.js";
+import { planRequest } from "#src/orchestrator/rewrite.js";
 import { str, type Json } from "#src/runner/json.js";
 import type { Runner } from "#src/runner/types.js";
 import { Store } from "#src/state/store.js";
@@ -59,7 +59,7 @@ function outcome(id: string, s: State, cwd: string): string {
 async function plan(opener: Opener, args: Json, progress: Progress): Promise<string> {
   const cwd = folder(args);
   const { concert, id } = await open(opener, cwd, progress);
-  await scoreRequest(concert, str(args.request));
+  await planRequest(concert, str(args.request));
   saveSession(cwd, id, concert.store.get());
   return planView(id, concert.store.get());
 }

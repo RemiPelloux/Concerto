@@ -7,6 +7,7 @@ export const USAGE = `concerto [options] [request]
   --template <name>   plan in the shape of a saved template (see /template)
   --run               score and build without the TUI, printing the log (scripts, CI)
   --yes               build right after scoring, without the confirm step
+  --no-rewrite        score the request as typed: no rewriter, questions or design brief
   --orca              start the run in a new Orca worktree, in its own terminal tab
   --budget <usd>      stop starting stories once a run has spent this (API-equivalent)
   --gate <command>    a check every story must pass before review, e.g. "pnpm test" (repeatable)
@@ -47,6 +48,7 @@ export const OPTIONS = {
   template: { type: "string" },
   run: { type: "boolean" },
   yes: { type: "boolean" },
+  "no-rewrite": { type: "boolean" },
   orca: { type: "boolean" },
   budget: { type: "string" },
   gate: { type: "string", multiple: true },

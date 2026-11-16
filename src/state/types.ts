@@ -4,7 +4,7 @@ import type { Ledger } from "#src/engine/ledger.js";
 import type { Factor } from "#src/orchestrator/scoring.js";
 import type { Plan } from "#src/orchestrator/plan.js";
 
-export type Phase = "idle" | "scoring" | "planned" | "running" | "done" | "failed";
+export type Phase = "idle" | "scoring" | "clarifying" | "planned" | "running" | "done" | "failed";
 export type Activity = "idle" | "working" | "waiting" | "done";
 export type StoryStatus = "queued" | "building" | "checking" | "passed" | "failed" | "skipped";
 
@@ -18,6 +18,8 @@ export type StoryView = {
   factors: Factor[];
   role: Role;
   effort: Effort;
+  /** How hard the critics think about it; absent in sessions saved before 1.1 (the critic's own effort). */
+  reviewEffort?: Effort;
   /** Name of the routing rule that picked the chain. */
   rule: string;
   /** Builder models in order; `model` is the one that ran last. */
@@ -91,6 +93,12 @@ export type State = {
   error: string;
   /** The saved session this one was reopened from: sessions form a history with branches. */
   parent?: string;
+  /** The rewriter's questions, waiting for the person's answers (phase "clarifying"). */
+  questions?: string[];
+  /** The rewriter's design brief: the scorer, every builder and every critic read it. */
+  brief?: string;
+  /** The least effort any story of this request runs at, from the rewriter. */
+  floor?: Effort;
   /** What the plan would cost on each way of reaching the models, for picking one before building. */
   paths: PathCost[];
 };

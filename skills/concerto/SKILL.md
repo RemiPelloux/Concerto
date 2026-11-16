@@ -29,6 +29,9 @@ Rules:
 - Always pass `--budget` with `--run` unless the user gave a budget or said not to.
 - `--run` can take many minutes. Run it in the background if your harness allows it.
 
+`concerto --plan --explain "<request>"` prints the same plan in words: each story's score with the
+factors behind it, its builders and reviewers in order, and where its estimate comes from.
+
 ## Reading `--plan` output
 
 JSON with `summary`, `stories` and `routing`. For each routing entry, tell the user:

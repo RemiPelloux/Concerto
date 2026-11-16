@@ -30,20 +30,23 @@ async function setup(values: Values): Promise<Setup> {
   return { config, catalog, store, cwd, log };
 }
 
-async function printPlan(s: Setup, request: string): Promise<void> {
+async function printPlan(s: Setup, request: string, values: Values): Promise<void> {
   const [{ createConcert }, { scoreRequest }, { runModel }] = await Promise.all([
     import("#src/orchestrator/concert.js"), import("#src/orchestrator/score.js"), import("#src/runner/index.js"),
   ]);
-  await scoreRequest(await createConcert({ ...s, runner: runModel }), request);
+  const concert = await createConcert({ ...s, runner: runModel, template: values.template });
+  await scoreRequest(concert, request);
   const { plan, order, stories, paths } = s.store.get();
-  process.stdout.write(`${JSON.stringify({ ...plan, routing: order.map((id) => stories[id]), paths }, null, 2)}\n`);
+  if (!values.explain) return void process.stdout.write(`${JSON.stringify({ ...plan, routing: order.map((id) => stories[id]), paths }, null, 2)}\n`);
+  const { explainLines } = await import("#src/commands/explain.js");
+  explainLines(s.store.get(), concert.calibration).forEach((line) => process.stdout.write(`${line}\n`));
 }
 
-async function headless(s: Setup, request: string): Promise<void> {
+async function headless(s: Setup, request: string, values: Values): Promise<void> {
   const [{ createConcert }, { runHeadless }, { runModel }] = await Promise.all([
     import("#src/orchestrator/concert.js"), import("#src/headless.js"), import("#src/runner/index.js"),
   ]);
-  await runHeadless(await createConcert({ ...s, runner: runModel }), request, s.log);
+  await runHeadless(await createConcert({ ...s, runner: runModel, template: values.template }), request, s.log);
 }
 
 async function updatePrices(): Promise<void> {
@@ -76,8 +79,8 @@ export async function run(values: Values, request: string): Promise<void> {
   if (values["clear-cache"]) return clearCache(s.cwd, s.config);
   if (values.models) return printModels(s.catalog, s.config);
   if ((values.plan || values.run) && !request) throw new Error("--plan and --run need a request.");
-  if (values.plan) return printPlan(s, request);
-  if (values.run) return headless(s, request);
+  if (values.plan) return printPlan(s, request, values);
+  if (values.run) return headless(s, request, values);
   return interactive(values, s, { request: values.resume ? `/history ${values.resume}` : request, tour: firstLaunch });
 }
 

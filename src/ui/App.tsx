@@ -25,6 +25,7 @@ import { StoryBoard } from "#src/ui/StoryBoard.js";
 import { ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 import { useConcert } from "#src/ui/useConcert.js";
 import { useNavigation, type Navigation } from "#src/ui/useNavigation.js";
+import { usePlanKeys } from "#src/ui/usePlanKeys.js";
 
 /** Below this many rows the decorative diagram is left out, so the useful parts fit. */
 const ROOMY_ROWS = 72;
@@ -130,6 +131,7 @@ export function App(deps: AppDeps) {
   const roomy = (useStdout().stdout.rows ?? ROOMY_ROWS) >= ROOMY_ROWS;
   const nav = useNavigation(state, deps.cwd, deps.showTour);
   const { panel, submit, enter } = useConcert(deps, { active: nav.zone === "prompt" && !nav.overlay, tour: () => nav.open({ kind: "tour" }) });
+  usePlanKeys(state, nav, submit);
   const brain = useMemo(() => shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? ""), [deps.catalog, deps.config]);
   if (nav.overlay) return <OverlayScreen state={state} nav={nav} session={deps.log.id} />;
   return (

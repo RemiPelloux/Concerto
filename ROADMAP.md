@@ -109,14 +109,16 @@ on real runs, and the context packs aim at exactly that.
 
 ## Part 3 · Control during a run
 
-### Sprint 7 · 0.8 · edit the plan
+### Sprint 7 · edit the plan · shipped
 
-- **Plan editor in the TUI:** drop, merge, split or reword a story; change its model, effort or
-  reviewer; reorder dependencies.
-- **Templates:** save a plan shape ("API endpoint with tests and docs") and reuse it.
-- **Dry run:** `--plan --explain` prints why each story got its model and what it would cost.
+- **Plan editor:** `/drop`, `/merge`, `/split` (by acceptance items), `/retitle`, `/after`, and
+  `/route`, `/reviewer`, `/effort`; `d`, `m` and `s` on a story in the list. Shape edits measure
+  and score the changed stories again; dependencies always point at stories that exist.
+- **Templates:** `/template save <name>` keeps a plan's shape in the config folder;
+  `/template use <name>` or `--template <name>` has the scorer follow it.
+- **Dry run:** `--plan --explain` says why each story got its score, model and estimate.
 
-Done when: a five-story plan can be trimmed to three, rerouted and built without leaving the TUI.
+Done: a five-story plan trimmed to three, one story rerouted, and built, all from the TUI.
 
 ### Sprint 8 · 0.9 · review and accept
 

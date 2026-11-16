@@ -28,7 +28,7 @@ export function preferProven(chain: ModelInfo[], calibration: Calibration): Mode
   return chain.map((m, i) => ({ m, i })).sort((a, b) => (blendedPrice(a.m) === blendedPrice(b.m) ? rate(b.m) - rate(a.m) || a.i - b.i : a.i - b.i)).map(({ m }) => m);
 }
 
-function view(c: Concert, story: Story, impact: Impact): StoryView {
+export function storyView(c: Concert, story: Story, impact: Impact): StoryView {
   const breakdown = scoreStory(story, impact, (c.calibration.weights as Record<FactorKey, number> | null) ?? WEIGHTS);
   const { score } = breakdown;
   const route = routeStory({ score, tags: story.tags }, c.catalog, c.config);
@@ -51,15 +51,15 @@ function withSafeFiles(plan: Plan): Plan {
  * state reuses that plan: no model call, counted as a local hit.
  */
 async function planText(c: Concert, request: string, segments: Segment[]): Promise<string> {
-  const known = { repoKey: c.repo.key, ttlHours: c.config.cache.ttlHours };
-  const reused = planForSimilar(c.cwd, request, known);
+  const repoKey = c.template ? `${c.repo.key}|${c.template.split("\n")[0]}` : c.repo.key;
+  const reused = planForSimilar(c.cwd, request, { repoKey, ttlHours: c.config.cache.ttlHours });
   if (reused) {
     c.store.update((s) => ({ ledger: bump(s.ledger, "localHits") }));
     c.store.log({ role: "scorer", label: "Score", detail: "same request, worded differently: plan reused", result: "local hit" });
     return reused;
   }
   const reply = await callRole(c, { role: "scorer", segments, cacheable: true, label: "scoring the request" });
-  rememberPlan(c.cwd, request, { repoKey: c.repo.key, reply: reply.text });
+  rememberPlan(c.cwd, request, { repoKey, reply: reply.text });
   return reply.text;
 }
 
@@ -72,11 +72,12 @@ export async function scoreRequest(c: Concert, request: string): Promise<void> {
   c.store.update(() => ({ phase: "scoring", prompt: request, error: "", notes: [], checkpoints: NO_CHECKPOINTS }));
   const segments = [
     { name: "repository snapshot", text: c.repo.text },
+    { name: "plan shape", text: c.template },
     { name: "request", text: `## Request\n${request}` },
   ];
   const plan = withSafeFiles(parsePlan(await planText(c, request, segments)));
   const impacts = await analyzeImpact({ cwd: c.cwd, repoFiles: c.repo.files, cache: c.blastRadius, stories: plan.stories });
-  const views = plan.stories.map((s) => view(c, s, impacts.get(s.id) ?? NO_IMPACT));
+  const views = plan.stories.map((s) => storyView(c, s, impacts.get(s.id) ?? NO_IMPACT));
   const stories = Object.fromEntries(views.map((v) => [v.id, v]));
   const paths = pathCosts(c.catalog, { stories: plan.stories, views: stories });
   c.store.update(() => ({ phase: "planned", plan, stories, order: views.map((v) => v.id), paths }));

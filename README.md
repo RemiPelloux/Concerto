@@ -78,6 +78,8 @@ pass.`, press Enter to see the scored stories, and Enter again to build them.
 | `concerto` | Start the terminal UI |
 | `concerto "request"` | Start with a request already typed |
 | `concerto --plan "request"` | Show the scored stories as JSON, build nothing |
+| `concerto --plan --explain "request"` | Why each story got its score, model and estimate, in words |
+| `concerto --template <name> "request"` | Plan in the shape of a saved template |
 | `concerto --run "request"` | Score and build without the UI, for scripts and CI |
 | `concerto --orca "request"` | Start the run in a new Orca worktree, in its own tab |
 | `concerto --resume <id>` | Reopen a saved session and build what did not pass |
@@ -114,6 +116,7 @@ stories that passed stay passed, and Enter builds the rest.
 | ↑ ↓ | Pick an agent, a story or a file |
 | Enter on an agent | Its live output: what it reads, runs and says, as it happens |
 | Enter on a story | Why it got its score: every factor, the files, the covering tests |
+| d, m, s on a story | While a plan waits: drop it, merge the next story into it, split it |
 | Enter on a file | Its diff |
 | Esc | Close, go back to the prompt, discard a plan, or stop a build |
 
@@ -124,6 +127,9 @@ Type `/` for commands, with suggestions as you type and Tab to complete:
 
 | Command | What it does |
 |---|---|
+| `/drop`, `/merge`, `/split`, `/retitle`, `/after` | Change the waiting plan: `/merge s4 s3` folds s4 into s3 |
+| `/route`, `/reviewer`, `/effort` | Pick who builds or reviews a story, and how hard: `/route s1 claude-code/claude-opus-5-5` |
+| `/template save <name>`, `/template use <name>` | Keep a plan's shape, or plan the next requests in it |
 | `/insights` | Pass rate and cost per model in this repository, and the files that keep failing |
 | `/history`, `/history 2` | Saved sessions of this project; reopen one and build what did not pass |
 | `/onboarding` | Replay the animated tour |

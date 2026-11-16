@@ -3,6 +3,8 @@ import type { parseArgs } from "node:util";
 export const USAGE = `concerto [options] [request]
 
   --plan              score the request into user stories, print JSON and exit
+  --explain           with --plan: say why each story got its score, model and estimate, in words
+  --template <name>   plan in the shape of a saved template (see /template)
   --run               score and build without the TUI, printing the log (scripts, CI)
   --yes               build right after scoring, without the confirm step
   --orca              start the run in a new Orca worktree, in its own terminal tab
@@ -29,6 +31,8 @@ https://codex-everywhere.com/home?aff=H9TB6LJQJMEU`;
 
 export const OPTIONS = {
   plan: { type: "boolean" },
+  explain: { type: "boolean" },
+  template: { type: "string" },
   run: { type: "boolean" },
   yes: { type: "boolean" },
   orca: { type: "boolean" },

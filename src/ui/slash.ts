@@ -8,9 +8,13 @@ import type { SessionLog } from "#src/engine/session-log.js";
 import type { Store } from "#src/state/store.js";
 import type { State } from "#src/state/types.js";
 import { history } from "#src/ui/history.js";
+import type { Edit } from "#src/orchestrator/edit.js";
+import { parseEdit, PLAN_EDITS } from "#src/ui/plan-commands.js";
+import { listTemplates, saveTemplate, templateBrief } from "#src/engine/templates.js";
 
 export type Panel = { title: string; lines: string[] };
-export type Session = { config: ConcertoConfig; catalog: Catalog };
+/** `template`: the plan shape the scorer follows for the next requests, if one was picked. */
+export type Session = { config: ConcertoConfig; catalog: Catalog; template?: string };
 export type ExitReason = "quit" | "setup";
 
 export type SlashContext = {
@@ -24,6 +28,8 @@ export type SlashContext = {
   log: SessionLog;
   /** Puts a saved session on screen and gets it ready to build. */
   resume: (state: State) => void;
+  /** Changes the plan waiting for Enter; returns what was done. */
+  edit: (edit: Edit) => Promise<string>;
 };
 
 type Command = { name: string; args: string; help: string; run: (arg: string, ctx: SlashContext) => Promise<void> | void };
@@ -118,7 +124,37 @@ async function orca(arg: string, ctx: SlashContext): Promise<void> {
   ctx.show({ title: "Started in Orca", lines: [`A new worktree is building: ${arg}`] });
 }
 
+/** `/drop`, `/merge`, `/route`…: one command per plan edit. */
+const editCommands: Command[] = Object.entries(PLAN_EDITS).map(([name, spec]) => ({
+  name,
+  args: spec.usage,
+  help: spec.help,
+  run: async (arg, ctx) => {
+    const edit = parseEdit(name, arg);
+    if (typeof edit === "string") return ctx.show({ title: "Usage", lines: [edit] });
+    ctx.show({ title: "Plan", lines: [await ctx.edit(edit), "Enter builds the plan; more edits, or Esc to discard it."] });
+  },
+}));
+
+function template(arg: string, ctx: SlashContext): void {
+  const [verb, name = ""] = arg.split(/\s+/);
+  if (verb === "save" && name) {
+    const plan = ctx.store.get().plan;
+    if (!plan) return ctx.show({ title: "Template", lines: ["Score a request first: a template saves the shape of a plan."] });
+    return ctx.show({ title: "Template", lines: [`Saved ${saveTemplate(name, plan)}`] });
+  }
+  if (verb === "use" && name) {
+    templateBrief(name);
+    ctx.setSession({ ...ctx.session, template: name });
+    return ctx.show({ title: "Template", lines: [`Next requests are planned in the shape of "${name}". /template off stops it.`] });
+  }
+  if (verb === "off") return ctx.setSession({ ...ctx.session, template: undefined });
+  ctx.show({ title: "Templates", lines: [`Saved: ${listTemplates().join(", ") || "none"}`, "/template save <name> · /template use <name> · /template off"] });
+}
+
 export const COMMANDS: readonly Command[] = [
+  ...editCommands,
+  { name: "template", args: "save|use <name>", help: "save a plan's shape, or plan the next requests in one", run: template },
   { name: "help", args: "", help: "list these commands", run: (_a, ctx) => ctx.show({ title: "Commands", lines: COMMANDS.map((c) => `/${`${c.name} ${c.args}`.trim().padEnd(HELP_NAME)} ${c.help}`) }) },
   { name: "session", args: "", help: "this session's id and its log file, for debugging", run: (_a, ctx) => ctx.show({ title: "Session", lines: [`id    ${ctx.log.id}`, `log   ${ctx.log.shownPath}`, "Every phase, agent line and error with its stack is in that file. Attach it to a bug report."] }) },
   { name: "history", args: "[n|id]", help: "saved sessions; /history 2 reopens one and builds what did not pass", run: history },

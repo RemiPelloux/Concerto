@@ -19,7 +19,7 @@ const PREFER = z.string().regex(/^[\w.@-]+\*?$/, "prefer entries are provider na
 export const ROLES = ["conductor", "scorer", "soloist", "critic", "section"] as const;
 export type Role = (typeof ROLES)[number];
 
-const EffortSchema = z.enum(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
+export const EffortSchema = z.enum(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 export type Effort = z.infer<typeof EffortSchema>;
 
 const RoleConfigSchema = z.object({

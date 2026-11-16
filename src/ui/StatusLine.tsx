@@ -15,7 +15,7 @@ const HINT: Record<State["phase"], string> = {
 
 const ZONE_HINT: Record<Exclude<Zone, "prompt">, string> = {
   agents: "agents · ↑↓ select · enter live output · tab next · esc prompt",
-  stories: "stories · ↑↓ select · enter why this score · tab next · esc prompt",
+  stories: "stories · ↑↓ select · enter why this score · d drop · m merge next in · s split · tab next · esc prompt",
   changes: "changes · ↑↓ select · enter diff · tab next · esc prompt",
 };
 

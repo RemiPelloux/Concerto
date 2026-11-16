@@ -10,6 +10,7 @@ import type { State } from "#src/state/types.js";
 import { AgentList } from "#src/ui/AgentList.js";
 import { AgentTree } from "#src/ui/AgentTree.js";
 import { Banner } from "#src/ui/Banner.js";
+import { BuildCallout } from "#src/ui/BuildCallout.js";
 import { UpdateNotice } from "#src/ui/UpdateNotice.js";
 import { ChangesTable } from "#src/ui/ChangesTable.js";
 import { ConductorPanel } from "#src/ui/ConductorPanel.js";
@@ -158,6 +159,7 @@ export function App(deps: AppDeps) {
       <LogView log={state.log} />
       <PanelView panel={panel} />
       <RunSummary state={state} />
+      {state.phase === "planned" && nav.zone === "prompt" ? <BuildCallout /> : null}
       <PromptBar enabled={nav.zone === "prompt"} hint={promptHint(state)} onSubmit={submit} onTab={nav.nextZone} onEmpty={enter} />
       <StatusLine state={state} zone={nav.zone} overlay={false} session={deps.log.id} />
     </Box>

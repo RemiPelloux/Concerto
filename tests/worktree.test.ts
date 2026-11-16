@@ -84,6 +84,18 @@ describe("story worktrees", () => {
     expect(mergeLines("A\nb\nnew", "a\nb", "a\nB")).toBeNull();
   });
 
+  it("ignores line endings a checkout converted and keeps the main file's own", async () => {
+    const cwd = repo();
+    writeFileSync(join(cwd, "app.txt"), `${LINES.join("\r\n")}\r\n`);
+    const w = await openWorktree(cwd, "run-1/crlf", await snapshot(cwd));
+    const theirs = [...LINES];
+    theirs[5] = "story changed line 5";
+    writeFileSync(join(w.dir, "app.txt"), `${theirs.join("\n")}\n`);
+    expect((await mergeBack(cwd, w, await changesIn(w))).merged).toEqual(["app.txt"]);
+    expect(readFileSync(join(cwd, "app.txt"), "utf8")).toBe(`${theirs.join("\r\n")}\r\n`);
+    await closeWorktree(cwd, w);
+  });
+
   it("deletes a file only if nobody changed it meanwhile", async () => {
     const cwd = repo();
     const w = await openWorktree(cwd, "run-1/d", await snapshot(cwd));

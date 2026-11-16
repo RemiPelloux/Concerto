@@ -13,6 +13,8 @@ const ROOT = [".concerto", "worktrees"];
 /** Ignored folders a build needs but git does not carry: linked into every worktree. */
 const DEPENDENCY_DIRS = new Set(["node_modules", ".venv", "venv", "vendor", ".bundle", ".yarn", ".pnpm-store"]);
 const ENV_FILE = /^\.env(\..+)?$/;
+/** Windows refuses to delete a folder while a process or the virus scanner still holds it: retry. */
+const REMOVE = { recursive: true, force: true, maxRetries: 5, retryDelay: 200 } as const;
 const SNAPSHOT_IDENTITY = { GIT_AUTHOR_NAME: "Concerto", GIT_AUTHOR_EMAIL: "concerto@localhost", GIT_COMMITTER_NAME: "Concerto", GIT_COMMITTER_EMAIL: "concerto@localhost" };
 
 export type Change = { status: "A" | "M" | "D"; file: string };
@@ -41,7 +43,7 @@ export async function snapshot(cwd: string): Promise<string> {
     const tree = (await git(cwd, ["write-tree"], env)).trim();
     return (await git(cwd, ["commit-tree", tree, ...(head ? ["-p", head] : []), "-m", "concerto snapshot"], env)).trim();
   } finally {
-    rmSync(scratch, { recursive: true, force: true });
+    rmSync(scratch, REMOVE);
   }
 }
 
@@ -67,7 +69,7 @@ function link(main: string, dir: string, path: string): void {
 /** A detached worktree of `base` for one story, with the main folder's dependencies linked in. */
 export async function openWorktree(main: string, name: string, base: string): Promise<Worktree> {
   const dir = join(worktreeRoot(main), name);
-  rmSync(dir, { recursive: true, force: true });
+  rmSync(dir, REMOVE);
   mkdirSync(dirname(dir), { recursive: true });
   await git(main, ["worktree", "add", "--detach", "--quiet", dir, base]);
   const links = await needed(main);
@@ -105,7 +107,7 @@ export async function changesIn(w: Worktree): Promise<Change[]> {
 /** Removes the worktree: links first, so nothing they point at is touched, then git's record. */
 export async function closeWorktree(main: string, w: Pick<Worktree, "dir" | "links">): Promise<void> {
   w.links.forEach((path) => rmSync(join(w.dir, path), { force: true }));
-  await git(main, ["worktree", "remove", "--force", w.dir]).catch(() => rmSync(w.dir, { recursive: true, force: true }));
+  await git(main, ["worktree", "remove", "--force", w.dir]).catch(() => rmSync(w.dir, REMOVE));
   rmSync(`${w.dir}.links.json`, { force: true });
   await git(main, ["worktree", "prune"]).catch(() => "");
 }
@@ -122,7 +124,7 @@ export function claimRun(main: string, runId: string): void {
 
 /** A finished run gives up its folder and its claim; failed stories' patches stay. */
 export function releaseRun(main: string, runId: string): void {
-  [join(worktreeRoot(main), runId), join(worktreeRoot(main), `${runId}.pid`)].forEach((p) => rmSync(p, { recursive: true, force: true }));
+  [join(worktreeRoot(main), runId), join(worktreeRoot(main), `${runId}.pid`)].forEach((p) => rmSync(p, REMOVE));
 }
 
 function alive(main: string, run: string): boolean {
@@ -162,6 +164,6 @@ export async function clearLeftovers(main: string): Promise<string[]> {
     const saved = await retire(main, dir, "leftover");
     if (saved) patches.push(saved);
   }
-  runs.forEach((r) => [join(root, r.name), join(root, `${r.name}.pid`)].forEach((p) => rmSync(p, { recursive: true, force: true })));
+  runs.forEach((r) => [join(root, r.name), join(root, `${r.name}.pid`)].forEach((p) => rmSync(p, REMOVE)));
   return patches;
 }

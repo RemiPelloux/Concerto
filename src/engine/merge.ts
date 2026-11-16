@@ -66,23 +66,43 @@ function lineMerged(ours: Buffer, base: Buffer, theirs: Buffer): Buffer | null {
   return text === null ? null : Buffer.from(text, "utf8");
 }
 
-async function plan(main: string, w: Worktree, change: Change): Promise<Planned> {
-  const ours = read(join(main, change.file));
-  const theirs = read(join(w.dir, change.file));
+const CRLF = Buffer.from("\r\n");
+
+/** Text with LF endings, so endings a checkout converted (Windows, autocrlf) never read as changes. */
+function lf(bytes: Buffer | null): Buffer | null {
+  return bytes && !bytes.includes(NUL) ? Buffer.from(bytes.toString("utf8").replace(/\r\n/g, "\n"), "utf8") : bytes;
+}
+
+/** Back to the main file's own line endings, so a merge never rewrites them. */
+function inStyle(bytes: Buffer, crlf: boolean): Buffer {
+  return crlf && !bytes.includes(NUL) ? Buffer.from(bytes.toString("utf8").replace(/\r?\n/g, "\r\n"), "utf8") : bytes;
+}
+
+type Versions = { ours: Buffer | null; theirs: Buffer | null; base: Buffer | null; raw: Buffer | null; crlf: boolean };
+
+async function versions(main: string, w: Worktree, change: Change): Promise<Versions> {
+  const mine = read(join(main, change.file));
+  const raw = read(join(w.dir, change.file));
   const base = change.status === "A" ? null : await baseBytes(w, change.file);
+  return { ours: lf(mine), theirs: lf(raw), base: lf(base), raw, crlf: Boolean(mine?.includes(CRLF)) };
+}
+
+async function plan(main: string, w: Worktree, change: Change): Promise<Planned> {
+  const { ours, theirs, base, raw, crlf } = await versions(main, w, change);
   const conflict = (why: string): Planned => ({ step: null, conflict: `${change.file}: ${why}` });
   if (change.status === "D") {
     if (!ours) return { step: null, conflict: null };
     return base && ours.equals(base) ? { step: { file: change.file, remove: true }, conflict: null } : conflict("changed here, deleted by the story");
   }
-  if (!theirs) return conflict("missing in the story's worktree");
-  const write = { file: change.file, write: { bytes: theirs, mode: statSync(join(w.dir, change.file)).mode } };
-  if (!ours) return change.status === "A" ? { step: write, conflict: null } : conflict("deleted here, changed by the story");
+  if (!theirs || !raw) return conflict("missing in the story's worktree");
+  const mode = statSync(join(w.dir, change.file)).mode;
+  const write = (bytes: Buffer): Planned => ({ step: { file: change.file, write: { bytes: inStyle(bytes, crlf), mode } }, conflict: null });
+  if (!ours) return change.status === "A" ? { step: { file: change.file, write: { bytes: raw, mode } }, conflict: null } : conflict("deleted here, changed by the story");
   if (ours.equals(theirs)) return { step: null, conflict: null };
-  if (!base || ours.equals(base)) return base ? { step: write, conflict: null } : conflict("added here and by the story");
+  if (!base || ours.equals(base)) return base ? write(theirs) : conflict("added here and by the story");
   const merged = await threeWay(ours, base, theirs);
   const text = merged.text ?? lineMerged(ours, base, theirs);
-  return text ? { step: { ...write, write: { ...write.write, bytes: text } }, conflict: null } : conflict(merged.hunk);
+  return text ? write(text) : conflict(merged.hunk);
 }
 
 function apply(main: string, step: Step): void {

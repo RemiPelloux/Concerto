@@ -73,7 +73,7 @@ describe("reviewing a run's work", () => {
     const done = await rejectStory(cwd, { runId: c.runId, storyId: "s2" });
     expect(done.reverted).toEqual(["s2.txt"]);
     expect(read(cwd, "s2.txt")).toBe(`${LINES}\n`);
-    git(cwd, "apply", done.saved);
+    git(cwd, "-c", "core.autocrlf=false", "apply", done.saved);
     expect(read(cwd, "s2.txt").split("\n")[1]).toBe("s2 top");
     await expect(rejectStory(cwd, { runId: c.runId, storyId: "s2" })).rejects.toThrow(/Nothing merged for "s2"/);
   });

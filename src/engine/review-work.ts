@@ -105,7 +105,8 @@ export async function rejectHunk(cwd: string, at: { runId: string; storyId: stri
   if (!hunk) throw new Error(`No hunk ${at.index} in "${at.storyId}". /hunks ${at.storyId} lists them.`);
   const patch = `${hunk.header}${hunk.text}`;
   await new Promise<void>((resolve, reject) => {
-    const child = execFile("git", ["apply", "-R", "--whitespace=nowarn", "-"], { cwd, env: gitEnv() }, (error, _out, stderr) => (error ? reject(new Error(`The hunk no longer applies: ${stderr.trim()}`)) : resolve()));
+    // core.autocrlf off: on Windows git would otherwise rewrite the whole file's line endings.
+    const child = execFile("git", ["-c", "core.autocrlf=false", "apply", "-R", "--whitespace=nowarn", "-"], { cwd, env: gitEnv() }, (error, _out, stderr) => (error ? reject(new Error(`The hunk no longer applies: ${stderr.trim()}`)) : resolve()));
     child.stdin?.end(patch);
   });
   return { file: hunk.file, saved: stash(cwd, `${at.runId}-${at.storyId}-hunk-${at.index}`, patch) };

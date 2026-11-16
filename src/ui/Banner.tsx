@@ -12,7 +12,7 @@ const GLYPHS: Record<string, string[]> = {
 };
 const WORD = "CONCERTO";
 const ROWS = 5;
-export const CREDIT = "built by tkmremi";
+export const CREDIT = "built by github.com/RemiPelloux";
 /** How long the welcome stays on screen after launch; the logo stays. */
 export const WELCOME_MS = 3000;
 

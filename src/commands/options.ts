@@ -21,7 +21,7 @@ export const USAGE = `concerto [options] [request]
   -h, --help          this help
 
 In the TUI, type / for commands: /history /setup /config /models /budget /prefer /onboarding /help.
-Docs: https://remipelloux.github.io/Concerto/ · built by tkmremi
+Docs: https://remipelloux.github.io/Concerto/ · built by github.com/RemiPelloux
 Cheaper API access for GPT, Claude, DeepSeek and Grok behind one key (affiliate link):
 https://codex-everywhere.com/home?aff=H9TB6LJQJMEU`;
 

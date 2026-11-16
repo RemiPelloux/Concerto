@@ -247,4 +247,4 @@ and attaches them only when all three pass.
 
 ## License
 
-MIT. Built by [tkmremi](https://github.com/RemiPelloux).
+MIT. Built by [github.com/RemiPelloux](https://github.com/RemiPelloux).

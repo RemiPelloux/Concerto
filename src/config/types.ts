@@ -80,6 +80,30 @@ const CustomRoleSchema = z.object({
 });
 export type CustomRole = z.infer<typeof CustomRoleSchema>;
 
+/**
+ * What a team agrees on, in the project config: files no agent may change, models nobody may use,
+ * a ceiling on any run's spend, and reviews that must run on sensitive paths.
+ */
+const PolicySchema = z.object({
+  /** Globs: a story that changes a file here is sent back and never merged. */
+  protectedPaths: z.array(z.string()).default([]),
+  /** Refs, or prefixes ending in `*` (`ollama/*`): removed from every chain. */
+  blockedModels: z.array(z.string()).default([]),
+  /** API-equivalent dollars: caps budgetUsd and --budget. */
+  maxRunUsd: z.number().positive().optional(),
+  /** The custom review role that must run on every story touching these paths. */
+  requireReview: z.array(z.object({ paths: z.array(z.string()).min(1), role: z.string() })).default([]),
+});
+export type Policy = z.infer<typeof PolicySchema>;
+
+/** Where a run's end, or a plan waiting for you, is announced. `${VAR}` in a URL reads the environment. */
+const NotifySchema = z.object({
+  kind: z.enum(["slack", "discord", "webhook"]),
+  url: z.string().min(1),
+  on: z.array(z.enum(["done", "failed", "plan"])).default(["done", "failed"]),
+});
+export type Notify = z.infer<typeof NotifySchema>;
+
 export const ConfigSchema = z.object({
   models: z.record(REF, z.object({ tier: TIER, costFactor: z.number().min(0).optional() })),
   /** Providers tried first in every chain, e.g. ["ce-*"] to send everything through a proxy. */
@@ -104,6 +128,8 @@ export const ConfigSchema = z.object({
   routes: z.array(RouteSchema).default([]),
   reviews: z.array(ReviewSchema).default([]),
   customRoles: z.array(CustomRoleSchema).default([]),
+  policy: PolicySchema.default({ protectedPaths: [], blockedModels: [], requireReview: [] }),
+  notify: z.array(NotifySchema).default([]),
   skills: z.array(SkillRuleSchema),
   swarm: z.object({ maxParallel: z.number().int().min(1) }),
   /** "worktree": every story builds in its own git worktree and is merged back when it passes. */

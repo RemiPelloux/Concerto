@@ -211,16 +211,16 @@ budget, with the tests green. Tested so far: commits, the branch, the push and t
 against a local remote, and the Action's script with stand-ins for `concerto` and `gh`. The live
 test needs a test repository with an agent token as a secret.
 
-### Sprint 14 · 0.15 · shared configuration and policy
+### Sprint 14 · shared configuration and policy · shipped
 
 - **Project config** merged over the personal one, so a team agrees on routes, budgets and
-  reviewers.
-- **Policy:** paths no agent may touch, models not allowed, maximum spend per run, required
-  reviewers for sensitive paths.
-- **Notifications** to Slack, Discord or a webhook when a run ends or needs a decision.
+  reviewers while each person keeps their models.
+- **Policy:** paths no agent may touch, models not allowed, a ceiling on any run's spend, and
+  custom reviews required on sensitive paths.
+- **Notifications** to Slack, Discord or a webhook when a run ends or a plan waits.
 
-Done when: a policy that forbids edits under `infra/` stops a story that tries, with a clear
-message, in both the TUI and CI.
+Done: a policy that forbids `infra/` sends back a builder that edits `infra/main.tf`, never lets
+the story merge, and says so in the log of a `--run --json` run and on the TUI's screen.
 
 ### Sprint 15 · 0.16 · observability
 

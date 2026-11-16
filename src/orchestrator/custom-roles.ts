@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { CustomRole } from "#src/config/types.js";
+import { glob, matching } from "#src/engine/glob.js";
 import { impactBrief } from "#src/engine/impact.js";
 import { tierChain } from "#src/models/router.js";
 import { headline, readTag, storyBrief, storySegments } from "#src/orchestrator/briefs.js";
@@ -15,18 +16,14 @@ const MAX_PATH = 260;
 type Verdict = { pass: boolean; text: string; model: string };
 
 /** `src/auth/**`, `**\/*.sql`, `migrations/*` as a regular expression on repository paths. */
-const WILDCARDS: Record<string, string> = { "**/": "(?:.*/)?", "**": ".*", "*": "[^/]*", "?": "[^/]" };
-
-function glob(pattern: string): RegExp {
-  const body = pattern.split(/(\*\*\/|\*\*|\*|\?)/).map((part) => WILDCARDS[part] ?? part.replace(/[.+^${}()|[\]\\]/g, "\\$&")).join("");
-  return new RegExp(`^${body}$`);
-}
-
-/** The custom roles of one kind that apply to a story: by tag or path, at or above their score. */
+/** The custom roles of one kind that apply to a story: required by the policy for its paths, or by tag or path at or above their score. */
 export function rolesFor(c: Concert, story: Story, kind: CustomRole["kind"]): CustomRole[] {
   const score = c.store.get().stories[story.id]?.score ?? 0;
+  const required = new Set(c.config.policy.requireReview.filter((r) => matching(story.files, r.paths).length > 0).map((r) => r.role));
   return c.config.customRoles.filter((r) => {
-    if (r.kind !== kind || score < r.minScore) return false;
+    if (r.kind !== kind) return false;
+    if (required.has(r.name)) return true;
+    if (score < r.minScore) return false;
     if (r.tags.length === 0 && r.paths.length === 0) return true;
     return r.tags.some((t) => story.tags.includes(t)) || r.paths.some((p) => story.files.some((f) => glob(p).test(f)));
   });

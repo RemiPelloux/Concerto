@@ -41,6 +41,8 @@ export function testConfig(): ConcertoConfig {
     routes: [],
     reviews: [],
     customRoles: [],
+    policy: { protectedPaths: [], blockedModels: [], requireReview: [] },
+    notify: [],
     prefer: [],
     timeoutMinutes: 1,
     skills: [],

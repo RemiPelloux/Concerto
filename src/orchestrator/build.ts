@@ -10,6 +10,7 @@ import { callRole } from "#src/orchestrator/call.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 import { consult } from "#src/orchestrator/consult.js";
 import { gate } from "#src/orchestrator/gate.js";
+import { policyBrief, policyGate } from "#src/orchestrator/policy.js";
 import { closeWorkspace, openWorkspace } from "#src/orchestrator/isolate.js";
 import type { Story } from "#src/orchestrator/plan.js";
 import { judge, mutationProbe, type Job } from "#src/orchestrator/review.js";
@@ -32,6 +33,7 @@ async function play(c: Concert, { story, cwd }: Job, feedback: string): Promise<
   const segments = [
     ...storySegments(c.store.get(), { repoMap: c.repo.text, storyId: story.id, snapshot: true }),
     { name: "story", text: storyBrief(story) },
+    { name: "policy", text: policyBrief(c) },
     { name: "blast radius", text: impactBrief(view.impact) },
     { name: "context pack", text: contextPack(c.cwd, view.impact.files) },
     { name: "feedback", text: feedback ? `## Fix this before anything else\n${feedback}` : "" },
@@ -51,9 +53,9 @@ async function finish(c: Concert, story: Story, pass: boolean): Promise<boolean>
   return pass;
 }
 
-/** Concerto's own checks, then a mutation probe: "" when both are satisfied, else the feedback. */
+/** The policy, Concerto's own checks, then a mutation probe: "" when all are satisfied, else the feedback. */
 async function verify(c: Concert, job: Job): Promise<string> {
-  return (await gate(c, job)) || (await mutationProbe(c, job));
+  return (await policyGate(c, job)) || (await gate(c, job)) || (await mutationProbe(c, job));
 }
 
 /**

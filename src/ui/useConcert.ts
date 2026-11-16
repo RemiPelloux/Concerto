@@ -10,6 +10,7 @@ import { unfinished } from "#src/ui/RunSummary.js";
 import type { AppDeps } from "#src/ui/App.js";
 import { submitPrompt } from "#src/ui/prompt-actions.js";
 import type { Edit } from "#src/orchestrator/edit.js";
+import { announcePlan } from "#src/orchestrator/announce.js";
 import type { CallRecord } from "#src/engine/session-log.js";
 import { applyEdit } from "#src/orchestrator/replan.js";
 import { runSlash, type ExitReason, type Panel, type Session } from "#src/ui/slash.js";
@@ -66,6 +67,7 @@ function useRequest(deps: AppDeps, session: Session, run: RefObject<Run | null>)
         current.concert = concert;
         await scoreRequest(concert, text);
         if (deps.autoPerform) await perform(concert);
+        else await announcePlan(concert);
       })
       .catch(fail);
   }, [deps, session, fail, run]);

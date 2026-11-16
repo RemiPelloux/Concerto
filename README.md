@@ -301,9 +301,30 @@ last attempt.
 ## Configuration
 
 Your config is `~/.config/concerto/config.json`, written by the first launch. A
-`concerto.config.json` in a project overrides it. Edit the routes, model chains, tiers, budget or
-skills there. [examples/concerto.config.full.json](examples/concerto.config.full.json) shows a full
-one with 37 working models.
+`concerto.config.json` in a project is merged over it: what the team commits there (routes,
+reviewers, budgets, policy) wins, objects merge key by key, lists are replaced, and each person keeps
+their own models and logins. [examples/concerto.config.full.json](examples/concerto.config.full.json)
+shows a full one with 37 working models.
+
+A team's policy and notifications go in the project config:
+
+```json
+"policy": {
+  "protectedPaths": ["infra/", "**/*.pem"],
+  "blockedModels": ["ollama/*"],
+  "maxRunUsd": 20,
+  "requireReview": [{ "paths": ["src/auth/**"], "role": "security" }]
+},
+"notify": [
+  { "kind": "slack", "url": "${SLACK_WEBHOOK}", "on": ["done", "failed", "plan"] }
+]
+```
+
+A story that changes a protected path goes back to its builder and can never pass or merge; the
+log says which file and which rule. Blocked models leave every chain. `maxRunUsd` caps `budgetUsd`
+and `--budget`. A required review runs the named custom review role on every story touching those
+paths. Notifications go to Slack, Discord or any webhook when a run ends or a plan waits for you;
+`${VAR}` in a URL reads the environment, so the secret stays out of the repository.
 
 Model names look like `claude-code/claude-opus-5-5` (Claude subscription), `codex/gpt-6.1-sol`
 (ChatGPT subscription), `codex@ce-gpt/gpt-6.1-sol` (a Codex profile, such as a proxy), or

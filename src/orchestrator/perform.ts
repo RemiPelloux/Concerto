@@ -1,5 +1,6 @@
 import { relative } from "node:path";
 import { writeReport } from "#src/engine/report.js";
+import { announceEnd } from "#src/orchestrator/announce.js";
 import { saveRun } from "#src/engine/stats.js";
 import { outcomesOf, recordOutcomes } from "#src/engine/outcomes.js";
 import { releaseRun } from "#src/engine/worktree.js";
@@ -61,5 +62,6 @@ export async function perform(c: Concert): Promise<void> {
     recordOutcomes(c.cwd, outcomesOf(c.store.get(), c.runId));
     const report = writeReport(c.store.get(), { cwd: c.cwd, runId: c.runId });
     c.store.log({ role: "conductor", label: "Report", detail: relative(c.cwd, report), result: "written" });
+    await announceEnd(c, report);
   }
 }

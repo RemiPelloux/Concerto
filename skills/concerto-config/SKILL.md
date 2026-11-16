@@ -30,6 +30,10 @@ a repository file), "tags", "paths" (globs), "minScore", "models", "minTier", "t
 A review runs after the critic passes and can send the story back; a build edits a passed story
 before its merge.
 
+A project's `concerto.config.json` is merged over the personal config. Team rules go there:
+`policy` (`protectedPaths`, `blockedModels`, `maxRunUsd`, `requireReview: [{ paths, role }]`) and
+`notify` (`[{ kind: slack | discord | webhook, url, on: [done, failed, plan] }]`).
+
 ## What to change
 
 - **Who builds what:** `routes`, tried in order. A route matches on `tags` (any of),

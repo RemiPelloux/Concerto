@@ -1,6 +1,6 @@
 import { clearCache, printModels, printStats } from "#src/commands/info.js";
 import type { Values } from "#src/commands/options.js";
-import { configPath, isFirstLaunch, loadConfig } from "#src/config/load.js";
+import { configPath, isFirstLaunch, loadConfig, withPolicy } from "#src/config/load.js";
 import { keepSessions } from "#src/engine/history.js";
 import { SessionLog } from "#src/engine/session-log.js";
 import { ROLES, type ConcertoConfig } from "#src/config/types.js";
@@ -19,7 +19,7 @@ function overrides(values: Values): Partial<ConcertoConfig> {
 
 async function setup(values: Values): Promise<Setup> {
   const cwd = process.cwd();
-  const config = { ...loadConfig(cwd), ...overrides(values) };
+  const config = withPolicy({ ...loadConfig(cwd), ...overrides(values) });
   const catalog = await loadCatalog(config);
   const log = SessionLog.current ?? new SessionLog(cwd);
   const store = new Store((kind, text) => log.write(kind, text));

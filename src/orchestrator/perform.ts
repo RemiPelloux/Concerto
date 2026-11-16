@@ -1,6 +1,8 @@
 import { relative } from "node:path";
 import { writeReport } from "#src/engine/report.js";
 import { announceEnd } from "#src/orchestrator/announce.js";
+import { sendTrace, traceRun } from "#src/orchestrator/trace.js";
+import { appendRun, recordOf } from "#src/engine/run-log.js";
 import { saveRun } from "#src/engine/stats.js";
 import { outcomesOf, recordOutcomes } from "#src/engine/outcomes.js";
 import { releaseRun } from "#src/engine/worktree.js";
@@ -49,6 +51,7 @@ export async function perform(c: Concert): Promise<void> {
   const plan = c.store.get().plan;
   if (!plan) throw new Error("Nothing to perform: score a request first.");
   c.store.update(() => ({ phase: "running" }));
+  traceRun(c);
   try {
     if (!(await lockPlan(c))) return;
     const results: boolean[] = [];
@@ -60,8 +63,10 @@ export async function perform(c: Concert): Promise<void> {
     if (c.isolated) releaseRun(c.cwd, c.runId);
     saveRun(c.cwd, c.store.get().ledger);
     recordOutcomes(c.cwd, outcomesOf(c.store.get(), c.runId));
+    appendRun(recordOf(c.store.get(), { repo: c.cwd, runId: c.runId }));
     const report = writeReport(c.store.get(), { cwd: c.cwd, runId: c.runId });
     c.store.log({ role: "conductor", label: "Report", detail: relative(c.cwd, report), result: "written" });
     await announceEnd(c, report);
+    await sendTrace(c);
   }
 }

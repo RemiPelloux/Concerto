@@ -11,6 +11,7 @@ import type { Concert } from "#src/orchestrator/concert.js";
 import { consult } from "#src/orchestrator/consult.js";
 import { gate } from "#src/orchestrator/gate.js";
 import { policyBrief, policyGate } from "#src/orchestrator/policy.js";
+import { traceStory } from "#src/orchestrator/trace.js";
 import { closeWorkspace, openWorkspace } from "#src/orchestrator/isolate.js";
 import type { Story } from "#src/orchestrator/plan.js";
 import { judge, mutationProbe, type Job } from "#src/orchestrator/review.js";
@@ -97,6 +98,9 @@ function rebuildFeedback(conflict: string): string {
  */
 export async function buildStory(c: Concert, story: Story, opening = ""): Promise<boolean> {
   await whilePaused(c);
+  const started = Date.now();
+  const endSpan = traceStory(c, story);
+  const done = (pass: boolean) => (c.store.story(story.id, { ms: Date.now() - started }), endSpan(pass), pass);
   let feedback = opening;
   for (let round = 0; ; round += 1) {
     const ws = await openWorkspace(c, story.id);
@@ -107,8 +111,8 @@ export async function buildStory(c: Concert, story: Story, opening = ""): Promis
     });
     if (result === true) await customBuilds(c, { story, cwd: ws.cwd, round });
     const ending = await closeWorkspace(c, ws, { pass: result === true, rebuild });
-    if (result === null) return false;
-    if (!ending.conflict || !rebuild) return finish(c, story, ending.merged);
+    if (result === null) return done(false);
+    if (!ending.conflict || !rebuild) return done(await finish(c, story, ending.merged));
     feedback = rebuildFeedback(ending.conflict);
   }
 }

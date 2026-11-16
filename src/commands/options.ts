@@ -13,6 +13,8 @@ export const USAGE = `concerto [options] [request]
   --resume <id>       reopen a saved session (see /history) and build what did not pass
   --share <id>        write a saved session as one HTML file, secrets redacted
   --mcp               serve Concerto to other agents as MCP tools on stdio
+  --costs             what runs cost, by week, repository and model (--since <days>, --csv)
+  --dashboard         write a page of every run: costs, pass rates, slowest stories
   --json              with --run: one JSON event per line (session, log, story, done, pr)
   --commit            with --run: commit each merged story on its own (clean tree needed)
   --pr                with --run: a new branch, a commit per story, then a pull request (gh)
@@ -45,6 +47,10 @@ export const OPTIONS = {
   resume: { type: "string" },
   share: { type: "string" },
   mcp: { type: "boolean" },
+  costs: { type: "boolean" },
+  csv: { type: "boolean" },
+  since: { type: "string" },
+  dashboard: { type: "boolean" },
   json: { type: "boolean" },
   commit: { type: "boolean" },
   pr: { type: "boolean" },

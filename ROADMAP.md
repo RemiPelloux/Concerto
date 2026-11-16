@@ -222,13 +222,16 @@ test needs a test repository with an agent token as a secret.
 Done: a policy that forbids `infra/` sends back a builder that edits `infra/main.tf`, never lets
 the story merge, and says so in the log of a `--run --json` run and on the TUI's screen.
 
-### Sprint 15 · 0.16 · observability
+### Sprint 15 · observability · shipped
 
-- **OpenTelemetry traces** for every run, story and model call.
-- **A local dashboard** (`concerto --dashboard`): runs, costs, pass rates, slowest stories.
-- **Cost reports** per repository, per week, per model, exportable as CSV.
+- **OpenTelemetry traces** for every run, story and model call, over OTLP/HTTP, with the GenAI
+  semantic-convention attributes, when an OTLP endpoint is set.
+- **A local dashboard** (`concerto --dashboard`): costs per week, pass rates per repository, cost
+  per model, slowest stories.
+- **Cost reports** per week, repository and model (`concerto --costs`), as CSV with `--csv`.
 
-Done when: a week of runs can be broken down by model and repository without reading a log.
+Done: runs in two repositories over a week break down by model and repository in the table, the CSV
+and the dashboard, read from the run log alone; a run's trace reaches a collector as one tree.
 
 ---
 

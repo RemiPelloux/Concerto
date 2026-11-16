@@ -34,6 +34,8 @@ export type StoryView = {
   finding?: string;
   /** API-equivalent dollars this story's builds and reviews cost so far. */
   spent?: number;
+  /** Milliseconds from the first build to the story's end, for the slowest-stories view. */
+  ms?: number;
   /** Builds this story took, rebuilds included. */
   attempts?: number;
   /** Files this story's merge wrote into the main folder (isolated runs). */

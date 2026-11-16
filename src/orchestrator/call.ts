@@ -9,6 +9,7 @@ import { blocked, pauseOnLimit, recordSpend } from "#src/models/quota.js";
 import { AgentFeed } from "#src/orchestrator/feed.js";
 import { SessionLog } from "#src/engine/session-log.js";
 import type { Concert } from "#src/orchestrator/concert.js";
+import { traced } from "#src/orchestrator/trace.js";
 
 const MS_PER_MINUTE = 60_000;
 
@@ -142,7 +143,7 @@ export async function callRole(c: Concert, call: Call): Promise<CallResult> {
   let lastError: unknown = new Error(`No model to run the ${call.role}.`);
   for (const [i, model] of chain.entries()) {
     try {
-      return { ...(await attempt(c, call, model)), model };
+      return { ...(await traced(c, { role: call.role, storyId: call.storyId, model }, () => attempt(c, call, model))), model };
     } catch (error) {
       if (c.signal.aborted) throw error;
       lastError = error;

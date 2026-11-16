@@ -235,6 +235,20 @@ budget caps it, and the issue gets a link to the pull request. On GitLab,
 [examples/gitlab/concerto.gitlab-ci.yml](examples/gitlab/concerto.gitlab-ci.yml) builds the
 `CONCERTO_REQUEST` of a pipeline and pushes a merge request.
 
+## Costs, dashboard and traces
+
+Every finished run is recorded, from every repository, in `~/.config/concerto/runs.jsonl`.
+
+- `concerto --costs` breaks it down by ISO week, repository and model: calls, tokens and cost.
+  `--since 7` keeps the last seven days; `--csv` prints it as CSV for a spreadsheet.
+- `concerto --dashboard` writes one page of every run: cost per week, pass rate per repository,
+  cost per model and the slowest stories. It needs no server and no network.
+- With `OTEL_EXPORTER_OTLP_ENDPOINT` set (or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, and
+  `OTEL_EXPORTER_OTLP_HEADERS` for a key), each run is sent as an OpenTelemetry trace: the run, a
+  span per story, and a client span per model call with the GenAI attributes
+  (`gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`) and its cost.
+  Any OTLP collector works: Jaeger, Grafana Tempo, Honeycomb, Datadog.
+
 ## Neovim
 
 [`editors/nvim`](editors/nvim) adds `:Concerto` and `:ConcertoPlan`. Over a visual selection,

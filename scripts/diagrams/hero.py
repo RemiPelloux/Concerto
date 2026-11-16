@@ -156,15 +156,15 @@ def build():
     paths += "\n  " + path("v", "M1010,247 L1050,247", GREEN, "v")
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" role="img" aria-labelledby="t d">
   <title id="t">Concerto</title>
-  <desc id="d">A request is dispatched as stories to builder models, checked by a critic, then verified and shipped. The conductor wakes at three checkpoints. Using the conductor model only as the brain costs a fraction of running it alone.</desc>
+  <desc id="d">A request is split into scored stories, each built by the model that fits it in its own git worktree, checked by the project's tests and a critic from another vendor, then merged. The conductor wakes at three checkpoints. Using the conductor model only as the brain costs a fraction of running it alone.</desc>
   <style>{STYLE}</style>
   <rect width="1200" height="560" rx="14" fill="{BG}"/>
 
   <g aria-hidden="true">
     {wordmark(40, 34, 11, 14)}
   </g>
-  <text x="640" y="58" fill="{TEXT}" font-size="17">A terminal orchestrator for coding agents.</text>
-  <text x="640" y="84" fill="{DIM}" font-size="13">One request, scored stories, the right model for each.</text>
+  <text x="640" y="58" fill="{TEXT}" font-size="17">One request in. Tested, reviewed, merged work out.</text>
+  <text x="640" y="84" fill="{DIM}" font-size="13">Nine coding agents, each story on the model that fits it.</text>
 
   <!-- conductor -->
   <rect x="40" y="140" width="300" height="384" rx="10" fill="{PANEL}" stroke="{PURPLE}" stroke-width="1.5"/>
@@ -184,17 +184,17 @@ def build():
   <text x="390" y="132" fill="{DIM}" font-size="12">wave 1 · 5 stories</text>
   {paths}
   {node(390, 222, 150, 50, BRASS, "Task", "dispatch stories")}
-  {node(600, 150, 220, 50, CORAL, "● opus-5.5 · builds", "score 76 · auth handlers")}
-  {node(600, 222, 220, 50, CORAL, "● gpt-6.1-sol · builds", "score 24 · json helpers", "flash")}
-  {node(600, 294, 220, 50, GREEN, "● section · swarms", "3 small stories")}
+  {node(600, 150, 220, 50, CORAL, "● gpt-6.1-sol · worktree", "score 62 · login rate limit")}
+  {node(600, 222, 220, 50, CORAL, "● haiku-5.5 · worktree", "score 36 · quota on the account", "flash")}
+  {node(600, 294, 220, 50, GREEN, "● qwen3 · swarms", "3 small stories, local")}
   <rect class="cell" x="770" y="304" width="10" height="10" rx="2"/>
   <rect class="cell s2" x="784" y="304" width="10" height="10" rx="2"/>
   <rect class="cell s3" x="798" y="304" width="10" height="10" rx="2"/>
-  {node(880, 222, 130, 50, BLUE, "● critic", "sonnet-5.5")}
+  {node(880, 222, 130, 50, BLUE, "● critic", "after the tests")}
   <text class="check" x="992" y="243" fill="{GREEN}" font-size="14" font-weight="700" text-anchor="end">✓</text>
   <g>
     <rect class="verify" x="1050" y="222" width="120" height="50" rx="8" stroke-width="1.5"/>
-    <text x="1110" y="252" fill="{TEXT}" font-size="13" font-weight="700" text-anchor="middle">verify · ship</text>
+    <text x="1110" y="252" fill="{TEXT}" font-size="13" font-weight="700" text-anchor="middle">merged</text>
   </g>
 
   <!-- cost -->

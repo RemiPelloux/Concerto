@@ -1,0 +1,8 @@
+{
+  "claude-code/claude-opus-5-5": { "tier": 4, "input": 5, "output": 25 },
+  "claude-code/claude-sonnet-5-5": { "tier": 3, "input": 3, "output": 15 },
+  "claude-code/claude-haiku-5-5": { "tier": 2, "input": 1, "output": 5 },
+  "codex/gpt-6.1-sol": { "tier": 4, "input": 2.5, "output": 15 },
+  "gemini/gemini-3-pro": { "tier": 3, "input": 2, "output": 12 },
+  "ollama/qwen3:8b": { "tier": 1, "input": 0, "output": 0 }
+}

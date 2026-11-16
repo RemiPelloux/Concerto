@@ -1,77 +1,92 @@
 <p align="center">
-  <img src="assets/hero.svg" width="100%" alt="Concerto: a conductor model reviews the plan while builder, critic and swarm models work on scored user stories.">
+  <img src="assets/hero.svg" width="100%" alt="Concerto: a request is split into scored stories, each built by the model that fits it in its own worktree, checked by your tests and a critic, then merged. A conductor model wakes at three checkpoints.">
 </p>
 
 <p align="center">
+  <a href="https://github.com/RemiPelloux/Concerto/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/RemiPelloux/Concerto?style=flat-square&label=release&labelColor=111113&color=E0A458"></a>
   <a href="https://github.com/RemiPelloux/Concerto/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/RemiPelloux/Concerto/ci.yml?branch=main&style=flat-square&label=CI&labelColor=111113"></a>
   <a href="https://remipelloux.github.io/Concerto/"><img alt="Docs" src="https://img.shields.io/badge/docs-github%20pages-E0A458?style=flat-square&labelColor=111113"></a>
-  <img alt="Node 22+" src="https://img.shields.io/badge/node-22%2B-4FD08A?style=flat-square&labelColor=111113">
-  <img alt="Backends: Claude Code, Codex, Gemini CLI, Cursor, OpenCode, Goose, Aider, pi, local" src="https://img.shields.io/badge/backends-9-B48CFF?style=flat-square&labelColor=111113">
+  <img alt="9 coding agents" src="https://img.shields.io/badge/agents-9-B48CFF?style=flat-square&labelColor=111113">
+  <img alt="Linux, macOS, Windows" src="https://img.shields.io/badge/runs%20on-Linux%20%7C%20macOS%20%7C%20Windows-4FD08A?style=flat-square&labelColor=111113">
   <a href="LICENSE"><img alt="MIT" src="https://img.shields.io/badge/license-MIT-F3F1EC?style=flat-square&labelColor=111113"></a>
 </p>
 
 # Concerto
 
-You describe a coding job in your terminal. Concerto splits it into user stories, measures how much
-of your repository each one touches, and sends each story to the model that fits it. Opus 5.5
-builds the hard and UI stories, GPT-6.1 Sol the middle ones, Haiku 5.5 the small ones. Every story
-builds in its own git worktree and must pass your tests before a critic tries to break it, and
-Fable 5.2 checks the plan at four checkpoints.
+**Hand it the whole feature. Get back code that was planned, built by the right model, tested,
+reviewed by a second model and merged, while you watch every step.**
 
-It runs on your Claude Code and ChatGPT subscriptions, and on any API key pi holds. Concerto never
-sees a key. Full documentation: [remipelloux.github.io/Concerto](https://remipelloux.github.io/Concerto/)
+One coding agent working through a big request is slow, expensive and easy to fool: it marks its
+own homework. Concerto runs it like a team. It splits your request into user stories and measures
+how much of the repository each one touches. Each story goes to the model that fits it: Opus or
+GPT-6.1 Sol for the risky work, Haiku or a free local model for the small stuff. Every story
+builds in its own git worktree, has to pass *your* tests, and is then reviewed by a critic that
+didn't write it. Only then is it merged into your folder.
 
-## Screenshots
+It runs the agents you already pay for: Claude Code, Codex, Gemini CLI, Cursor, OpenCode, Goose,
+Aider, pi and local models through Ollama or LM Studio. Concerto never holds an API key.
 
-<p align="center"><img src="docs/assets/screenshots/building.png" width="100%" alt="Concerto building two stories: the conductor's plan-lock asked for a revision, two GPT-6.1 Sol builders are working, the story table shows each story's reach, score, cost estimate, model and reviewer."></p>
+<p align="center"><img src="docs/assets/screens/building.svg" width="100%" alt="Concerto building four stories at once: GPT-6.1 Sol on the risky login rate limit, a local Qwen model on the small ones, Gemini reviewing, every agent's latest step live, and the cost against running one frontier model alone."></p>
+
+## Why teams pick Concerto
+
+- **The right model for every story, automatically.** Each story is scored on ten factors (its
+  reach in the import graph, untested code, risk, churn…) and routed to match. You see the reasons
+  for each score, and can change any of it before the build starts.
+- **Nothing reaches your branch unchecked.** Each story gets its own worktree, so parallel agents
+  never collide. Then come your tests and type check, a mutation probe that catches tests that
+  test nothing, a secret scan, and a critic from another vendor on risky work. The merge is
+  three-way, so your own edits are safe.
+- **It costs less than one frontier model alone.** The expensive model plans and wakes only at
+  checkpoints; cheaper ones do the typing. Session reuse and context packs cut prompt tokens by 40%
+  on a 10-story run. Each run's report puts its cost next to what the brain model alone would
+  have cost.
+- **You stay in charge.** Edit the plan before building, take back one story or one hunk, send a
+  story back with a comment, pause, replay every model call, and share a run as one HTML page.
+- **Safe enough for real repositories.**
+  - **Sandbox:** your credentials are hidden from the agents, and their network is limited to the
+    model providers.
+  - **Policy:** paths no agent may touch, a spending ceiling, and reviews that must happen.
+  - **Audit:** a signed log of every command an agent ran.
+- **Fits your workflow.** Label a GitHub issue and get a pull request. Drive it from another agent
+  over MCP, or from Neovim. Read each week's costs by model and repository, and send traces to
+  OpenTelemetry.
+
+**When not to use it:** for a one-file fix, one model alone is faster and cheaper; we measured it
+([benchmark](docs/benchmark-single.md)). Concerto earns its overhead on features that span stories,
+files and risk levels.
+
+## See it
 
 | | |
 |---|---|
-| <img src="docs/assets/screenshots/agent.png" alt="An agent's live view: every file it reads, command it runs and line it writes, as it happens."> | <img src="docs/assets/screenshots/story.png" alt="Why a story got its score: ten factors with their values and weights, the files, the covering tests and the model chain."> |
-| An agent's live output | Why a story got its score |
-| <img src="docs/assets/screenshots/diff.png" alt="The diff of one changed file, colored, from the changes table."> | <img src="docs/assets/screenshots/tour.png" alt="The animated tour: stories travel to the model that fits them."> |
-| A changed file's diff | The animated tour (`/onboarding`) |
-| <img src="docs/assets/screenshots/live.png" alt="A build in progress: the agent list with ticking clocks and a live preview of the builder's last lines, with how long ago it last printed."> | <img src="docs/assets/screenshots/finished.png" alt="A finished run: a box says how many stories passed and what to do next."> |
-| A build in progress, with the live preview | The end of a run and what to do next |
+| <img src="docs/assets/screens/plan.svg" alt="The plan: four stories with their score, reach, cost estimate, the model that builds each and the one that reviews it, and the price on subscriptions against API keys."> | <img src="docs/assets/screens/story.svg" alt="Why a story got its score: ten factors with their weights, the files it touches, the tests that cover them and the model chain."> |
+| **The plan, before anything is built.** Edit it, reroute a story, or press Enter. | **Every score explained**, factor by factor. |
+| <img src="docs/assets/screens/agent.svg" alt="An agent's live view: each file it reads, each command it runs and what it says, as it happens."> | <img src="docs/assets/screens/diff.svg" alt="A changed file side by side, the changed words marked."> |
+| **Every agent, live.** | **Diffs side by side**, changed words marked. |
+
+<p align="center"><img src="docs/assets/screens/finished.svg" width="100%" alt="A finished run: all four stories passed, the agents that built and reviewed each, the files changed, and the cost against one frontier model alone."></p>
+
+The screenshots are taken from the real interface by `pnpm docs:screens`, on a demo repository.
 
 ## Install
 
-You need git, Node 22+, and at least one of these logged in: `claude` (Claude Code), `codex`
-(Codex), `pi`.
-
-Linux and macOS:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.sh | sh
-```
-
-Windows (PowerShell):
-
-```powershell
-irm https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.ps1 | iex
-```
-
-Both download the latest [release](https://github.com/RemiPelloux/Concerto/releases/latest),
-install it for your user only (`~/.local/share/concerto`, or `%LOCALAPPDATA%\Concerto` on
-Windows), add a `concerto` command, and give Concerto's skills to the agents they find. Run them
-again to update. Nothing is built on your machine and no admin rights are needed. Read
-[install.sh](scripts/install.sh) or [install.ps1](scripts/install.ps1) first if you prefer.
-
-From 0.17 each release also has a standalone executable per system, which needs no Node, through
-the usual package managers:
+You need git and at least one coding agent logged in (`claude`, `codex`, `gemini`, `cursor-agent`,
+`opencode`, `goose`, `aider` or `pi`), or Ollama.
 
 | System | Command |
 |---|---|
-| macOS, Linux (Homebrew) | `brew tap remipelloux/concerto https://github.com/RemiPelloux/Concerto && brew install concerto` |
-| Windows (Scoop) | `scoop bucket add concerto https://github.com/RemiPelloux/Concerto; scoop install concerto` |
-| Ubuntu, Debian | download `concerto_<version>_amd64.deb` (or `arm64`) from the release, then `sudo apt install ./concerto_*.deb` |
+| macOS, Linux | `brew tap remipelloux/concerto https://github.com/RemiPelloux/Concerto && brew install concerto` |
+| Windows | `scoop bucket add concerto https://github.com/RemiPelloux/Concerto; scoop install concerto` |
+| Ubuntu, Debian | `sudo apt install ./concerto_<version>_amd64.deb`, from the [release](https://github.com/RemiPelloux/Concerto/releases/latest) |
 | Nix | `nix profile install github:RemiPelloux/Concerto` |
 | Docker | `docker run --rm -v "$PWD:/work" -w /work ghcr.io/remipelloux/concerto --help` |
-| Any system | the `concerto-<system>-<arch>` archive of the release: one file to put on your PATH |
+| Any system, with Node 22+ | `curl -fsSL https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.sh \| sh` (or [install.ps1](scripts/install.ps1) on Windows) |
 
-`concerto --update` updates it the way it was installed. Concerto checks for a newer release at
-most once a day and says so in one line; nothing about you or your project is sent, and
-`CONCERTO_NO_UPDATE_CHECK=1` turns it off.
+Every package is a single executable that needs no Node, except the script, which runs on your
+Node. `concerto --update` updates it the way it was installed. Concerto checks for a new release
+at most once a day and says so in one line; it sends nothing about you or your project, and
+`CONCERTO_NO_UPDATE_CHECK=1` turns the check off.
 
 ## Quick start
 

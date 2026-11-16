@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560" role="img" aria-labelledby="t d">
   <title id="t">Concerto</title>
-  <desc id="d">A request is dispatched as stories to builder models, checked by a critic, then verified and shipped. The conductor wakes at three checkpoints. Using the conductor model only as the brain costs a fraction of running it alone.</desc>
+  <desc id="d">A request is split into scored stories, each built by the model that fits it in its own git worktree, checked by the project's tests and a critic from another vendor, then merged. The conductor wakes at three checkpoints. Using the conductor model only as the brain costs a fraction of running it alone.</desc>
   <style>
 text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', monospace; }
 .pill { fill: #2A2140; stroke: #B48CFF; }
@@ -175,8 +175,8 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans 
     <rect x="469" y="90" width="22" height="12" fill="#9C6B2E"/>
     <rect x="535" y="90" width="33" height="12" fill="#9C6B2E"/>
   </g>
-  <text x="640" y="58" fill="#E6E3DC" font-size="17">A terminal orchestrator for coding agents.</text>
-  <text x="640" y="84" fill="#8A8F98" font-size="13">One request, scored stories, the right model for each.</text>
+  <text x="640" y="58" fill="#E6E3DC" font-size="17">One request in. Tested, reviewed, merged work out.</text>
+  <text x="640" y="84" fill="#8A8F98" font-size="13">Nine coding agents, each story on the model that fits it.</text>
 
   <!-- conductor -->
   <rect x="40" y="140" width="300" height="384" rx="10" fill="#15171C" stroke="#B48CFF" stroke-width="1.5"/>
@@ -230,18 +230,18 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans 
   </g>
   <g>
     <rect x="600" y="150" width="220" height="50" rx="8" fill="#15171C" stroke="#E8826A" stroke-width="1.5"/>
-    <text x="614" y="171" fill="#E8826A" font-size="13" font-weight="700">● opus-5.5 · builds</text>
-    <text x="614" y="189" fill="#8A8F98" font-size="11.5">score 76 · auth handlers</text>
+    <text x="614" y="171" fill="#E8826A" font-size="13" font-weight="700">● gpt-6.1-sol · worktree</text>
+    <text x="614" y="189" fill="#8A8F98" font-size="11.5">score 62 · login rate limit</text>
   </g>
   <g>
     <rect class="flash" x="600" y="222" width="220" height="50" rx="8" fill="#15171C" stroke="#E8826A" stroke-width="1.5"/>
-    <text x="614" y="243" fill="#E8826A" font-size="13" font-weight="700">● gpt-6.1-sol · builds</text>
-    <text x="614" y="261" fill="#8A8F98" font-size="11.5">score 24 · json helpers</text>
+    <text x="614" y="243" fill="#E8826A" font-size="13" font-weight="700">● haiku-5.5 · worktree</text>
+    <text x="614" y="261" fill="#8A8F98" font-size="11.5">score 36 · quota on the account</text>
   </g>
   <g>
     <rect x="600" y="294" width="220" height="50" rx="8" fill="#15171C" stroke="#4FD08A" stroke-width="1.5"/>
-    <text x="614" y="315" fill="#4FD08A" font-size="13" font-weight="700">● section · swarms</text>
-    <text x="614" y="333" fill="#8A8F98" font-size="11.5">3 small stories</text>
+    <text x="614" y="315" fill="#4FD08A" font-size="13" font-weight="700">● qwen3 · swarms</text>
+    <text x="614" y="333" fill="#8A8F98" font-size="11.5">3 small stories, local</text>
   </g>
   <rect class="cell" x="770" y="304" width="10" height="10" rx="2"/>
   <rect class="cell s2" x="784" y="304" width="10" height="10" rx="2"/>
@@ -249,12 +249,12 @@ text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans 
   <g>
     <rect x="880" y="222" width="130" height="50" rx="8" fill="#15171C" stroke="#6AA5FF" stroke-width="1.5"/>
     <text x="894" y="243" fill="#6AA5FF" font-size="13" font-weight="700">● critic</text>
-    <text x="894" y="261" fill="#8A8F98" font-size="11.5">sonnet-5.5</text>
+    <text x="894" y="261" fill="#8A8F98" font-size="11.5">after the tests</text>
   </g>
   <text class="check" x="992" y="243" fill="#4FD08A" font-size="14" font-weight="700" text-anchor="end">✓</text>
   <g>
     <rect class="verify" x="1050" y="222" width="120" height="50" rx="8" stroke-width="1.5"/>
-    <text x="1110" y="252" fill="#E6E3DC" font-size="13" font-weight="700" text-anchor="middle">verify · ship</text>
+    <text x="1110" y="252" fill="#E6E3DC" font-size="13" font-weight="700" text-anchor="middle">merged</text>
   </g>
 
   <!-- cost -->

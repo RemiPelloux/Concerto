@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Concerto · terminal orchestrator for coding agents</title>
-  <meta name="description" content="Concerto splits one request into scored user stories and sends each story to the model that fits it, through Claude Code, Codex CLI or pi. It never holds API keys.">
+  <title>Concerto · tested, reviewed, merged work from your coding agents</title>
+  <meta name="description" content="Hand Concerto the whole feature: it splits it into scored stories, builds each with the model that fits it in its own git worktree, runs your tests, has a second model review it, and merges it. Nine coding agents, no API keys held.">
   <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#0E0F12" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#F4F4F1" media="(prefers-color-scheme: light)">
@@ -34,27 +34,27 @@
     <section class="hero wrap" id="top" aria-labelledby="hero-title">
       <div class="hero-text">
         <h1 id="hero-title" class="sr-only">Concerto</h1>
-        <p class="lead reveal">A terminal orchestrator for coding agents. You give it one request. It splits the work into scored user stories and sends each story to the model that fits it.</p>
+        <p class="lead reveal">Hand it the whole feature. Concerto splits it into scored stories, builds each with the model that fits it in its own git worktree, runs your tests, has a second model review it, and merges it into your folder, while you watch every step.</p>
         <div class="hero-actions reveal">
           <a class="button" href="#install">Install and run</a>
           <a class="link" href="https://github.com/RemiPelloux/Concerto">Source on GitHub</a>
         </div>
       </div>
       <figure class="hero-figure reveal">
-        <a class="zoom" href="assets/hero.svg"><img src="assets/hero.svg" width="1200" height="560" alt="The Concerto screen: a conductor panel with three checkpoints on the left; a task node dispatching stories to Opus 5.5, GPT-6.1 Sol and a swarm of small builders, then to the critic and to verify and ship; a bar comparing the cost of the conductor alone with the conductor used only as the brain."></a>
-        <figcaption>One run: stories go out to builders, come back through the critic, then get verified. The conductor only wakes at its checkpoints.</figcaption>
+        <a class="zoom" href="assets/hero.svg"><img src="assets/hero.svg" width="1200" height="560" alt="A run: a task dispatching stories to GPT-6.1 Sol and Haiku 5.5, each in its own worktree, and to a local Qwen model; the critic after the tests; then the merge. The conductor panel shows its checkpoints, and a bar compares its cost alone with its cost as the brain."></a>
+        <figcaption>One run: stories go out to the builders that fit them, pass your tests and a critic, then merge. The conductor only wakes at its checkpoints.</figcaption>
       </figure>
     </section>
 
     <section class="shots wrap" aria-labelledby="shots-title">
       <h2 id="shots-title" class="head reveal">What it looks like</h2>
       <div class="shot-grid">
-        <figure class="reveal"><a class="zoom" href="assets/screenshots/live.png"><img src="assets/screenshots/live.png" loading="lazy" alt="A build in progress: agents with ticking clocks and a live preview of the builder's last lines."></a><figcaption>While a story builds: clocks tick every second, and a preview shows what the agent last printed and how long ago.</figcaption></figure>
-        <figure class="reveal"><a class="zoom" href="assets/screenshots/finished.png"><img src="assets/screenshots/finished.png" loading="lazy" alt="A finished run: a box says how many stories passed and what to do next."></a><figcaption>When the run ends: what passed, why the rest failed, and what to do next. Enter retries only what did not pass.</figcaption></figure>
-        <figure class="reveal"><a class="zoom" href="assets/screenshots/agent.png"><img src="assets/screenshots/agent.png" loading="lazy" alt="An agent's live view: what it reads, runs and writes, as it happens."></a><figcaption>Enter on an agent: its live output.</figcaption></figure>
-        <figure class="reveal"><a class="zoom" href="assets/screenshots/story.png"><img src="assets/screenshots/story.png" loading="lazy" alt="A story's score breakdown: ten factors, files, tests and model chain."></a><figcaption>Enter on a story: why it got its score.</figcaption></figure>
-        <figure class="reveal"><a class="zoom" href="assets/screenshots/diff.png"><img src="assets/screenshots/diff.png" loading="lazy" alt="The colored diff of a changed file."></a><figcaption>Enter on a changed file: its diff.</figcaption></figure>
-        <figure class="reveal"><a class="zoom" href="assets/screenshots/tour.png"><img src="assets/screenshots/tour.png" loading="lazy" alt="The animated tour."></a><figcaption>The tour on first launch, or <code>/onboarding</code>.</figcaption></figure>
+        <figure class="reveal"><a class="zoom" href="assets/screens/building.svg"><img src="assets/screens/building.svg" loading="lazy" alt="A run in progress: four stories, each on its own model, every agent's latest step live, and the cost against one frontier model alone."></a><figcaption>While the run works: every agent, its model and its latest step, and the cost against one frontier model alone.</figcaption></figure>
+        <figure class="reveal"><a class="zoom" href="assets/screens/plan.svg"><img src="assets/screens/plan.svg" loading="lazy" alt="The plan: four stories with score, reach, estimate, builder and reviewer, and the price on subscriptions against API keys."></a><figcaption>Before anything is built: the plan, its price, and who builds and reviews each story. Edit it, or press Enter.</figcaption></figure>
+        <figure class="reveal"><a class="zoom" href="assets/screens/agent.svg"><img src="assets/screens/agent.svg" loading="lazy" alt="An agent's live view: each file it reads, command it runs and what it says."></a><figcaption>Enter on an agent: its live output.</figcaption></figure>
+        <figure class="reveal"><a class="zoom" href="assets/screens/story.svg"><img src="assets/screens/story.svg" loading="lazy" alt="Why a story got its score: ten factors with weights, files, tests and the model chain."></a><figcaption>Enter on a story: why it got its score, and where it goes.</figcaption></figure>
+        <figure class="reveal"><a class="zoom" href="assets/screens/diff.svg"><img src="assets/screens/diff.svg" loading="lazy" alt="A changed file side by side, with the changed words marked."></a><figcaption>Enter on a changed file: the diff, side by side, changed words marked.</figcaption></figure>
+        <figure class="reveal"><a class="zoom" href="assets/screens/finished.svg"><img src="assets/screens/finished.svg" loading="lazy" alt="A finished run: all four stories passed, the files changed, and what it cost."></a><figcaption>When the run ends: what passed, what changed, what it cost, and what to do next.</figcaption></figure>
       </div>
     </section>
 
@@ -155,7 +155,7 @@ model's four factors are reweighted.</code></pre>
 
     <section class="backends wrap" id="backends" aria-labelledby="backends-title">
       <div class="backends-head">
-        <h2 id="backends-title" class="head reveal">Three backends, no API keys</h2>
+        <h2 id="backends-title" class="head reveal">Nine coding agents, no API keys</h2>
         <p class="reveal">Concerto starts other programs and reads what they print. Your logins stay with those programs. Concerto never reads, stores or sends a key.</p>
       </div>
       <ul class="backend-list">
@@ -174,13 +174,30 @@ model's four factors are reweighted.</code></pre>
           <p class="backend-account">Any API provider you log into</p>
           <p>Anthropic, OpenAI, DeepSeek, Grok, or a proxy that serves all of them, such as <code>ce-gpt/</code> or <code>ce-claude/</code>. It is the fallback for both CLIs. <code>--prefer 'ce-*'</code> sends every model through the proxy first without changing which model runs.</p>
         </li>
+        <li class="reveal">
+          <h3>And six more</h3>
+          <p class="backend-account">Whatever you already use</p>
+          <p>Gemini CLI, Cursor's agent, OpenCode, Goose and Aider, each on its own login, and models on your machine through Ollama or LM Studio, free. Reviewers run read-only in each one; tokens and cost are read from each one's output.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="wrap" id="teams" aria-labelledby="teams-title">
+      <h2 id="teams-title" class="head reveal">Built for real repositories</h2>
+      <ul class="backend-list">
+        <li class="reveal"><h3>A sandbox</h3><p class="backend-account"><code>--sandbox</code></p><p>Every agent and every check runs with the system read-only, your credentials hidden, and the network limited to the model providers. Every refused host is logged.</p></li>
+        <li class="reveal"><h3>A team policy</h3><p class="backend-account">in the project's config</p><p>Paths no agent may touch, models nobody may use, a ceiling on any run's spend, reviews required on sensitive paths. Secrets in a change never merge.</p></li>
+        <li class="reveal"><h3>A signed audit log</h3><p class="backend-account"><code>.concerto/audit/</code></p><p>Every command an agent ran and every refusal, each line signed over the one before it.</p></li>
+        <li class="reveal"><h3>Pull requests from issues</h3><p class="backend-account">a GitHub Action</p><p>Label an issue <code>concerto</code>: a run builds it within a budget and opens a pull request with the report as its body. Or <code>--pr</code> anywhere.</p></li>
+        <li class="reveal"><h3>Costs you can read</h3><p class="backend-account"><code>--costs</code>, <code>--dashboard</code></p><p>Every run by week, repository and model, as a table, CSV or a page; OpenTelemetry traces for your tracing backend.</p></li>
+        <li class="reveal"><h3>Other agents and editors</h3><p class="backend-account"><code>--mcp</code>, Neovim</p><p>Claude Code or any MCP client can plan and build through Concerto's tools; Neovim starts a run from a selection.</p></li>
       </ul>
     </section>
 
     <section class="conductor" id="checkpoints" aria-labelledby="conductor-title">
       <div class="wrap conductor-inner">
         <div class="conductor-text">
-          <h2 id="conductor-title" class="head reveal">The conductor wakes three times</h2>
+          <h2 id="conductor-title" class="head reveal">The conductor wakes four times at most</h2>
           <p class="reveal">Claude Fable 5.2 is the conductor. It can read the whole session and has no tool that writes. It stays asleep while the builders work and is called at four fixed moments, each with one question: before the plan locks, when a story fails review twice, when two critics disagree on a risky story, and before the run is called done. When it asks for changes, its notes go into every builder's and critic's prompt for the rest of the run.</p>
         </div>
         <ol class="gates">
@@ -223,7 +240,7 @@ model's four factors are reweighted.</code></pre>
     <section class="install wrap" id="install" aria-labelledby="install-title">
       <div class="install-main">
         <h2 id="install-title" class="head reveal">Install and run</h2>
-        <p class="reveal">You need git, Node 22 or newer, and at least one of <code>claude</code>, <code>codex</code> or <code>pi</code> on your PATH and logged in.</p>
+        <p class="reveal">You need git and at least one coding agent logged in (<code>claude</code>, <code>codex</code>, <code>gemini</code>, <code>cursor-agent</code>, <code>opencode</code>, <code>goose</code>, <code>aider</code> or <code>pi</code>), or Ollama. Homebrew: <code>brew tap remipelloux/concerto https://github.com/RemiPelloux/Concerto &amp;&amp; brew install concerto</code>. Scoop, apt, Nix and Docker work too; the script below needs Node 22+.</p>
         <div class="code-block reveal">
           <div class="code-bar"><button class="copy" type="button" data-copy="install-cmd">Copy</button></div>
           <pre><code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/RemiPelloux/Concerto/main/scripts/install.sh | sh

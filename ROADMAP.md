@@ -1,9 +1,9 @@
 # Roadmap
 
-Concerto works end to end today: scoring, routing across Claude Code, Codex and pi, review,
-fallbacks, the token engine, probes, session history and resume, and installers for Linux, macOS
-and Windows. This page is the plan to 1.0 and past it, sprint by sprint, in order. Each sprint has
-one goal, the work that serves it, and a test that says when it is done.
+Concerto 1.0 is out: its config, CLI, slash commands and event format are stable under semantic
+versioning ([stability](docs/stability.md)). This page is how it got there, sprint by sprint, and
+what comes after. Each sprint has one goal, the work that serves it, and a test that says when it
+is done.
 
 ## Shipped
 
@@ -19,7 +19,7 @@ one goal, the work that serves it, and a test that says when it is done.
 | 0.13.0 | Part 4: import graphs for eight more languages and monorepos, five more agent CLIs, local models, custom roles, an MCP server, a Neovim plugin |
 | 0.16.0 | Part 5: commits per story, pull requests, a GitHub Action, shared config and policy, notifications, traces, cost reports and a dashboard |
 | 0.19.0 | Part 6: standalone executables and package managers, a Docker image, a sandbox, secret scanning and a signed audit log, themes, a plain mode, French, full docs, performance budgets |
-| Unreleased | An Orca plugin: a Concerto panel in the sidebar that plans or builds a request; your own `gates`; builders that end with done, nothing-to-do or blocked; an arrow-key model picker and `/config auto` |
+| 1.0.0 | Stable: a versioned config with migrations, a stable CLI, slash commands and event format, a migration guide; an Orca panel, your own `gates`, builders that end with done, nothing-to-do or blocked, an arrow-key model picker and `/config auto` |
 
 ---
 
@@ -289,7 +289,7 @@ reaches only the host it is allowed, and both attempts are in the signed audit l
 Done: each of the 39 documented failure messages is triggered by a test, and a new error without a
 row fails the build; the benchmark runs from one command.
 
-## 1.0 · stable
+## 1.0 · stable · shipped in 1.0
 
 - **Stable config:** a versioned schema with migrations from every 0.x format.
 - **Stable CLI and slash commands** under semantic versioning.

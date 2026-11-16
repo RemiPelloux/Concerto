@@ -81,7 +81,7 @@ type OverlayKeys = { key: { escape: boolean; upArrow: boolean; downArrow: boolea
  * clamps the value to what it shows (the tour handles its own keys). In a replay, ←→ change call.
  */
 /** Up or down in a list: the arrows, or the extra keys `ui.keys` names. */
-function move(key: { upArrow: boolean; downArrow: boolean }, input: string): number {
+export function move(key: { upArrow: boolean; downArrow: boolean }, input: string): number {
   if (key.upArrow || (KEYS.up !== "" && input === KEYS.up)) return -1;
   return key.downArrow || (KEYS.down !== "" && input === KEYS.down) ? 1 : 0;
 }

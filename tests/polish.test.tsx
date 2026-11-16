@@ -10,6 +10,7 @@ import type { RunRequest } from "#src/runner/types.js";
 import { Store } from "#src/state/store.js";
 import { App } from "#src/ui/App.js";
 import { applyKeys, KEYS } from "#src/ui/keys.js";
+import { move } from "#src/ui/useNavigation.js";
 import { applyTheme, COLOR, ROLE_COLOR, THEMES } from "#src/ui/theme.js";
 import { CATALOG, PLAN_REPLY, scriptedRunner, tempDir, testConfig } from "#tests/fixtures.js";
 
@@ -76,14 +77,19 @@ describe("keys, language and plain sentences", () => {
       if (!terminal.frames.at(-1)?.includes("x retirer")) keyboard.press("\t");
       expect(terminal.frames.at(-1)).toContain("x retirer");
     }, { timeout: 10_000, interval: 300 });
-    const before = terminal.frames.length;
-    keyboard.press("j");
-    await vi.waitFor(() => expect(terminal.frames.length).toBeGreaterThan(before));
     keyboard.press("x");
-    await vi.waitFor(() => expect(store.get().order).toEqual(["route"]), { timeout: 5000 });
+    await vi.waitFor(() => expect(store.get().order).toEqual(["auth"]), { timeout: 5000 });
     expect(KEYS.drop).toBe("x");
     app.unmount();
   }, 30_000);
+
+  it("moves with the extra keys as with the arrows", () => {
+    applyKeys({ up: "k", down: "j" });
+    const none = { upArrow: false, downArrow: false };
+    expect([move(none, "j"), move(none, "k"), move(none, "x"), move({ upArrow: true, downArrow: false }, "")]).toEqual([1, -1, 0, -1]);
+    applyKeys({ up: "", down: "" });
+    expect(move(none, "j")).toBe(0);
+  });
 
   it("reads the language from the locale when set to auto", () => {
     expect(resolveLanguage("auto", { LANG: "fr_FR.UTF-8" })).toBe("fr");

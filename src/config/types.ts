@@ -59,6 +59,12 @@ export const ConfigSchema = z.object({
   budgetUsd: z.number().positive().optional(),
   /** Shell commands every story must pass before the critic sees it, e.g. ["pnpm test"]. */
   gates: z.array(z.string().min(1)).default([]),
+  /**
+   * Codex roles that run commands (builders, critics) run without a sandbox, with your full user
+   * permissions. Off by default; on Linux it is the only way a Node test runner can start git or
+   * sh inside Codex.
+   */
+  codexFullAccess: z.boolean().default(false),
   roles: z.object({
     conductor: RoleConfigSchema,
     scorer: RoleConfigSchema,

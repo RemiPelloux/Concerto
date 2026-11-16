@@ -77,6 +77,7 @@ async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
     cwd: c.cwd,
     session,
     signal: AbortSignal.any([c.signal, timeout]),
+    fullAccess: c.config.codexFullAccess,
   });
   if (session) c.sessions.record(session, assembled.hashes);
   const entry = { usage: result.usage, price: model.price, brain: c.brainPrice };

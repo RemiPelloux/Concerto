@@ -235,6 +235,12 @@ Your config is `~/.config/concerto/config.json`, written by the first launch. A
 skills there. [examples/concerto.config.full.json](examples/concerto.config.full.json) shows a full
 one with 37 working models.
 
+On Linux, Codex's sandbox stops Node from starting programs, so tests that run git or sh fail
+inside a Codex build. Concerto tells Codex builders so, and the gates and the critic run those
+tests outside the sandbox. `"codexFullAccess": true` runs Codex's builders and critics without a
+sandbox, with your user permissions. It is off by default; turn it on only in a checkout you would
+let any command touch.
+
 Model names look like `claude-code/claude-opus-5-5` (Claude subscription), `codex/gpt-6.1-sol`
 (ChatGPT subscription), `codex@ce-gpt/gpt-6.1-sol` (a Codex profile, such as a proxy), or
 `openai/gpt-6.1-sol` (any provider in pi).

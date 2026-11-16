@@ -82,7 +82,22 @@ describe("codex backend", () => {
   });
 
   it("puts the role prompt first in the message: a stable cached prefix", () => {
-    expect(codexInput(request({ model: "codex/gpt-6-astra" }))).toMatch(/^You are the critic\.\n\n---\n\nsecret prompt$/);
+    expect(codexInput(request({ model: "codex/gpt-6-astra" }), "darwin")).toMatch(/^You are the critic\.\n\n---\n\nsecret prompt$/);
+  });
+
+  it("runs writers without a sandbox only when full access is on, readers never", () => {
+    const writer = buildCodexArgs(request({ model: "codex/gpt-6.1-sol", tools: ["edit"], fullAccess: true }));
+    expect(writer).toEqual(expect.arrayContaining(["--sandbox", "danger-full-access"]));
+    const reader = buildCodexArgs(request({ model: "codex/gpt-6.1-sol", tools: ["read"], fullAccess: true }));
+    expect(reader).toEqual(expect.arrayContaining(["--sandbox", "read-only"]));
+    expect(codexInput(request({ model: "codex/gpt-6.1-sol", tools: ["edit"], fullAccess: true }), "linux")).not.toContain("## Sandbox");
+  });
+
+  it("tells Linux builders that Node cannot start processes in the sandbox", () => {
+    const builder = codexInput(request({ model: "codex/gpt-6.1-sol", tools: ["edit"] }), "linux");
+    expect(builder).toMatch(/secret prompt\n\n## Sandbox\n.*EPERM/s);
+    expect(codexInput(request({ model: "codex/gpt-6.1-sol", tools: ["read"] }), "linux")).not.toContain("## Sandbox");
+    expect(codexInput(request({ model: "codex/gpt-6.1-sol", tools: ["edit"] }), "darwin")).not.toContain("## Sandbox");
   });
 
   it("reports the last agent message with usage, cached tokens split out", () => {

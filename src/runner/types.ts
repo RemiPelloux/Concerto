@@ -16,6 +16,8 @@ export type RunRequest = {
   /** `resume` is true when this session already has turns. */
   session?: { dir: string; id: string; resume: boolean };
   signal?: AbortSignal;
+  /** Codex roles that run commands get no sandbox (`codexFullAccess` in the config). */
+  fullAccess?: boolean;
 };
 
 export type RunResult = { text: string; usage: Usage; turns: number };

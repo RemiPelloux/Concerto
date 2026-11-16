@@ -13,6 +13,23 @@ import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
 const EFFORT: Partial<Record<Effort, string>> = { off: "minimal", max: "xhigh" };
 const WRITE_TOOLS = new Set(["edit", "write", "bash"]);
 const READ_STDIN = "-";
+/**
+ * Codex's Linux sandbox rejects the way Node starts processes (Python's subprocess still works),
+ * so a test that runs git or sh from Node fails with EPERM. Without this note builders report
+ * finished work as blocked.
+ */
+const SANDBOX_NOTE = [
+  "## Sandbox",
+  "In this sandbox a program started from Node (a test that runs git, sh or another CLI) fails with",
+  "EPERM. That is the sandbox, not your change: do not report `blocked` for it. Name those tests in",
+  "your last line; Concerto's checks and the critic run them outside the sandbox.",
+].join("\n");
+
+/** Roles without edit, write or bash stay read-only, even with full access. */
+function sandboxOf(req: RunRequest): "read-only" | "workspace-write" | "danger-full-access" {
+  if (!req.tools.some((t) => WRITE_TOOLS.has(t))) return "read-only";
+  return req.fullAccess ? "danger-full-access" : "workspace-write";
+}
 
 /**
  * In a git worktree the repository's git data lives outside the folder, and Codex's sandbox
@@ -32,11 +49,11 @@ function gitDataOutside(cwd: string): string | null {
 /**
  * `codex exec` on the ChatGPT subscription, or through a profile such as a proxy
  * (`codex@ce-gpt/gpt-6.1-sol` runs with `-p ce-gpt`). Builders get a workspace-write
- * sandbox, everyone else read-only.
+ * sandbox (none with `codexFullAccess`), everyone else read-only.
  */
 export function buildCodexArgs(req: RunRequest): string[] {
   const ref = parseRef(req.model);
-  const sandbox = req.tools.some((t) => WRITE_TOOLS.has(t)) ? "workspace-write" : "read-only";
+  const sandbox = sandboxOf(req);
   const args = ["exec", "--json", "--skip-git-repo-check", "--cd", req.cwd, "--model", ref.id, "--sandbox", sandbox];
   const gitData = sandbox === "workspace-write" ? gitDataOutside(req.cwd) : null;
   if (gitData) args.push("--add-dir", gitData);
@@ -46,8 +63,9 @@ export function buildCodexArgs(req: RunRequest): string[] {
 }
 
 /** Codex has no system prompt flag: the role prompt opens the message, still a stable prefix. */
-export function codexInput(req: RunRequest): string {
-  return `${readFileSync(req.systemFile, "utf8")}\n\n---\n\n${withSkillNote(req.prompt, req.skills)}`;
+export function codexInput(req: RunRequest, platform: NodeJS.Platform = process.platform): string {
+  const note = platform === "linux" && sandboxOf(req) === "workspace-write" ? `\n\n${SANDBOX_NOTE}` : "";
+  return `${readFileSync(req.systemFile, "utf8")}\n\n---\n\n${withSkillNote(req.prompt, req.skills)}${note}`;
 }
 
 function itemEvent(item: Json): RunEvent | null {

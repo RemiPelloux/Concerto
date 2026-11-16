@@ -1,0 +1,23 @@
+{
+  "version": "0.19.0",
+  "description": "Split a coding request into scored user stories and run coding agents on them, each checked and reviewed",
+  "homepage": "https://github.com/RemiPelloux/Concerto",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/RemiPelloux/Concerto/releases/download/v0.19.0/concerto-windows-x64.zip",
+      "hash": "90f0d5281ecdf7c9be346eebccf71b9001067091433cbfaa1c46d57202c5ff67"
+    }
+  },
+  "bin": "concerto.exe",
+  "checkver": {
+    "github": "https://github.com/RemiPelloux/Concerto"
+  },
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/RemiPelloux/Concerto/releases/download/v$version/concerto-windows-x64.zip"
+      }
+    }
+  }
+}

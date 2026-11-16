@@ -38,7 +38,7 @@ async function play(c: Concert, { story, cwd }: Job, feedback: string): Promise<
   c.store.story(story.id, { attempts: (view.attempts ?? 0) + 1 });
   const out = await callRole(c, { role: view.role, chain, segments, effort: view.effort, tags: story.tags, sessionKey: story.id, label: story.title, cwd, storyId: story.id });
   c.store.story(story.id, { model: out.model.ref });
-  if (!c.isolated) readChanges(c.cwd).then((changes) => c.store.update(() => ({ changes })), () => undefined);
+  if (!c.isolated) await readChanges(c.cwd).then((changes) => c.store.update(() => ({ changes })), () => undefined);
   c.store.role(view.role, { activity: "done" });
   // What the builder says about its own work; the critic decides whether the story passes.
   c.store.log({ role: view.role, label: "Builder", detail: story.title, result: readTag(out.text, "STATUS") || "done" });

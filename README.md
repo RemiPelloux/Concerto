@@ -57,6 +57,22 @@ Windows), add a `concerto` command, and give Concerto's skills to the agents the
 again to update. Nothing is built on your machine and no admin rights are needed. Read
 [install.sh](scripts/install.sh) or [install.ps1](scripts/install.ps1) first if you prefer.
 
+From 0.17 each release also has a standalone executable per system, which needs no Node, through
+the usual package managers:
+
+| System | Command |
+|---|---|
+| macOS, Linux (Homebrew) | `brew tap remipelloux/concerto https://github.com/RemiPelloux/Concerto && brew install concerto` |
+| Windows (Scoop) | `scoop bucket add concerto https://github.com/RemiPelloux/Concerto; scoop install concerto` |
+| Ubuntu, Debian | download `concerto_<version>_amd64.deb` (or `arm64`) from the release, then `sudo apt install ./concerto_*.deb` |
+| Nix | `nix profile install github:RemiPelloux/Concerto` |
+| Docker | `docker run --rm -v "$PWD:/work" -w /work ghcr.io/remipelloux/concerto --help` |
+| Any system | the `concerto-<system>-<arch>` archive of the release: one file to put on your PATH |
+
+`concerto --update` updates it the way it was installed. Concerto checks for a newer release at
+most once a day and says so in one line; nothing about you or your project is sent, and
+`CONCERTO_NO_UPDATE_CHECK=1` turns it off.
+
 ## Quick start
 
 Go to a project, ideally on a clean branch or a git worktree, because agents edit the files there:

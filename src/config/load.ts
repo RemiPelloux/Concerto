@@ -1,10 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join, resolve } from "node:path";
+import { packageRoot } from "#src/config/root.js";
 import { ConfigSchema, type ConcertoConfig } from "#src/config/types.js";
 
-const BUNDLED = fileURLToPath(new URL("../../concerto.config.json", import.meta.url));
+const BUNDLED = join(packageRoot(), "concerto.config.json");
 
 export function expandHome(path: string): string {
   return path.startsWith("~/") ? resolve(homedir(), path.slice(2)) : path;
@@ -95,6 +95,4 @@ export function loadConfig(cwd: string): ConcertoConfig {
   return withPolicy(parseConfig(mergeConfig(raw, JSON.parse(readFileSync(project, "utf8"))), `${project} merged over ${personal}`));
 }
 
-export function packageRoot(): string {
-  return fileURLToPath(new URL("../..", import.meta.url));
-}
+export { packageRoot };

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { OPTIONS, USAGE } from "#src/commands/options.js";
 
@@ -11,8 +10,8 @@ async function main(): Promise<void> {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: OPTIONS });
   if (values.help) return void process.stdout.write(`${USAGE}\n`);
   if (values.version) {
-    const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")) as { version: string };
-    return void process.stdout.write(`concerto ${pkg.version}\n`);
+    const { packageVersion } = await import("#src/config/root.js");
+    return void process.stdout.write(`concerto ${packageVersion()}\n`);
   }
   const { run } = await import("#src/main.js");
   await run(values, positionals.join(" ").trim());

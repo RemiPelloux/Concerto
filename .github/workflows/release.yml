@@ -1,6 +1,8 @@
 name: Release
-# Builds concerto.tar.gz (Linux, macOS) and concerto.zip (Windows), installs each with its
-# installer on a real machine of that system, and attaches them to the release once all pass.
+# Builds concerto.tar.gz and concerto.zip (Node 22 or newer) and a standalone executable per
+# system (no Node needed), installs each on a real machine of that system, and on a release
+# attaches them, writes the package manifests, publishes the Docker image, then installs the
+# release with Homebrew, Scoop and apt as a person would.
 on:
   push:
   release:
@@ -67,9 +69,63 @@ jobs:
           git init -q
           & "$bin\concerto.cmd" --doctor
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  binaries:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, name: linux-x64, deb: amd64 }
+          - { os: ubuntu-24.04-arm, name: linux-arm64, deb: arm64 }
+          - { os: macos-latest, name: macos-arm64 }
+          - { os: macos-15-intel, name: macos-x64 }
+          - { os: windows-latest, name: windows-x64 }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/build-sea.mjs
+      - name: Archive, and run it where no Node is on the PATH
+        if: runner.os != 'Windows'
+        run: |
+          tar -czf "out/concerto-${{ matrix.name }}.tar.gz" -C out/sea concerto
+          env -i HOME="$HOME" PATH=/usr/bin:/bin out/sea/concerto --version
+          env -i HOME="$HOME" PATH=/usr/bin:/bin sh -c 'command -v node && echo "(a system node exists, unused)"; true'
+      - name: The .deb, installed in a bare Ubuntu container without Node
+        if: matrix.deb
+        run: |
+          version=$(node -p "require('./package.json').version")
+          sh scripts/packaging/deb.sh out/sea/concerto "$version" "${{ matrix.deb }}" out
+          docker run --rm -v "$PWD/out:/out:ro" ubuntu:24.04 sh -ec '
+            apt-get update -qq && apt-get install -y -qq /out/concerto_*_${{ matrix.deb }}.deb >/dev/null
+            if command -v node; then echo "node should not be here"; exit 1; fi
+            concerto --version && concerto --help >/dev/null
+            cd /tmp && git init -q p && cd p && concerto --doctor'
+      - name: Archive, and run it where no Node is on the PATH
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path out/sea/concerto.exe -DestinationPath out/concerto-windows-x64.zip
+          $env:Path = "C:\Windows\System32;C:\Windows;C:\Program Files\Git\cmd"
+          if (Get-Command node -ErrorAction SilentlyContinue) { throw "node is on the PATH" }
+          & out/sea/concerto.exe --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: binary-${{ matrix.name }}
+          path: |
+            out/concerto-${{ matrix.name }}.*
+            out/concerto_*.deb
   publish:
     if: github.event_name == 'release'
-    needs: install
+    needs: [install, binaries]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -78,8 +134,144 @@ jobs:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: packages
-      - run: gh release upload "$TAG" out/concerto.tar.gz out/concerto.zip scripts/install.sh scripts/install.ps1 --clobber --repo "$REPO"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: binary-*
+          path: out
+          merge-multiple: true
+      - run: (cd out && sha256sum concerto-*.tar.gz concerto-*.zip concerto_*.deb > checksums.txt)
+      - run: gh release upload "$TAG" out/concerto.tar.gz out/concerto.zip out/concerto-*.tar.gz out/concerto-*.zip out/concerto_*.deb out/checksums.txt scripts/install.sh scripts/install.ps1 --clobber --repo "$REPO"
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
           REPO: ${{ github.repository }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: checksums
+          path: out/checksums.txt
+  manifests:
+    # Homebrew and Scoop read this repository as a tap and a bucket; Nix reads its flake. The AUR
+    # PKGBUILD and the winget manifests are attached for submission to their own registries.
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: main
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: checksums
+          path: out
+      - run: node scripts/packaging/render.mjs "${TAG#v}" out/checksums.txt
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+      - name: Commit the manifests
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/concerto.rb bucket/concerto.json flake.nix
+          git commit -m "build(packaging): manifests for $TAG" || exit 0
+          git push origin HEAD:main
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+      - run: |
+          (cd out/packaging && zip -qr ../packaging.zip aur winget)
+          gh release upload "$TAG" out/packaging.zip --clobber --repo "$REPO"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+  docker:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: binary-linux-*
+          path: out
+          merge-multiple: true
+      - name: Build and push ghcr.io/remipelloux/concerto, amd64 and arm64
+        run: |
+          for arch in x64:amd64 arm64:arm64; do
+            mkdir -p "bin/${arch#*:}" && tar -xzf "out/concerto-linux-${arch%:*}.tar.gz" -C "bin/${arch#*:}"
+          done
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          docker buildx create --use >/dev/null
+          image=ghcr.io/remipelloux/concerto
+          docker buildx build --platform linux/amd64,linux/arm64 -t "$image:${TAG#v}" -t "$image:latest" --push .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          TAG: ${{ github.event.release.tag_name }}
+  npm:
+    # Published as @tkmremi/concerto when the repository has an NPM_TOKEN secret; skipped otherwise.
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Publish
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then echo "No NPM_TOKEN secret: not published to npm."; exit 0; fi
+          pnpm install --frozen-lockfile && pnpm build
+          npm pkg set name=@tkmremi/concerto
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  installs:
+    # The done-test of distribution: the release, installed with each system's usual tool.
+    needs: [manifests, docker]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - name: Homebrew
+        if: runner.os == 'macOS'
+        run: |
+          brew tap remipelloux/concerto https://github.com/RemiPelloux/Concerto
+          brew install remipelloux/concerto/concerto
+          env -i HOME="$HOME" PATH="$(brew --prefix)/bin:/usr/bin:/bin" concerto --version | grep -F "${TAG#v}"
+      - name: Scoop
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Invoke-RestMethod -Uri https://get.scoop.sh -OutFile install-scoop.ps1
+          ./install-scoop.ps1 -RunAsAdmin
+          $env:Path = "$env:USERPROFILE\scoop\shims;$env:Path"
+          scoop bucket add concerto https://github.com/RemiPelloux/Concerto
+          scoop install concerto/concerto
+          $out = concerto --version
+          if ($out -notmatch [regex]::Escape($env:TAG.TrimStart('v'))) { throw "got $out" }
+      - name: apt in a bare Ubuntu, and the Docker image
+        if: runner.os == 'Linux'
+        run: |
+          docker run --rm -e TAG ubuntu:24.04 sh -ec '
+            apt-get update -qq && apt-get install -y -qq curl ca-certificates >/dev/null
+            v=${TAG#v}
+            curl -fsSLO "https://github.com/RemiPelloux/Concerto/releases/download/$TAG/concerto_${v}_amd64.deb"
+            apt-get install -y -qq "./concerto_${v}_amd64.deb" >/dev/null
+            concerto --version | grep -F "$v"'
+          docker run --rm "ghcr.io/remipelloux/concerto:${TAG#v}" --version | grep -F "${TAG#v}"

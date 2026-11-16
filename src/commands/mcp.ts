@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { packageVersion } from "#src/config/root.js";
 import { loadConfig } from "#src/config/load.js";
 import { serve } from "#src/mcp/server.js";
 import { concertoTools } from "#src/mcp/tools.js";
@@ -11,7 +11,7 @@ import { runModel } from "#src/runner/index.js";
  * Nothing but protocol messages goes to stdout.
  */
 export async function runMcp(): Promise<void> {
-  const { version } = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as { version: string };
+  const version = packageVersion();
   const opener = async (cwd: string) => {
     const config = loadConfig(cwd);
     return { config, catalog: await loadCatalog(config), runner: runModel };

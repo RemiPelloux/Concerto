@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { packageVersion } from "#src/config/root.js";
 import { Tracer, tracesEndpoint, type Span } from "#src/engine/telemetry.js";
 import type { ModelInfo } from "#src/models/types.js";
 import { promptTokens } from "#src/runner/usage.js";
@@ -57,7 +57,6 @@ export async function sendTrace(c: Concert): Promise<void> {
   if (!t || !endpoint) return;
   const s = c.store.get();
   if (t.root) t.end(t.root, { "concerto.phase": s.phase, "concerto.cost_usd": s.ledger.usage.cost }, s.phase === "done");
-  const { version } = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as { version: string };
-  const failure = await t.send(endpoint, version);
+  const failure = await t.send(endpoint, packageVersion());
   c.store.log({ role: "conductor", label: "Trace", detail: failure || `${t.spans.length} spans to ${endpoint}`, result: failure ? "failed" : "sent" });
 }

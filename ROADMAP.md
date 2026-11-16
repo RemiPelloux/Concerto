@@ -238,16 +238,20 @@ and the dashboard, read from the run log alone; a run's trace reaches a collecto
 
 ## Part 6 · Ready for everyone
 
-### Sprint 16 · 0.17 · distribution
+### Sprint 16 · distribution · built, live test at the next release
 
-- **npm** (`npx concerto`), **Homebrew**, **Scoop**, **winget**, **AUR** and **Nix** packages,
-  published by the release workflow.
-- **Standalone binaries** with Node's single executable applications, so Node is not required.
-- **A Docker image** for CI and remote runners.
-- **Auto-update** check with a one-line changelog.
+- **Standalone executables** with Node's single executable applications, for Linux (x64, arm64),
+  macOS (arm64, x64) and Windows (x64): Concerto's files are embedded and unpacked once.
+- **Homebrew** and **Scoop** read this repository as a tap and a bucket, **Nix** its flake; a
+  **.deb** for apt; the **AUR** PKGBUILD and **winget** manifests are attached to each release for
+  submission; **npm** as `@tkmremi/concerto` once an `NPM_TOKEN` secret is set.
+- **A Docker image,** `ghcr.io/remipelloux/concerto`, amd64 and arm64.
+- **Update check** once a day with a one-line notice, and `concerto --update`.
 
 Done when: a fresh Mac, a fresh Windows machine and a fresh Ubuntu install Concerto with their
-usual package manager, without installing Node first.
+usual package manager, without installing Node first. The release workflow does exactly that after
+publishing: Homebrew on macOS, Scoop on Windows, apt in a bare Ubuntu container, and the Docker
+image. Every push already builds the five executables and runs the .deb in a container without Node.
 
 ### Sprint 17 · 0.18 · safety
 

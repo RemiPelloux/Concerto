@@ -67,11 +67,23 @@ function link(main: string, dir: string, path: string): void {
 }
 
 /** A detached worktree of `base` for one story, with the main folder's dependencies linked in. */
+const queues = new Map<string, Promise<unknown>>();
+
+/**
+ * One `git worktree` command at a time per repository: two at once race on git's admin files
+ * (`failed to read .git/worktrees/a/commondir`) when parallel stories start or end together.
+ */
+function oneAtATime<T>(main: string, task: () => Promise<T>): Promise<T> {
+  const next = (queues.get(main) ?? Promise.resolve()).then(task, task);
+  queues.set(main, next.catch(() => undefined));
+  return next;
+}
+
 export async function openWorktree(main: string, name: string, base: string): Promise<Worktree> {
   const dir = join(worktreeRoot(main), name);
   rmSync(dir, REMOVE);
   mkdirSync(dirname(dir), { recursive: true });
-  await git(main, ["worktree", "add", "--detach", "--quiet", dir, base]);
+  await oneAtATime(main, () => git(main, ["worktree", "add", "--detach", "--quiet", dir, base]));
   const links = await needed(main);
   links.forEach((path) => link(main, dir, path));
   writeFileSync(`${dir}.links.json`, JSON.stringify({ base, links }));
@@ -107,9 +119,9 @@ export async function changesIn(w: Worktree): Promise<Change[]> {
 /** Removes the worktree: links first, so nothing they point at is touched, then git's record. */
 export async function closeWorktree(main: string, w: Pick<Worktree, "dir" | "links">): Promise<void> {
   w.links.forEach((path) => rmSync(join(w.dir, path), { force: true }));
-  await git(main, ["worktree", "remove", "--force", w.dir]).catch(() => rmSync(w.dir, REMOVE));
+  await oneAtATime(main, () => git(main, ["worktree", "remove", "--force", w.dir])).catch(() => rmSync(w.dir, REMOVE));
   rmSync(`${w.dir}.links.json`, { force: true });
-  await git(main, ["worktree", "prune"]).catch(() => "");
+  await oneAtATime(main, () => git(main, ["worktree", "prune"])).catch(() => "");
 }
 
 /**

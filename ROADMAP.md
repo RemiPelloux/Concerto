@@ -20,6 +20,7 @@ is done.
 | 0.16.0 | Part 5: commits per story, pull requests, a GitHub Action, shared config and policy, notifications, traces, cost reports and a dashboard |
 | 0.19.0 | Part 6: standalone executables and package managers, a Docker image, a sandbox, secret scanning and a signed audit log, themes, a plain mode, French, full docs, performance budgets |
 | 1.0.0 | Stable: a versioned config with migrations, a stable CLI, slash commands and event format, a migration guide; an Orca panel, your own `gates`, builders that end with done, nothing-to-do or blocked, an arrow-key model picker and `/config auto` |
+| 1.0.1 | Gemini CLI, Cursor, Aider, Goose, OpenCode and Ollama get their API-key logins; security notes, skills and docs brought up to 1.0 |
 
 ---
 

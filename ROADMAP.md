@@ -16,6 +16,7 @@ one goal, the work that serves it, and a test that says when it is done.
 | 0.1.4 | The prompt works in every phase: type a change to re-plan, a note for running agents, any command |
 | 0.4.0 | Part 1: every story in its own worktree with rebuild on conflict, a test gate, acceptance commands, mutation spot checks, a second critic, a behaviour diff |
 | 0.10.0 | Parts 2 and 3: learning from runs, account windows and budgets, a leaner token engine, a plan editor, reject and ask per story, search, replay and share |
+| 0.13.0 | Part 4: import graphs for eight more languages and monorepos, five more agent CLIs, local models, custom roles, an MCP server, a Neovim plugin |
 
 ---
 
@@ -149,7 +150,7 @@ Done: a failed run from last week was found by a file name, opened as a branch a
 
 ---
 
-## Part 4 · Reach
+## Part 4 · Reach · shipped in 0.13
 
 ### Sprint 10 · more languages and repositories · shipped
 

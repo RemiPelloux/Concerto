@@ -1,7 +1,8 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { isSea } from "node:sea";
 import { gitEnv } from "#src/runner/env.js";
 import { PROVIDER_HOSTS, startProxy } from "#src/runner/proxy.js";
@@ -19,6 +20,13 @@ const SECRET_PATHS = [".ssh", ".aws", ".gnupg", ".kube", ".docker", ".config/gh"
 const AGENT_PATHS = [".claude", ".claude.json", ".codex", ".pi", ".gemini", ".cursor", ".config/opencode", ".local/share/opencode", ".local/state/opencode", ".config/goose", ".local/share/goose", ".cache", ".npm"];
 
 const home = (p: string) => join(homedir(), p);
+const real = (p: string) => {
+  try {
+    return realpathSync(p);
+  } catch {
+    return p;
+  }
+};
 const present = (paths: readonly string[]) => paths.map(home).filter((p) => existsSync(p));
 
 /** The repository's shared git folder: a worktree's index and refs live there. */
@@ -36,13 +44,29 @@ function self(): string[] {
   return isSea() ? [process.execPath] : [process.execPath, ...process.execArgv, process.argv[1] ?? ""];
 }
 
+/**
+ * The package folders of the relay's own files that sit under /tmp, which the sandbox empties: a
+ * checkout or test copy there must stay readable for the relay to start. Read-only.
+ */
+function relayMounts(command: string[]): string[] {
+  const tmp = real(tmpdir());
+  const paths = command.map((a) => (a.startsWith("file://") ? fileURLToPath(a) : a)).filter((a) => isAbsolute(a) && existsSync(a)).map(real);
+  const roots = paths.filter((p) => p.startsWith(`${tmp}/`) || p.startsWith("/tmp/")).map((p) => {
+    let dir = dirname(p);
+    while (dir !== dirname(dir) && !existsSync(join(dir, "package.json"))) dir = dirname(dir);
+    return dir === dirname(dir) ? dirname(p) : dir;
+  });
+  return [...new Set(roots)];
+}
+
 export function hasBubblewrap(): boolean {
   return spawnSync("bwrap", ["--ro-bind", "/", "/", "--unshare-net", "true"], { stdio: "ignore" }).status === 0;
 }
 
 /** bubblewrap: the system read-only, the story's folders writable, secrets hidden, no network but the relay. */
-export function bwrapArgs(at: { cwd: string; writable: string[]; hidden: string[]; runtime: string }): string[] {
+export function bwrapArgs(at: { cwd: string; writable: string[]; hidden: string[]; runtime: string; readable?: string[] }): string[] {
   const args = ["--ro-bind", "/", "/", "--dev", "/dev", "--proc", "/proc", "--tmpfs", "/tmp", "--unshare-net", "--unshare-pid", "--die-with-parent"];
+  (at.readable ?? []).forEach((p) => args.push("--ro-bind", p, p));
   [...new Set([at.cwd, ...at.writable, at.runtime])].forEach((p) => args.push("--bind", p, p));
   at.hidden.forEach((p) => args.push(...(existsSync(join(p, ".")) ? ["--tmpfs", p] : ["--ro-bind", "/dev/null", p])));
   return [...args, "--chdir", at.cwd];
@@ -50,7 +74,8 @@ export function bwrapArgs(at: { cwd: string; writable: string[]; hidden: string[
 
 /** sandbox-exec on macOS: no network but the local proxy, no writes outside the story's folders, secrets unreadable. */
 export function seatbeltProfile(at: { writable: string[]; hidden: string[] }): string {
-  const sub = (p: string) => `(subpath "${p.replace(/"/g, '\\"')}")`;
+  // sandbox-exec matches real paths: /var/folders is /private/var/folders, so a rule on the link never applies.
+  const sub = (p: string) => `(subpath "${real(p).replace(/"/g, '\\"')}")`;
   return [
     "(version 1)", "(allow default)",
     "(deny network-outbound)", '(allow network-outbound (remote ip "localhost:*") (remote unix-socket))',
@@ -80,7 +105,7 @@ export async function sandboxed(job: { bin: string; args: string[]; cwd: string 
     const { server } = await startProxy(socket, rule);
     const close = () => (server.close(), rmSync(runtime, { recursive: true, force: true }));
     const relay = [...self(), "--sandbox-forward", String(INNER_PORT), socket, "--", job.bin, ...job.args];
-    return { bin: "bwrap", args: [...bwrapArgs({ cwd: job.cwd, writable, hidden, runtime }), "--", ...relay], env: proxyEnv(`http://127.0.0.1:${INNER_PORT}`), close };
+    return { bin: "bwrap", args: [...bwrapArgs({ cwd: job.cwd, writable, hidden, runtime, readable: relayMounts(relay) }), "--", ...relay], env: proxyEnv(`http://127.0.0.1:${INNER_PORT}`), close };
   }
   if (process.platform === "darwin") {
     const { server, port } = await startProxy(0, rule);

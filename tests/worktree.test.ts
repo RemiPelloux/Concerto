@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { mergeBack, mergeLines } from "#src/engine/merge.js";
@@ -94,6 +94,31 @@ describe("story worktrees", () => {
     expect((await mergeBack(cwd, w, await changesIn(w))).merged).toEqual(["app.txt"]);
     expect(readFileSync(join(cwd, "app.txt"), "utf8")).toBe(`${theirs.join("\r\n")}\r\n`);
     await closeWorktree(cwd, w);
+  });
+
+  it.skipIf(process.platform === "win32")("never merges a symbolic link, nor writes through one out of the folder", async () => {
+    const cwd = repo();
+    const secret = join(tempDir(), "id_rsa");
+    writeFileSync(secret, "PRIVATE KEY BYTES\n");
+    const w = await openWorktree(cwd, "run-1/link", await snapshot(cwd));
+    symlinkSync(secret, join(w.dir, "notes.txt"));
+    const leak = await mergeBack(cwd, w, await changesIn(w));
+    expect(leak.merged).toEqual([]);
+    expect(leak.conflicts).toEqual(["notes.txt"]);
+    expect(existsSync(join(cwd, "notes.txt"))).toBe(false);
+    await closeWorktree(cwd, w);
+    const outside = tempDir();
+    symlinkSync(outside, join(cwd, "out"));
+    git(cwd, "add", "out");
+    git(cwd, "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "link");
+    const v = await openWorktree(cwd, "run-1/through", await snapshot(cwd));
+    rmSync(join(v.dir, "out"));
+    mkdirSync(join(v.dir, "out"));
+    writeFileSync(join(v.dir, "out", "pwned.txt"), "x\n");
+    const through = await mergeBack(cwd, v, await changesIn(v));
+    expect(through.conflicts.length).toBeGreaterThan(0);
+    expect(existsSync(join(outside, "pwned.txt"))).toBe(false);
+    await closeWorktree(cwd, v);
   });
 
   it("deletes a file only if nobody changed it meanwhile", async () => {

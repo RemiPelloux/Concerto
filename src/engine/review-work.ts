@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
@@ -73,6 +73,7 @@ type Revert = { path: string; bytes: Buffer | null } | { conflict: string };
 
 async function revertOne(cwd: string, r: FileRecord): Promise<Revert> {
   const path = join(cwd, r.file);
+  if (existsSync(path) && lstatSync(path).isSymbolicLink()) return { conflict: `${r.file}: now a symbolic link, which Concerto never writes through` };
   const now = read(path);
   if (!r.after) return now ? { conflict: `${r.file}: written again since the story deleted it` } : { path, bytes: r.before };
   if (!now) return { conflict: `${r.file}: deleted since the story changed it` };

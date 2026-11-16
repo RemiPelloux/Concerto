@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { promisify } from "node:util";
@@ -103,9 +103,27 @@ async function versions(main: string, w: Worktree, change: Change): Promise<Vers
   return { ours: lf(mine), theirs: lf(raw), base: lf(base), raw, crlf: Boolean(mine?.includes(CRLF)) };
 }
 
+const isLink = (path: string) => {
+  try {
+    return lstatSync(path).isSymbolicLink();
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * A symbolic link, or a path that goes through one, in the story or in the main folder: reading
+ * it could copy a file from outside the project in, and writing it could change one outside.
+ */
+function throughLink(main: string, w: Worktree, file: string): boolean {
+  const parts = file.split("/");
+  return parts.some((_, i) => [main, w.dir].some((root) => isLink(join(root, ...parts.slice(0, i + 1)))));
+}
+
 async function plan(main: string, w: Worktree, change: Change): Promise<Planned> {
-  const { ours, theirs, base, raw, crlf } = await versions(main, w, change);
   const conflict = (why: string): Planned => ({ step: null, conflict: `${change.file}: ${why}` });
+  if (throughLink(main, w, change.file)) return conflict("a symbolic link, which Concerto never merges: it could reach outside the project");
+  const { ours, theirs, base, raw, crlf } = await versions(main, w, change);
   if (change.status === "D") {
     if (!ours) return { step: null, conflict: null };
     return base && ours.equals(base) ? { step: { file: change.file, remove: true }, conflict: null } : conflict("changed here, deleted by the story");

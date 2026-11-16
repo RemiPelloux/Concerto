@@ -237,7 +237,8 @@ empty build, no blind retry.
 
 ## Teach your agents
 
-`concerto --install-skills` (the installer runs it) adds three skills to Claude Code, Codex and pi:
+`concerto --install-skills` (the installer runs it) adds three skills to Claude Code, Codex, pi, and
+every agent that reads `~/.agents/skills`:
 
 - `concerto`: when to hand a job to Concerto, which command to run, how to read the plan and the
   report.

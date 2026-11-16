@@ -1,16 +1,34 @@
 # Security
 
 Concerto starts coding agents that edit files and run shell commands in the directory you start it
-from. Treat a run like giving a contractor your working tree: start it in a git worktree or a clean
-branch, and review the diff before you commit it. Concerto never commits.
+from. Treat a run like giving a contractor your working tree: turn on the sandbox for work you do
+not fully trust, and review the diff before you ship it. Concerto commits only when asked
+(`--commit`, `--pr`). Every place model output reaches a shell, a path or a file is reviewed in
+[docs/security.md](docs/security.md).
+
+## Supported versions
+
+Security fixes go to the latest 1.x release. `concerto --update` gets it.
 
 ## What Concerto does to limit the blast radius
 
-- **No API keys.** Claude Code, Codex and pi keep their own credentials. Concerto never reads,
-  stores or forwards them.
+- **No API keys.** Each agent CLI (Claude Code, Codex, Gemini CLI, Cursor, OpenCode, Goose, Aider,
+  pi) keeps its own credentials. Concerto never reads, stores or forwards them.
+- **A sandbox** (`--sandbox`): on Linux (bubblewrap) and macOS (`sandbox-exec`) every agent and
+  every check runs with the system read-only, `~/.ssh`, `~/.aws`, `gh` and similar credentials
+  hidden, and a network limited to the model providers. A run that asks for it and cannot get it
+  refuses to start.
+- **Secret scanning and policy.** Every change is scanned before review; one with a key, token or
+  password never merges, and neither does one that touches `policy.protectedPaths`.
+- **A signed audit log** in `.concerto/audit/`: every command an agent ran and every refusal,
+  each line signed over the one before it.
+- **Links never merge.** A symbolic link a builder leaves, or a path through one, is never copied
+  into your folder.
 - **Allowlisted environment.** Agent processes get `PATH`, `HOME`, locale, proxy and git variables,
   plus the variables their own providers read (`ANTHROPIC_*`, `OPENAI_*`, `CLAUDE_CODE_OAUTH_TOKEN`,
-  `CODEX_HOME`, `PI_*`, `DEEPSEEK_*`, `XAI_*`, `CE_*`). Everything else, such as cloud credentials
+  `CODEX_HOME`, `PI_*`, `DEEPSEEK_*`, `XAI_*`, `CE_*`, `GEMINI_*`, `GOOGLE_API_KEY`,
+  `CURSOR_API_KEY`, `OPENROUTER_*`, `GROQ_*`, `MISTRAL_*`, `OLLAMA_HOST`, `AIDER_*`, `GOOSE_*`,
+  `OPENCODE_*`). Everything else, such as cloud credentials
   or other tools' tokens, is dropped. Add names with `CONCERTO_ENV_PASSTHROUGH=NAME1,NAME2`.
 - **Prompts on stdin.** Prompts never appear in process arguments, so other users on the machine
   cannot read them with `ps`. On Windows the agent CLIs are `.cmd` shims started through
@@ -47,10 +65,13 @@ branch, and review the diff before you commit it. Concerto never commits.
 
 ## What it cannot do
 
-Builders run the shell commands a model writes, with your user's permissions. Concerto does not
-sandbox Claude Code or pi. Codex's `workspace-write` sandbox applies only to Codex. A worktree
-keeps a builder's edits out of your folder until they are merged, but it is not a sandbox: a
-builder can still read and write anywhere your user can. Outside a git repository, or with
+Without `--sandbox`, builders run the shell commands a model writes with your user's permissions.
+Codex's `workspace-write` sandbox applies only to Codex. A worktree keeps a builder's edits out of
+your folder until they are merged, but it is not a sandbox: a builder can still read and write
+anywhere your user can. Windows has no native sandbox; run the Docker image there for untrusted
+work. A builder may follow instructions planted in the code it reads; the sandbox, protected
+paths, the critic and the audit log limit what that can do, but Concerto cannot tell a planted
+instruction from a real one. Outside a git repository, or with
 `"isolation": "off"`, stories run in parallel in the folder itself; set `swarm.maxParallel` to 1
 there if your stories touch shared files.
 

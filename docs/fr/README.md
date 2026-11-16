@@ -6,6 +6,13 @@ construit chaque story dans son propre worktree git, la vérifie avec les tests 
 critique, puis la fusionne dans votre dossier. Le [README anglais](../../README.md) est la
 référence complète ; cette page en reprend l'essentiel.
 
+Depuis la 1.0, la configuration, les options, les commandes et le format des événements sont
+stables : rien ne casse avant la 2.0 ([stabilité](../stability.md), en anglais). Pour passer
+d'une 0.x : `concerto --update`, puis `concerto --migrate-config` si vous voulez écrire la version
+dans vos fichiers ([guide](../migrating-to-1.0.md)).
+
+![Concerto construit quatre stories](../assets/screens/building.svg)
+
 ## Installer
 
 Linux et macOS :

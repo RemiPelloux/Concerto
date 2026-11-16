@@ -1,13 +1,15 @@
 ---
 name: concerto
-description: Run a multi-step coding job through Concerto, which splits it into scored user stories, sends each story to the model that fits it (Claude Code, Codex, pi), has a critic review every story, and writes a report. Use when the user says "concerto", "orchestrate this", "split this into stories", "score this request", "how hard is this change", or wants a large change built by several models. Not for one-line edits you can make directly.
+description: Run a multi-step coding job through Concerto, which splits it into scored user stories, sends each story to the model that fits it (Claude Code, Codex, Gemini CLI, Cursor, OpenCode, Goose, Aider, pi or a local model), runs the tests, has a critic review every story, and writes a report. Use when the user says "concerto", "orchestrate this", "split this into stories", "score this request", "how hard is this change", or wants a large change built by several models. Not for one-line edits you can make directly.
 ---
 
 # Concerto
 
-`concerto` is a command on this machine. It starts other coding agents (Claude Code, Codex, pi)
-as background processes, one per story, so the user's own session is not involved. Builders
-edit files in the directory Concerto runs in.
+`concerto` is a command on this machine. It starts other coding agents (Claude Code, Codex,
+Gemini CLI, Cursor, OpenCode, Goose, Aider, pi, or a local model through Ollama or LM Studio) as
+background processes, one per story, so the user's own session is not involved. Each story builds
+in its own git worktree and merges into the directory Concerto runs in once it passes the tests
+and review.
 
 ## Pick the command
 
@@ -17,6 +19,8 @@ edit files in the directory Concerto runs in.
 | It built, watchable, without touching their branch | `concerto --orca "<request>"` | In a new worktree |
 | It built here, unattended, with a cap | `concerto --run --budget 5 "<request>"` | Yes, here |
 | To finish a run that crashed, was stopped or failed review | `concerto --resume <session id>` (opens the TUI; the user presses Enter to build) | Yes, here |
+| A pull request for it | `concerto --run --pr --budget 5 "<request>"` | On a new branch |
+| It built with agents kept away from credentials and the network | add `--sandbox` (Linux, macOS) | Yes, here |
 | To check which models work | `concerto --doctor` | No |
 | What past runs say: which model passes, what it costs, which files keep failing | `concerto --insights` | No |
 
@@ -45,7 +49,9 @@ JSON with `summary`, `stories` and `routing`. For each routing entry, tell the u
 `--run` prints a log and ends with `done` or `failed: <reason>`; exit code 1 means a story failed
 review, the budget ran out, or the conductor stopped the plan. The full report is the newest
 `.concerto/runs/*.md`. Relay what changed, what failed and the cost. Do not commit for the user
-unless asked; suggest reviewing the diff.
+unless asked; suggest reviewing the diff. For a machine-readable run, add `--json`: one event per
+line, documented in
+[docs/events.md](https://github.com/RemiPelloux/Concerto/blob/main/docs/events.md).
 
 Every run prints its session id first (`session s-… · log .concerto/logs/s-….log`). The log has
 every phase, agent line and error. The session is saved too: `concerto --resume <id>` reopens it

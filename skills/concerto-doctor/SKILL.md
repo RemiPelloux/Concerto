@@ -19,7 +19,7 @@ Every error message Concerto prints is listed, with its cause and fix, in
 | `401 Incorrect API key` | a bad key in the environment or pi | fix the key, then `concerto --probe` |
 | `503 No available accounts` | the proxy has no capacity for that model | wait, or `concerto --prefer claude-code,codex` |
 | `403 ... IP is not authorized` | the provider blocks this network | remove that provider's models or allow the IP |
-| `No configured model is reachable` | nothing installed or logged in | install and log into `claude`, `codex` or `pi`, then `concerto --init` |
+| `No configured model is reachable` | nothing installed or logged in | install and log into an agent (`claude`, `codex`, `gemini`, `cursor-agent`, `opencode`, `goose`, `aider`, `pi`) or start Ollama, then `concerto --init` |
 | `Fallback` lines in the log | a model failed mid-run; the next one took over | usually fine; `--doctor` shows if it persists |
 | `run budget reached` (or story, daily, repository budget) | a budget in the config or `--budget` was spent | raise it in `budgets`/`budgetUsd`, or split the request |
 | `Quota <account>: rate-limited until …` or `… window used` | the account hit its rate limit or its `limits` window | calls go to the next way of reaching the model; nothing to do unless every way is blocked |
@@ -32,7 +32,10 @@ Every error message Concerto prints is listed, with its cause and fix, in
 | `Merge ... conflict` in the log | the story and work that landed meanwhile changed the same lines | Concerto rebuilds the story on the current code, up to twice; if it still fails, its work is in `.concerto/worktrees/failed-*.patch` (`git apply` it, or retry the story) |
 | `2nd critic` failed, then `critics-disagree` | on a high-risk story, critics from two vendors disagreed | the conductor decides; its finding is in the log and the report |
 | an agent shows no output for minutes | it is usually running tests; the preview says how long since it last printed | wait, or Tab to the agent and Enter for its live output |
-| on Windows: `claude`, `codex` or `pi` not found | not on PATH in this terminal | open a new terminal after installing, check `where codex` |
+| on Windows: an agent CLI not found | not on PATH in this terminal | open a new terminal after installing, check `where codex` |
+| an agent logged in with an API key fails only under Concerto | its variable is not passed to agents | Concerto passes each agent CLI's own variables; add others with `CONCERTO_ENV_PASSTHROUGH=NAME1,NAME2` |
+| `sandbox` refuses to start | no bubblewrap (Linux) or `sandbox-exec` (macOS), or Windows | install `bubblewrap`; on Windows run the Docker image |
+| an older config warns or fails to load | written by a newer Concerto, or before 1.0 | `concerto --update`; `concerto --migrate-config` writes the version into old files |
 | a crash or any other error | see the session log | open `.concerto/logs/<session id>.log`; the id is in the error message and the status line |
 
 Notes:

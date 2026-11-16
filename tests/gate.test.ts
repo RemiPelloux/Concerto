@@ -68,7 +68,8 @@ async function run(gates: string[], cwd = tempDir()) {
 
 describe("gates in a run", () => {
   it("a red gate goes back to the builder and never reaches the critic", async () => {
-    const { store, critics, builds } = await run(["echo boom >&2; exit 1"]);
+    // Gates run in the system shell (cmd.exe on Windows): node keeps them portable.
+    const { store, critics, builds } = await run([`node -e "console.error('boom'); process.exit(1)"`]);
     expect(critics).toHaveLength(0);
     expect(Object.values(store.get().stories).every((s) => s.status === "failed")).toBe(true);
     expect(builds.some((r) => r.prompt.includes("boom"))).toBe(true);
@@ -76,14 +77,15 @@ describe("gates in a run", () => {
 
   it("does not run a failed gate again over a build that changed nothing", async () => {
     const cwd = gitRepo();
-    const { builds } = await run([`echo x >> ${join(cwd, ".git", "gate-runs")}; exit 1`], cwd);
+    const log = join(cwd, ".git", "gate-runs").replace(/\\/g, "/");
+    const { builds } = await run([`node -e "require('fs').appendFileSync('${log}', 'x\\n'); process.exit(1)"`], cwd);
     expect(builds.some((r) => r.prompt.includes("changed no file"))).toBe(true);
     const runs = readFileSync(join(cwd, ".git", "gate-runs"), "utf8").trim().split("\n");
     expect(runs.length).toBeLessThan(builds.length);
   });
 
   it("a green gate lets the critic review", async () => {
-    const { store, critics } = await run(["true"]);
+    const { store, critics } = await run([`node -e "process.exit(0)"`]);
     expect(critics.length).toBeGreaterThan(0);
     expect(store.get().phase).toBe("done");
   });

@@ -89,6 +89,9 @@ class Keyboard extends EventEmitter {
   }
 }
 
+const SLOW_CI_MS = 5000;
+const VIEW_SETTLE_MS = 100;
+
 describe("/config picker", () => {
   it("changes a role's model with the arrows and enter, applies it now and saves it", async () => {
     const cwd = project();
@@ -96,9 +99,11 @@ describe("/config picker", () => {
     const deps = { config: config(), catalog: CATALOG, store, runner: scriptedRunner(() => "").runner, cwd, autoPerform: false, initialRequest: "", showTour: false, onExit: () => undefined, log: new SessionLog(cwd) };
     const app = render(<App {...deps} />, { stdout: terminal as never, stdin: keyboard as never, debug: true, patchConsole: false, exitOnCtrlC: false });
     const screen = () => terminal.frames.at(-1) ?? "";
+    // A new view listens for keys from its first effect, a moment after it first shows: wait that moment.
     const press = async (key: string, see: string) => {
       keyboard.press(key);
-      await vi.waitFor(() => expect(screen()).toContain(see));
+      await vi.waitFor(() => expect(screen()).toContain(see), { timeout: SLOW_CI_MS });
+      await new Promise((r) => setTimeout(r, VIEW_SETTLE_MS));
     };
     keyboard.press("/config");
     await press(ENTER, "Who does what");

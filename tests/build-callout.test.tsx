@@ -41,7 +41,7 @@ describe("build call-out", () => {
 
   it("rolls the colours along the letters as frames pass", () => {
     const now = [0, 1, 2].map((i) => waveColor(i, 0));
-    const later = [0, 1, 2].map((i) => waveColor(i, 2));
+    const later = [0, 1, 2].map((i) => waveColor(i, 1));
     expect(later).not.toEqual(now);
     expect(later[1]).toBe(now[0]);
   });

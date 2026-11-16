@@ -11,6 +11,9 @@ import { applyKeys } from "#src/ui/keys.js";
 import { setLanguage } from "#src/i18n/index.js";
 import { applyTheme } from "#src/ui/theme.js";
 
+/** Only the lines that changed are rewritten, not the whole screen on every update. */
+export const TUI_RENDER = { incrementalRendering: true };
+
 /** The only module that loads Ink and React: commands that print and exit never import it. */
 export async function launchTui(deps: Omit<AppDeps, "onExit">): Promise<ExitReason> {
   applyTheme(deps.config.ui.theme);
@@ -18,7 +21,7 @@ export async function launchTui(deps: Omit<AppDeps, "onExit">): Promise<ExitReas
   setLanguage(deps.config.ui.language);
   process.stdout.write("\x1b[2J\x1b[H");
   let reason: ExitReason = "quit";
-  await render(<App {...deps} onExit={(r) => (reason = r)} />).waitUntilExit();
+  await render(<App {...deps} onExit={(r) => (reason = r)} />, TUI_RENDER).waitUntilExit();
   return reason;
 }
 

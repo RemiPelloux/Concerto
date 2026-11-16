@@ -1,5 +1,5 @@
 import { Box, Text, useStdout } from "ink";
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { ConcertoConfig } from "#src/config/types.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { roleChain } from "#src/models/router.js";
@@ -122,6 +122,49 @@ function Diagram({ state, swarmSize }: { state: State; swarmSize: number }) {
   );
 }
 
+/** What may be cut when the terminal is short. `swarm`: the diagram's swarm size, 0 to leave the diagram out. */
+function Top({ state, nav, brain, swarm }: { state: State; nav: Navigation; brain: string; swarm: number }) {
+  return (
+    <>
+      <Header state={state} />
+      <CostBar ledger={state.ledger} brain={brain} />
+      {swarm ? <Diagram state={state} swarmSize={swarm} /> : null}
+      <Work state={state} nav={nav} />
+      <LogView log={state.log} />
+    </>
+  );
+}
+
+/** The terminal's rows, kept current when the pane is resized. */
+function useRows(): number | undefined {
+  const { stdout } = useStdout();
+  const [rows, setRows] = useState(stdout.rows);
+  useEffect(() => {
+    const resize = () => setRows(stdout.rows);
+    stdout.on("resize", resize);
+    return () => void stdout.off("resize", resize);
+  }, [stdout]);
+  return rows;
+}
+
+/**
+ * The screen stays one row short of the terminal. On a frame that tall, Ink clears the whole
+ * terminal, scrollback included, and redraws everything on every update: in Orca that flood froze
+ * the renderer every terminal shares. The top gives way first, cut from its bottom; the prompt and
+ * what answers it always show. Rows left over stay blank under the prompt.
+ */
+function FitScreen({ top, children }: { top: ReactNode; children: ReactNode }) {
+  const rows = useRows();
+  return (
+    <Box flexDirection="column" paddingX={1} height={rows ? rows - 1 : undefined}>
+      <Box flexDirection="column" flexShrink={1} overflow="hidden">
+        <Box flexDirection="column" flexShrink={0}>{top}</Box>
+      </Box>
+      <Box flexDirection="column" flexShrink={0}>{children}</Box>
+    </Box>
+  );
+}
+
 /** The store's state, re-read at most once a frame however fast the orchestrator writes. */
 function useFrameState(store: Store): State {
   const subscribe = useCallback((notify: () => void) => {
@@ -151,17 +194,12 @@ export function App(deps: AppDeps) {
   if (nav.overlay?.kind === "models") return <PickerScreen state={state} picker={{ config: session.config, catalog: session.catalog, cwd: deps.cwd, onApply: apply, onClose: () => nav.open(null) }} />;
   if (nav.overlay) return <OverlayScreen state={state} nav={nav} session={deps.log.id} />;
   return (
-    <Box flexDirection="column" paddingX={1}>
-      <Header state={state} />
-      <CostBar ledger={state.ledger} brain={brain} />
-      {roomy ? <Diagram state={state} swarmSize={deps.config.swarm.maxParallel} /> : null}
-      <Work state={state} nav={nav} />
-      <LogView log={state.log} />
+    <FitScreen top={<Top state={state} nav={nav} brain={brain} swarm={roomy ? deps.config.swarm.maxParallel : 0} />}>
       <PanelView panel={panel} />
       <RunSummary state={state} />
       {state.phase === "planned" && nav.zone === "prompt" ? <BuildCallout /> : null}
       <PromptBar enabled={nav.zone === "prompt"} hint={promptHint(state)} onSubmit={submit} onTab={nav.nextZone} onEmpty={enter} />
       <StatusLine state={state} zone={nav.zone} overlay={false} session={deps.log.id} />
-    </Box>
+    </FitScreen>
   );
 }

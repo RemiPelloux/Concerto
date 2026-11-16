@@ -5,7 +5,7 @@ import { diffText, type Worktree } from "#src/engine/worktree.js";
 import type { ModelInfo } from "#src/models/types.js";
 import { roleChain, tierChain } from "#src/models/router.js";
 import { parseRef } from "#src/runner/types.js";
-import { headline, readTag, runSegments, storyBrief } from "#src/orchestrator/briefs.js";
+import { headline, readTag, storyBrief, storySegments } from "#src/orchestrator/briefs.js";
 import { callRole } from "#src/orchestrator/call.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 import { consult } from "#src/orchestrator/consult.js";
@@ -34,7 +34,7 @@ async function critique(c: Concert, job: Job, second?: ModelInfo[]): Promise<Ver
   c.store.story(story.id, { status: "checking" });
   const view = c.store.view(story.id);
   const segments = [
-    ...runSegments(c.store.get(), c.repo.text),
+    ...storySegments(c.store.get(), { repoMap: c.repo.text, storyId: story.id, snapshot: false }),
     { name: "story", text: storyBrief(story) },
     { name: "blast radius", text: impactBrief(view.impact) },
     { name: "checks", text: checksBrief(c, story.id) },

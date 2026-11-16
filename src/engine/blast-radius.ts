@@ -1,10 +1,12 @@
-import { statSync } from "node:fs";
+import { mkdirSync, statSync } from "node:fs";
 import { readdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { ImportGraph } from "#src/engine/import-graph.js";
+import { ParseCache } from "#src/engine/parse-cache.js";
 import { buildRepoMap } from "#src/engine/repo-map.js";
 
 const CONFIG_FILES = ["package.json", "tsconfig.json", "smarttest.config.ts", "smarttest.config.js", ".smarttest.json"];
+const CACHE_DIR_MODE = 0o700;
 const IGNORED = new Set([".git", "node_modules", ".concerto", ".smarttest", "dist", "build"]);
 
 type Snapshot = {
@@ -48,6 +50,9 @@ export class BlastRadius {
   private stamps = new Map<string, string>();
 
   constructor(private readonly cwd: string, private files: readonly string[]) {
+    // The parse cache lives under .concerto/; creating it later would change the folder's
+    // modification time and read as a repository change.
+    mkdirSync(join(cwd, ".concerto", "cache"), { recursive: true, mode: CACHE_DIR_MODE });
     this.remember();
   }
 
@@ -71,7 +76,7 @@ export class BlastRadius {
       this.remember();
     }
     if (!this.snapshot) await this.watchDirectories();
-    this.snapshot ??= { files: this.files, graph: new ImportGraph(this.cwd, this.files), explained: new Map(), perFile: new Map() };
+    this.snapshot ??= { files: this.files, graph: new ImportGraph(this.cwd, this.files, ParseCache.for(this.cwd)), explained: new Map(), perFile: new Map() };
     return this.snapshot;
   }
 }

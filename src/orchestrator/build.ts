@@ -2,7 +2,8 @@ import { approxTokens, condense } from "#src/engine/condense.js";
 import { bump } from "#src/engine/ledger.js";
 import { readChanges } from "#src/engine/changes.js";
 import { impactBrief } from "#src/engine/impact.js";
-import { readTag, runSegments, storyBrief } from "#src/orchestrator/briefs.js";
+import { contextPack } from "#src/engine/context-pack.js";
+import { readTag, storyBrief, storySegments } from "#src/orchestrator/briefs.js";
 import { overBudget } from "#src/orchestrator/budget.js";
 import { callRole } from "#src/orchestrator/call.js";
 import type { Concert } from "#src/orchestrator/concert.js";
@@ -27,9 +28,10 @@ async function play(c: Concert, { story, cwd }: Job, feedback: string): Promise<
   const view = c.store.view(story.id);
   c.store.story(story.id, { status: "building" });
   const segments = [
-    ...runSegments(c.store.get(), c.repo.text),
+    ...storySegments(c.store.get(), { repoMap: c.repo.text, storyId: story.id, snapshot: true }),
     { name: "story", text: storyBrief(story) },
     { name: "blast radius", text: impactBrief(view.impact) },
+    { name: "context pack", text: contextPack(c.cwd, view.impact.files) },
     { name: "feedback", text: feedback ? `## Fix this before anything else\n${feedback}` : "" },
   ];
   const chain = c.catalog.reachable(view.chain);

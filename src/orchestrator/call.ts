@@ -110,7 +110,7 @@ async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
     signal: AbortSignal.any([c.signal, timeout]),
   });
   if (session) c.sessions.record(session, assembled.hashes);
-  const entry = { usage: result.usage, price: model.price, brain: c.brainPrice };
+  const entry = { usage: result.usage, price: model.price, brain: c.brainPrice, role: call.role };
   const before = c.store.get().ledger.usage.cost;
   c.store.update((s) => ({ ledger: bump(record(s.ledger, entry), "dedupedTokens", assembled.skippedTokens) }));
   const cost = c.store.get().ledger.usage.cost - before;

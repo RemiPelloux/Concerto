@@ -10,6 +10,9 @@ import { estimateStory } from "#src/orchestrator/estimate.js";
 import { parsePlan, type Plan, type Story } from "#src/orchestrator/plan.js";
 import { scoreStory, WEIGHTS, type FactorKey } from "#src/orchestrator/scoring.js";
 import { pathCosts } from "#src/orchestrator/paths.js";
+import { planForSimilar, rememberPlan } from "#src/engine/similar.js";
+import { bump } from "#src/engine/ledger.js";
+import type { Segment } from "#src/engine/segments.js";
 
 const NO_CHECKPOINTS = { "plan-lock": "", "repeat-error": "", "critics-disagree": "", "before-done": "" };
 
@@ -44,6 +47,23 @@ function withSafeFiles(plan: Plan): Plan {
 }
 
 /**
+ * The scorer's plan. A request worded differently from one already scored on the same repository
+ * state reuses that plan: no model call, counted as a local hit.
+ */
+async function planText(c: Concert, request: string, segments: Segment[]): Promise<string> {
+  const known = { repoKey: c.repo.key, ttlHours: c.config.cache.ttlHours };
+  const reused = planForSimilar(c.cwd, request, known);
+  if (reused) {
+    c.store.update((s) => ({ ledger: bump(s.ledger, "localHits") }));
+    c.store.log({ role: "scorer", label: "Score", detail: "same request, worded differently: plan reused", result: "local hit" });
+    return reused;
+  }
+  const reply = await callRole(c, { role: "scorer", segments, cacheable: true, label: "scoring the request" });
+  rememberPlan(c.cwd, request, { repoKey: c.repo.key, reply: reply.text });
+  return reply.text;
+}
+
+/**
  * Splits the request into scored user stories, measures what each one reaches in the
  * repository (files, importers, covering tests), then scores and routes it. The repository
  * snapshot goes first so the same request on a changed repository is not a cache hit.
@@ -54,8 +74,7 @@ export async function scoreRequest(c: Concert, request: string): Promise<void> {
     { name: "repository snapshot", text: c.repo.text },
     { name: "request", text: `## Request\n${request}` },
   ];
-  const reply = await callRole(c, { role: "scorer", segments, cacheable: true, label: "scoring the request" });
-  const plan = withSafeFiles(parsePlan(reply.text));
+  const plan = withSafeFiles(parsePlan(await planText(c, request, segments)));
   const impacts = await analyzeImpact({ cwd: c.cwd, repoFiles: c.repo.files, cache: c.blastRadius, stories: plan.stories });
   const views = plan.stories.map((s) => view(c, s, impacts.get(s.id) ?? NO_IMPACT));
   const stories = Object.fromEntries(views.map((v) => [v.id, v]));

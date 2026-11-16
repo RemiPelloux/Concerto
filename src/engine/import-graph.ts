@@ -1,6 +1,7 @@
 import { readFileSync, statSync } from "node:fs";
 import { join, posix } from "node:path";
 import { loadAliases, type Alias } from "#src/engine/aliases.js";
+import type { ParseCache } from "#src/engine/parse-cache.js";
 
 const SOURCE = /\.(?:[cm]?[jt]sx?|py)$/;
 const JS_EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
@@ -82,16 +83,22 @@ export class ImportGraph {
   constructor(
     private readonly cwd: string,
     files: readonly string[],
+    cache?: ParseCache,
   ) {
     const resolution = { files: new Set(files), aliases: loadAliases(cwd) };
-    files.filter((f) => SOURCE.test(f)).slice(0, MAX_FILES).forEach((from) => {
+    const parse = (from: string) => () => {
       const text = readSource(cwd, from);
-      this.lineCounts.set(from, countLines(text));
-      specifiers(from, text).forEach((spec) => {
+      return { lines: countLines(text), specifiers: specifiers(from, text) };
+    };
+    files.filter((f) => SOURCE.test(f)).slice(0, MAX_FILES).forEach((from) => {
+      const parsed = cache ? cache.get(cwd, from, parse(from)) : parse(from)();
+      this.lineCounts.set(from, parsed.lines);
+      parsed.specifiers.forEach((spec) => {
         const target = resolveImport(from, spec, resolution);
         if (target && target !== from) this.importers.set(target, (this.importers.get(target) ?? new Set()).add(from));
       });
     });
+    cache?.save();
   }
 
   /** Every file that imports any of `files`, with its distance: 1 = imports it directly. */

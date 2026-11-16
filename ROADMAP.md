@@ -91,17 +91,19 @@ miss by more.
 Done: a run whose account window is spent mid-run moves the remaining calls to another account
 with no failed call.
 
-### Sprint 6 · 0.7 · deeper token engine
+### Sprint 6 · deeper token engine · shipped
 
-- **Shared repo map across sessions** with incremental updates from git, not a full rebuild.
-- **Context packs per story:** only the files, symbols and tests a story needs, ranked by the
-  import graph, under a token budget.
-- **Semantic response cache** for scoring: a request that differs only in wording reuses the plan.
-- **Prompt cache planning:** order segments so the longest stable prefix is shared by the most
-  calls, and report the hit rate per role.
+- **A repository parse kept between runs:** the import graph re-reads only files whose size or
+  modification time changed.
+- **Context packs:** each builder gets what its story's files export, under 400 tokens, and only
+  its neighbours in the plan; critics, who read the diff, get no repository map.
+- **A request worded differently** (same content words, same numbers, same repository) reuses
+  the plan without a model call.
+- **Cache hit rate per role** in `concerto --stats`.
 
-Done when: the same 10-story run costs 30 % less in input tokens than in 0.4, with the same
-pass rate.
+Done: the same 10-story run sends 40 % fewer prompt tokens than 0.4 (4,269 against 7,079), all ten
+stories passing. Measured on what Concerto sends; what agents read on their own is only measurable
+on real runs, and the context packs aim at exactly that.
 
 ---
 

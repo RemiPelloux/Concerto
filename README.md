@@ -234,7 +234,12 @@ last attempt.
 - System prompts are byte-identical between calls, so provider caches keep hitting.
 - A resumed session is not sent what it already has.
 - Critiques and logs lose noise (ANSI codes, spinners, repeated lines) before going back to a model.
-- Scoring the same request twice is answered from a local cache, with no tokens spent.
+- Scoring the same request twice, even worded differently, is answered from a local cache, with no
+  tokens spent. Requests that name different numbers never match.
+- Each builder sees only its story's neighbours in the plan, and a context pack of what its files
+  export, so it opens fewer files to find its way. Critics, who read the diff, get no repository map.
+- The import graph's parse of every file is kept between runs; only changed files are read again.
+- `concerto --stats` shows the provider cache hit rate per role.
 - Agents are told to use [rtk](https://github.com/rtk-ai/rtk) when it is installed.
 
 ## Configuration

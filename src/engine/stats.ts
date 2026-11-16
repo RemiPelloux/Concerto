@@ -17,6 +17,7 @@ const StatsSchema = z.object({
     condensedTokens: z.number().default(0),
     dedupedTokens: z.number().default(0),
     fallbacks: z.number().default(0),
+    roles: z.record(z.string(), UsageSchema).default({}),
   }),
 });
 export type Stats = z.infer<typeof StatsSchema>;

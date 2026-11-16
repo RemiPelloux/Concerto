@@ -1,12 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync, realpathSync } from "node:fs";
+import { realpathSync } from "node:fs";
 import { relative } from "node:path";
 import { codexBin } from "#src/runner/bins.js";
 import type { Effort } from "#src/config/types.js";
 import { gitEnv } from "#src/runner/env.js";
 import type { RunEvent } from "#src/runner/events.js";
 import { asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
-import { withSkillNote } from "#src/runner/skill-note.js";
+import { withRolePrompt } from "#src/runner/skill-note.js";
 import { runJsonl } from "#src/runner/spawn.js";
 import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
 
@@ -46,9 +46,7 @@ export function buildCodexArgs(req: RunRequest): string[] {
 }
 
 /** Codex has no system prompt flag: the role prompt opens the message, still a stable prefix. */
-export function codexInput(req: RunRequest): string {
-  return `${readFileSync(req.systemFile, "utf8")}\n\n---\n\n${withSkillNote(req.prompt, req.skills)}`;
-}
+export const codexInput = withRolePrompt;
 
 function itemEvent(item: Json): RunEvent | null {
   if (item.type === "command_execution") return { kind: "tool", name: "bash", detail: oneLine(str(item.command).replace(/^\S*bash -lc /, "")) };

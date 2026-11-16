@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { claudeBin, codexBin, piBin } from "#src/runner/bins.js";
-import { codexHome, codexProfiles, codexSlugs, piRefs } from "#src/models/discover.js";
+import { codexHome, codexProfiles, codexSlugs, opencodeRefs, piRefs } from "#src/models/discover.js";
 import { onPath } from "#src/runner/tool.js";
 import { inferTier } from "#src/setup/tiers.js";
 
@@ -42,16 +42,25 @@ function profileRefs(profiles: string[], pi: Set<string>): string[] {
   });
 }
 
+/** `opencode/openai/gpt-6-sol`: the tier of the model after the provider, as for pi. */
+function opencodeLinked(refs: string[]): Linked[] {
+  return refs.flatMap((ref) => {
+    const tier = inferTier(ref.split("/").slice(2).join("/")) ?? inferTier(ref.split("/").slice(1).join("/"));
+    return tier === null ? [] : [{ ref, tier, via: "OpenCode" }];
+  });
+}
+
 /** Looks for every CLI and model Concerto can use on this machine. Reads no credentials. */
 export async function detect(): Promise<Detection> {
   const [claude, codex, pi] = [onPath(claudeBin()), onPath(codexBin()), onPath(piBin())];
-  const piModels = pi ? await piRefs() : new Set<string>();
+  const [piModels, opencode] = await Promise.all([pi ? piRefs() : new Set<string>(), opencodeRefs()]);
   const profiles = codex ? codexProfiles() : [];
   const linked = [
     ...(claude ? tiered(CLAUDE_CODE_MODELS.map((id) => `claude-code/${id}`), "Claude Code subscription") : []),
     ...(codex ? tiered([...codexSlugs()].map((id) => `codex/${id}`), "ChatGPT subscription (Codex)") : []),
     ...tiered(profileRefs(profiles, piModels), "Codex profile"),
     ...tiered([...piModels], "pi"),
+    ...opencodeLinked(opencode),
   ];
   return { claude, codex, pi, rtk: onPath("rtk"), profiles, linked };
 }

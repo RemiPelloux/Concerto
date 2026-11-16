@@ -2,7 +2,10 @@ import type { Effort } from "#src/config/types.js";
 import type { RunEvent } from "#src/runner/events.js";
 import type { Usage } from "#src/runner/usage.js";
 
-export type Backend = "claude-code" | "codex" | "pi";
+export type Backend = "claude-code" | "codex" | "pi" | "gemini" | "cursor" | "opencode" | "aider" | "goose";
+
+/** Prefixes that name a coding-agent CLI rather than a pi provider. */
+const AGENTS = new Set<string>(["gemini", "cursor", "opencode", "aider", "goose"]);
 
 export type RunRequest = {
   /** See parseRef for the grammar. */
@@ -31,6 +34,9 @@ const CODEX = "codex";
  * - `claude-code/<id>`: Claude Code CLI on the user's Claude subscription.
  * - `codex/<id>`: Codex CLI on the user's ChatGPT subscription.
  * - `codex@<profile>/<id>`: Codex CLI with `$CODEX_HOME/<profile>.config.toml`, e.g. a proxy.
+ * - `gemini/<id>`, `cursor/<id>`: Gemini CLI and Cursor's agent on their own logins.
+ * - `opencode/<provider>/<id>`, `goose/<provider>/<id>`, `aider/<litellm id>`: those CLIs with
+ *   whatever providers they are set up with.
  * - anything else: a pi provider, e.g. `anthropic/<id>`, `openai/<id>`, `ce-gpt/<id>`.
  */
 export function parseRef(ref: string): ModelRef {
@@ -41,5 +47,13 @@ export function parseRef(ref: string): ModelRef {
   if (prefix === CLAUDE_CODE) return { backend: "claude-code", prefix, provider: "anthropic", profile: "", id };
   const [head = "", profile = ""] = prefix.split("@");
   if (head === CODEX) return { backend: "codex", prefix, provider: profile || "openai", profile, id };
+  if (AGENTS.has(prefix)) return { backend: prefix as Backend, prefix, provider: agentProvider(prefix, id), profile: "", id };
   return { backend: "pi", prefix, provider: prefix, profile: "", id };
+}
+
+/** Who serves an agent CLI's model: Google and Cursor themselves, else the provider in the id. */
+function agentProvider(prefix: string, id: string): string {
+  if (prefix === "gemini") return "google";
+  if (prefix === "cursor") return "cursor";
+  return id.includes("/") ? (id.split("/")[0] ?? prefix) : prefix;
 }

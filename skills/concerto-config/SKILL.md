@@ -17,6 +17,9 @@ see the result. Invalid configs fail with the file and field named.
 - `claude-code/claude-opus-5-5`: Claude Code, on the Claude subscription.
 - `codex/gpt-6.1-sol`: Codex, on the ChatGPT subscription.
 - `codex@ce-gpt/gpt-6.1-sol`: Codex through the profile `~/.codex/ce-gpt.config.toml`.
+- `gemini/<id>`, `cursor/<id>`: Gemini CLI and Cursor's agent, on their own logins.
+- `opencode/<provider>/<id>`, `goose/<provider>/<id>`, `aider/<id>`: those CLIs, with the
+  providers they are set up with.
 - anything else is a pi provider: `anthropic/...`, `openai/...`, `ce-claude/...`.
 
 Every model used must be listed under `models` with a `tier` (1 bulk work to 5 frontier).

@@ -9,3 +9,7 @@ export function codexBin(): string {
 export function piBin(): string {
   return process.env.CONCERTO_PI_BIN || "pi";
 }
+
+/** The CLIs added in 0.11, each overridable like the others: CONCERTO_GEMINI_BIN and so on. */
+export const agentBin = (name: "gemini" | "cursor-agent" | "opencode" | "aider" | "goose"): string =>
+  process.env[`CONCERTO_${name.replace("-agent", "").toUpperCase()}_BIN`] || name;

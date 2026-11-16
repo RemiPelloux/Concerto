@@ -5,11 +5,12 @@ import { estimateStory } from "#src/orchestrator/estimate.js";
 import type { PathCost, StoryView } from "#src/state/types.js";
 
 type Path = PathCost["path"];
-const LABEL: Record<Path, string> = { subscriptions: "on your subscriptions", profiles: "through Codex profiles", api: "on API keys (pi)" };
+const SUBSCRIPTION_CLIS = new Set(["claude-code", "codex", "gemini", "cursor"]);
+const LABEL: Record<Path, string> = { subscriptions: "on your subscriptions", profiles: "through Codex profiles", api: "on API keys" };
 
-/** Which way a model is reached: the Claude Code / Codex subscriptions, a Codex profile, or pi. */
+/** Which way a model is reached: a subscription CLI's login, a Codex profile, or API keys. */
 export function pathOf(m: ModelInfo): Path {
-  if (m.parsed.backend === "pi") return "api";
+  if (!SUBSCRIPTION_CLIS.has(m.parsed.backend)) return "api";
   return m.parsed.profile ? "profiles" : "subscriptions";
 }
 

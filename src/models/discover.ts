@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { claudeBin, codexBin, piBin } from "#src/runner/bins.js";
+import { agentBin, claudeBin, codexBin, piBin } from "#src/runner/bins.js";
 import { childEnv } from "#src/runner/env.js";
 import { onPath, runTool } from "#src/runner/tool.js";
 import type { ModelRef } from "#src/runner/types.js";
@@ -94,6 +94,17 @@ export function piRefs(): Promise<Set<string>> {
   return piListing;
 }
 
+/** Models OpenCode is set up for, as `opencode/<provider>/<model>` refs; empty when it is absent. */
+export async function opencodeRefs(): Promise<string[]> {
+  if (!onPath(agentBin("opencode"))) return [];
+  try {
+    const { stdout } = await runTool(agentBin("opencode"), ["models"], { timeout: LIST_TIMEOUT_MS, env: childEnv() });
+    return stdout.split("\n").map((l) => l.trim()).filter((l) => /^[\w.-]+\/\S+$/.test(l)).map((l) => `opencode/${l}`);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Which configured refs can run right now. Each source is checked once, and pi is only
  * started when the config uses pi models at all.
@@ -106,6 +117,7 @@ export async function reachableRefs(refs: ModelRef[]): Promise<Set<string>> {
   const ok = (r: ModelRef): boolean => {
     if (r.backend === "claude-code") return hasClaude;
     if (r.backend === "pi") return pi.has(`${r.prefix}/${r.id}`);
+    if (r.backend !== "codex") return onPath(agentBin(r.backend === "cursor" ? "cursor-agent" : r.backend));
     if (!hasCodex) return false;
     return r.profile ? existsSync(join(codexHome(), `${r.profile}.config.toml`)) : slugs.size === 0 || slugs.has(r.id);
   };

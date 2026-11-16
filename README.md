@@ -265,7 +265,19 @@ one with 37 working models.
 
 Model names look like `claude-code/claude-opus-5-5` (Claude subscription), `codex/gpt-6.1-sol`
 (ChatGPT subscription), `codex@ce-gpt/gpt-6.1-sol` (a Codex profile, such as a proxy), or
-`openai/gpt-6.1-sol` (any provider in pi).
+`openai/gpt-6.1-sol` (any provider in pi). Five more coding agents work the same way, each with
+the login or providers it is set up with:
+
+| Ref | Runs | Reviewers, who only read |
+|---|---|---|
+| `gemini/<model>` | Gemini CLI | plan mode |
+| `cursor/<model>` | Cursor's agent | plan mode |
+| `opencode/<provider>/<model>` | OpenCode (`concerto --setup` lists its models) | the plan agent |
+| `goose/<provider>/<model>` | Goose | chat mode, no tools |
+| `aider/<model>` | Aider, which never commits | ask mode |
+
+Builders get each CLI's own write access; Concerto still works in a worktree and merges the
+result. Prompts go in on stdin, and token use and cost are read from each CLI's output.
 
 How stories are checked is set in the same file:
 

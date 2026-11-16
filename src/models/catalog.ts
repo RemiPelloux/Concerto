@@ -6,7 +6,7 @@ import { loadPriceIndex, priceFor } from "#src/models/prices.js";
 import type { ModelInfo } from "#src/models/types.js";
 
 const SUBSCRIPTION_COST_FACTOR = 0.25;
-const SUBSCRIPTIONS = new Set<Backend>(["claude-code", "codex"]);
+const SUBSCRIPTIONS = new Set<Backend>(["claude-code", "codex", "gemini", "cursor"]);
 
 /** Reachable models, indexed by ref so lookups never scan the list. */
 export class Catalog {

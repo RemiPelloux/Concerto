@@ -31,6 +31,7 @@ message has no row here, so a new error cannot ship undocumented.
 
 | Message | Why it happens | What to do |
 |---|---|---|
+| `The rewriter did not return JSON.` | The rewriter answered without a JSON object. Concerto logs `kept your words` and scores the request as you typed it; the run goes on. | Nothing to do for this run. If it keeps happening, give the rewriter role a stronger model, or pass `--no-rewrite`. |
 | `The scorer did not return a JSON plan.` | The scoring model answered without a JSON object, often because it refused or ran out of output. | Run again. If it keeps happening, give the scorer role a stronger model. |
 | `Template names are lowercase letters, digits and dashes, 48 at most.` | `/template` or `--template` got a name with capitals, spaces or other characters, or one over 48 characters. | Use a name like `api-endpoint`. |
 | `No template "<name>". Saved: <templates>.` | `--template` named a template that was never saved. | Use one of the names listed, or save the plan's shape first with `/template <name>`. |

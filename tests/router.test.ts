@@ -16,8 +16,8 @@ function routedConfig() {
     { name: "light-build", tags: [], minScore: 0, maxScore: ANY, role: "section", models: ["b/cheap-builder"], effort: "medium" },
   ];
   config.reviews = [
-    { tags: ["ui"], minScore: 0, maxScore: ANY, models: ["a/brain"] },
-    { tags: [], minScore: 0, maxScore: 25, models: ["x/missing", "a/swarm"] },
+    { tags: ["ui"], minScore: 0, maxScore: ANY, models: ["a/brain"], effort: "auto" },
+    { tags: [], minScore: 0, maxScore: 25, models: ["x/missing", "a/swarm"], effort: "auto" },
   ];
   return config;
 }

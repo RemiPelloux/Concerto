@@ -45,7 +45,7 @@ async function critique(c: Concert, job: Job, second?: ModelInfo[]): Promise<Ver
   ];
   const chain = second ?? c.catalog.reachable(view.critics);
   const key = `${story.id}-${second ? "critic2" : "critic"}${job.round > 0 ? `-r${job.round}` : ""}`;
-  const out = await callRole(c, { role: "critic", chain, segments, tags: story.tags, sessionKey: key, label: `${second ? "second review" : "review"}: ${story.title}`, cwd, storyId: story.id });
+  const out = await callRole(c, { role: "critic", chain, segments, effort: view.reviewEffort, tags: story.tags, sessionKey: key, label: `${second ? "second review" : "review"}: ${story.title}`, cwd, storyId: story.id });
   const pass = readTag(out.text, "VERDICT") === "pass";
   c.store.role("critic", { activity: "waiting", note: "waiting" });
   c.store.story(story.id, { finding: headline(out.text, "VERDICT") });
@@ -56,7 +56,8 @@ async function critique(c: Concert, job: Job, second?: ModelInfo[]): Promise<Ver
 /** Reviewers from another vendor than `first`: the critic chains first, then any able model. */
 function otherVendor(c: Concert, story: Story, first: string): ModelInfo[] {
   const pool = [...c.catalog.reachable(c.store.view(story.id).critics), ...roleChain(c.catalog, c.config, "critic"), ...tierChain(c.catalog, CRITIC_TIER)];
-  return [...new Set(pool)].filter((m) => vendorOf(m.ref) !== vendorOf(first)).slice(0, 2);
+  const unique = pool.filter((m, i) => pool.findIndex((x) => x.ref === m.ref) === i);
+  return unique.filter((m) => vendorOf(m.ref) !== vendorOf(first)).slice(0, 2);
 }
 
 const highRisk = (c: Concert, story: Story) => story.risk >= HIGH_RISK || c.store.view(story.id).score >= HIGH_SCORE;

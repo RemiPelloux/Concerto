@@ -7,6 +7,7 @@ import { hashParts } from "#src/engine/hash.js";
 const GUIDELINES = join(".pelloux", "GUIDELINES.md");
 const SEPARATOR = "\n\n---\n\n";
 const ROLE_FILES: Record<Role, string[]> = {
+  rewriter: ["rewriter.md"],
   conductor: ["conductor.md"],
   scorer: ["scorer.md"],
   soloist: ["builder.md"],

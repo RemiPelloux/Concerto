@@ -30,7 +30,7 @@ export function explainLines(state: State, calibration: Calibration): string[] {
       `${story.id.padEnd(TITLE / 2)} ${story.title.slice(0, TITLE).padEnd(TITLE)} score ${v.score} · ${story.points} pts${story.dependsOn.length ? ` · after ${story.dependsOn.join(", ")}` : ""}`,
       factorLine(v),
       `    built by ${v.chain[0] ?? "-"} (rule ${v.rule}, ${v.role}, effort ${v.effort})${v.chain.length > 1 ? `, then ${v.chain.slice(1).join(", ")}` : ""}`,
-      `    reviewed by ${v.critics[0] ?? "-"}${v.critics.length > 1 ? `, then ${v.critics.slice(1).join(", ")}` : ""}`,
+      `    reviewed by ${v.critics[0] ?? "-"}${v.reviewEffort ? ` (effort ${v.reviewEffort})` : ""}${v.critics.length > 1 ? `, then ${v.critics.slice(1).join(", ")}` : ""}`,
       estimateLine(v, calibration),
     ];
   });

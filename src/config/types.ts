@@ -9,6 +9,8 @@ const DEFAULT_CHECK_MINUTES = 10;
 const DEFAULT_READY_SECONDS = 60;
 /** A custom role, like the critic, runs on a solid model unless it names its own. */
 const DEFAULT_CUSTOM_TIER = 3;
+/** The rewriter needs the scorer's judgement: a solid model, never a light one. */
+const REWRITER_TIER = 3;
 /** Claude Code and Codex subscriptions reset over about five hours. */
 const DEFAULT_WINDOW_HOURS = 5;
 /** A command, false to turn the check off, or absent to let Concerto detect it. */
@@ -18,9 +20,11 @@ const CheckSetting = z.string().min(1).or(z.literal(false)).optional();
 const REF = z.string().regex(/^[\w.@-]+\/[\w.:/[\]-]+$/, "model refs look like <backend>/<model>");
 /** One printable character, or "" for no extra key. */
 const KEY = z.string().max(1);
+/** A chain entry: a model ref, optionally pinned to an effort (`claude-code/claude-opus-5-5#high`). */
+const CHAIN_REF = z.string().regex(/^[\w.@-]+\/[\w.:/[\]-]+(?:#(?:off|minimal|low|medium|high|xhigh|max))?$/, "chain entries look like <backend>/<model>, optionally #<effort>");
 const PREFER = z.string().regex(/^[\w.@-]+\*?$/, "prefer entries are provider names, optionally ending in *");
 
-export const ROLES = ["conductor", "scorer", "soloist", "critic", "section"] as const;
+export const ROLES = ["conductor", "rewriter", "scorer", "soloist", "critic", "section"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const EffortSchema = z.enum(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
@@ -31,7 +35,7 @@ const RoleConfigSchema = z.object({
   effort: EffortSchema,
   tools: z.array(z.string()),
   /** Preferred models, first reachable wins. Empty: cheapest model at minTier. */
-  models: z.array(REF).default([]),
+  models: z.array(CHAIN_REF).default([]),
 });
 export type RoleConfig = z.infer<typeof RoleConfigSchema>;
 
@@ -45,7 +49,7 @@ const RouteSchema = z.object({
   /** Exclusive: a route with maxScore 25 takes stories scoring under 25. */
   maxScore: z.number().min(0).max(MAX_SCORE + 1).default(MAX_SCORE + 1),
   role: z.enum(["soloist", "section"]),
-  models: z.array(REF).min(1),
+  models: z.array(CHAIN_REF).min(1),
   /** "auto": from the score, low under 25, medium under 50, high under 75, xhigh above. */
   effort: EffortSchema.or(z.literal("auto")).default("auto"),
 });
@@ -56,7 +60,9 @@ const ReviewSchema = z.object({
   tags: z.array(z.string()).default([]),
   minScore: z.number().min(0).max(MAX_SCORE).default(0),
   maxScore: z.number().min(0).max(MAX_SCORE + 1).default(MAX_SCORE + 1),
-  models: z.array(REF).min(1),
+  models: z.array(CHAIN_REF).min(1),
+  /** "auto": the critic's effort or the one the score calls for, whichever is higher. */
+  effort: EffortSchema.or(z.literal("auto")).default("auto"),
 });
 export type Review = z.infer<typeof ReviewSchema>;
 
@@ -74,7 +80,7 @@ const CustomRoleSchema = z.object({
   /** Globs on the story's files: `src/auth/**`, `**\/*.sql`. */
   paths: z.array(z.string()).default([]),
   minScore: z.number().min(0).max(MAX_SCORE).default(0),
-  models: z.array(REF).default([]),
+  models: z.array(CHAIN_REF).default([]),
   minTier: TIER.default(DEFAULT_CUSTOM_TIER),
   /** Default: the critic's tools for a review, the soloist's for a build. */
   tools: z.array(z.string()).optional(),
@@ -130,7 +136,11 @@ export const ConfigSchema = z.object({
    * sh inside Codex.
    */
   codexFullAccess: z.boolean().default(false),
+  /** The rewriter sharpens each request first: questions when it is unclear, a design brief when it is large. */
+  rewrite: z.boolean().default(true),
   roles: z.object({
+    /** Configs written before 1.1 have no rewriter: it runs like the scorer, at low effort. */
+    rewriter: RoleConfigSchema.default({ minTier: REWRITER_TIER, effort: "low", tools: [], models: [] }),
     conductor: RoleConfigSchema,
     scorer: RoleConfigSchema,
     soloist: RoleConfigSchema,

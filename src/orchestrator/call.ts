@@ -126,7 +126,7 @@ async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
     prompt: assembled.prompt,
     systemFile: call.custom?.systemFile ?? c.prompts.file(call.role),
     tools: call.custom?.tools ?? roleCfg.tools,
-    effort: call.effort ?? roleCfg.effort,
+    effort: model.effort ?? call.effort ?? roleCfg.effort,
     skills: c.skills.for(call.tags ?? []), cwd: call.cwd ?? c.cwd,
     session, signal: AbortSignal.any([c.signal, timeout]),
     fullAccess: c.config.codexFullAccess, sandbox: sandboxFor(c, call, session?.dir),

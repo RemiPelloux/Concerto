@@ -27,6 +27,11 @@ export function logBrief(log: LogEntry[]): string {
   return lines.length > 0 ? `## Session log\n${condense(lines.join("\n"))}` : "";
 }
 
+/** The rewriter's design brief, as the scorer, builders and critics read it. */
+export function briefText(brief: string | undefined): string {
+  return brief ? `## Design brief\n${brief}` : "";
+}
+
 export function notesBrief(notes: string[]): string {
   return notes.length > 0 ? `## Conductor notes for this run\n${notes.join("\n\n")}` : "";
 }
@@ -52,6 +57,7 @@ export function planExcerpt(plan: Plan, storyId: string): string {
 export function storySegments(state: State, opts: { repoMap: string; storyId: string; snapshot: boolean }): Segment[] {
   return [
     { name: "repository snapshot", text: opts.snapshot ? opts.repoMap : "" },
+    { name: "design brief", text: briefText(state.brief) },
     { name: "plan", text: state.plan ? planExcerpt(state.plan, opts.storyId) : "" },
     { name: "conductor notes", text: notesBrief(state.notes) },
   ];

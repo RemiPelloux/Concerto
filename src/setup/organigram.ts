@@ -10,6 +10,7 @@ const ROLE_WIDTH = 10;
 const REF_WIDTH = 34;
 
 const DUTY: Record<Role, string> = {
+  rewriter: "sharpens the request, asks, writes the design brief",
   conductor: "plans the request and splits it into stories",
   scorer: "scores each story",
   soloist: "builds the hard stories",

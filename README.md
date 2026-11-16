@@ -112,6 +112,7 @@ pass.`, press Enter to see the scored stories, and Enter again to build them.
 | `concerto --plan --explain "request"` | Why each story got its score, model and estimate, in words |
 | `concerto --template <name> "request"` | Plan in the shape of a saved template |
 | `concerto --run "request"` | Score and build without the UI, for scripts and CI |
+| `concerto --no-rewrite ...` | Score the request as typed: no rewriter, questions or design brief |
 | `concerto --orca "request"` | Start the run in a new Orca worktree, in its own tab |
 | `concerto --resume <id>` | Reopen a saved session and build what did not pass |
 | `concerto --budget 5 ...` | Stop starting stories after $5 of API-equivalent spend |
@@ -189,6 +190,24 @@ Concerto starts the agents itself. For every story it runs a builder (`claude -p
 conductor at its checkpoints. You do not open them, and they do not appear as separate tabs: you
 watch them in Concerto's screen, and their work shows up as changes in the folder. Concerto never
 commits; you review the diff.
+
+### The rewriter
+
+Before anything is scored, the rewriter role reads your request with the repository snapshot and
+makes it precise: real file names, a clear "done means", no filler, nothing you did not ask for.
+
+- **Questions.** When the request has readings that lead to different code, the TUI shows up to
+  four questions in the log. Type your answers and press Enter, or press Enter alone to let the
+  rewriter decide. `--run`, `--plan`, `--plain` and MCP runs never wait: the rewriter picks the
+  sensible reading and logs each choice as `Assume`.
+- **Design brief.** A request that spans several modules, adds a feature or hides a design decision
+  gets a short brief: the approach, the files and why, the decisions and the alternatives rejected,
+  the risks. The scorer, every builder and every critic read it, so the stories follow one design.
+- **Effort floor.** The rewriter rates the whole request (`low` to `xhigh`). No story builds or is
+  reviewed below that, so a hard request never gets a 1-point story built at low effort.
+
+It runs on the `rewriter` role (Sonnet by default, low effort). Turn it off with `--no-rewrite` or
+`"rewrite": false`.
 
 ### Learning from runs
 
@@ -362,7 +381,16 @@ The score picks the builder and its effort:
 | Score 25 to 54 | GPT-6.1 Sol | Sonnet 5.5 |
 | Score under 25 | Haiku 5.5 | Sonnet 5.5 |
 
-Effort follows the score: low under 25, medium under 50, high under 75, extra high above. Each
+Effort follows the score: low under 25, medium under 50, high under 75, extra high above, never
+under the rewriter's floor for the request. Critics scale the same way, never below the critic
+role's own effort; a review rule can name its own (`"effort": "high"`). Any entry in a chain can
+pin the effort its model runs at, whatever the story asks:
+
+```json
+"reviews": [{ "minScore": 55, "models": ["claude-code/claude-opus-5-5#high", "codex/gpt-6.1-sol#medium"] }]
+```
+
+`/effort <story> <level>` changes one story before you build. Each
 model has a fallback chain, so a rate limit or an outage moves the call to the next way of reaching
 the same model. A story that fails review twice wakes the conductor, and its advice goes into one
 last attempt.

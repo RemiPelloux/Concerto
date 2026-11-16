@@ -72,7 +72,7 @@ function usePromptInput({ enabled, onSubmit, onTab, onEmpty }: Props): string {
 /** What typing does in each phase, shown in the empty prompt. */
 export function promptHint(state: State): string {
   const p = t().prompt;
-  if (state.phase === "scoring" || state.phase === "planned" || state.phase === "running") return p[state.phase];
+  if (state.phase === "scoring" || state.phase === "clarifying" || state.phase === "planned" || state.phase === "running") return p[state.phase];
   const left = state.phase === "idle" ? 0 : unfinished(state).length;
   return left ? p.retry(left) : p.idle;
 }

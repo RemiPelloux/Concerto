@@ -36,8 +36,8 @@ function project(): string {
 
 describe("model slots", () => {
   it("lists every role, build route and review rule", () => {
-    const c = { ...config(), reviews: [{ tags: ["ui"], minScore: 0, maxScore: 101, models: ["a/brain"] }] };
-    expect(slots(c).map((s) => s.label)).toEqual(["conductor", "scorer", "soloist", "critic", "section", "build: complex-build", "review 1"]);
+    const c = { ...config(), reviews: [{ tags: ["ui"], minScore: 0, maxScore: 101, models: ["a/brain"], effort: "auto" as const }] };
+    expect(slots(c).map((s) => s.label)).toEqual(["conductor", "rewriter", "scorer", "soloist", "critic", "section", "build: complex-build", "review 1"]);
     expect(slots(c).find((s) => s.label === "section")?.brain).toBe(false);
   });
 
@@ -107,6 +107,7 @@ describe("/config picker", () => {
     };
     keyboard.press("/config");
     await press(ENTER, "Who does what");
+    await press(DOWN, "› rewriter");
     await press(DOWN, "› scorer");
     await press(ENTER, "Pick the model for scorer");
     expect(screen()).not.toContain("x/deepseek-v4-pro");

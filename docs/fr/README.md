@@ -56,6 +56,7 @@ dans la configuration.
 | `concerto --plan --explain "…"` | Le plan et pourquoi chaque story a son score et son modèle, sans rien construire |
 | `concerto --run --json "…"` | Sans interface, un événement JSON par ligne |
 | `concerto --run --pr "…"` | Une branche, un commit par story, puis une pull request |
+| `concerto --no-rewrite "…"` | Évaluer la demande telle quelle : pas de réécriture, de questions ni de note de conception |
 | `concerto --plain "…"` | Tout le déroulé en phrases, pour les lecteurs d'écran |
 | `concerto --sandbox "…"` | Chaque agent dans un bac à sable : réseau limité aux fournisseurs de modèles, secrets cachés |
 | `concerto --costs --since 7` | Les coûts de la semaine par dépôt et par modèle (`--csv` pour un tableur) |

@@ -17,6 +17,7 @@ one goal, the work that serves it, and a test that says when it is done.
 | 0.4.0 | Part 1: every story in its own worktree with rebuild on conflict, a test gate, acceptance commands, mutation spot checks, a second critic, a behaviour diff |
 | 0.10.0 | Parts 2 and 3: learning from runs, account windows and budgets, a leaner token engine, a plan editor, reject and ask per story, search, replay and share |
 | 0.13.0 | Part 4: import graphs for eight more languages and monorepos, five more agent CLIs, local models, custom roles, an MCP server, a Neovim plugin |
+| 0.16.0 | Part 5: commits per story, pull requests, a GitHub Action, shared config and policy, notifications, traces, cost reports and a dashboard |
 
 ---
 
@@ -195,7 +196,7 @@ a run from a selection, tested in a real headless Neovim.
 
 ---
 
-## Part 5 · Teams
+## Part 5 · Teams · shipped in 0.16
 
 ### Sprint 13 · CI and pull requests · built, live test pending
 

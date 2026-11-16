@@ -14,55 +14,49 @@ one goal, the work that serves it, and a test that says when it is done.
 | 0.1.2 | Tab works in every phase, a visible "enter to build" |
 | 0.1.3 | Windows support, release packages and installers, `/history` and `--resume`, a live agent panel, an end-of-run summary with retry |
 | 0.1.4 | The prompt works in every phase: type a change to re-plan, a note for running agents, any command |
+| 0.4.0 | Part 1: every story in its own worktree with rebuild on conflict, a test gate, acceptance commands, mutation spot checks, a second critic, a behaviour diff |
 
 ---
 
-## Part 1 · Trust the result
+## Part 1 · Trust the result · shipped in 0.4
 
-### Sprint 1 · 0.2 · isolation
+### Sprint 1 · isolation · shipped
 
-Parallel stories share one folder, so they collide on shared files and a critic can fail a story
-for someone else's edit.
+- **One git worktree per story,** every story, not only parallel ones: a soloist editing the main
+  folder while section stories merge into it would bring the collisions back. Each starts from a
+  snapshot commit of the working tree, made in a throwaway index, with ignored dependency folders
+  and `.env` files linked in.
+- **Three-way merge back** against that snapshot, all files or none; edits on adjacent lines
+  merge line by line.
+- **Rebuild on conflict:** a story that passed but conflicts with work that landed meanwhile is
+  rebuilt on the current code, up to twice, with fresh critic sessions.
+- **Per-story diff** for the critic and the report; failed stories' work saved as patches.
+- **Cleanup on crash:** worktrees of a run whose process is gone are saved as patches and removed.
 
-- **One git worktree per story.** Section stories build in their own worktree; soloist stories
-  keep the main folder. Worktrees are created from the same commit and removed after merge.
-- **Merge back in dependency order.** A story whose dependencies passed is merged with a
-  three-way merge; a conflict fails that story with the conflicting files and hunks.
-- **Per-story diff.** The critic, the changes table and the report see only the story's own diff.
-- **Cleanup on crash.** Leftover worktrees from an interrupted run are found and offered for
-  removal at the next start.
+Done: six stories editing neighbouring lines of one file merge in parallel, each critic sees only
+its story; a real run of three stories editing the same export line lands all three.
 
-Done when: six section stories editing neighbouring lines of the same files run in parallel, each
-critic sees only its story, and the merged result passes the tests.
+### Sprint 2 · a test gate Concerto runs itself · shipped
 
-### Sprint 2 · 0.3 · a test gate Concerto runs itself
+- **The project's checks after every build,** before the critic: SmartTest, npm, pnpm, yarn,
+  bun, pytest, go test, cargo test, PHPUnit, Maven or Gradle, then the typecheck and lint scripts.
+- **Red means retry** with the failing command and the end of its output; the critic only sees
+  green stories and is told what passed.
+- **Flaky tests:** a test command that passes on a rerun is reported as flaky.
+- **`checks` in the config** sets, replaces or turns off each check.
 
-- **Run the covering tests after each build,** before the critic: SmartTest when the repository
-  has it, the import graph otherwise, the project's own test command as the fallback.
-- **Detect the test command** for npm, pnpm, yarn, bun, pytest, go test, cargo test, PHPUnit,
-  Maven and Gradle.
-- **Red means retry,** with the failing test names and output condensed into the builder's
-  feedback. The critic only reviews green stories.
-- **Type check and lint gates,** configurable per repository.
-- **Flaky test handling:** a test that fails then passes on rerun is marked flaky in the report,
-  not counted against the story.
+Done: a story whose tests fail never reaches the critic, and the report lists every check per story.
 
-Done when: a story whose tests fail never reaches the critic, and the report lists every test that
-ran for every story.
+### Sprint 3 · verification beyond tests · shipped
 
-### Sprint 3 · 0.4 · verification beyond tests
+- **Acceptance checks as code,** written by the scorer when it is sure and run by Concerto.
+- **Mutation spot checks:** one condition the story added is flipped; a test must notice.
+- **Critic disagreement:** a second critic from another vendor on high-risk stories, settled by the
+  conductor at a fourth checkpoint.
+- **Behaviour diff,** opt-in for web projects: the server is started before and after each story
+  and the critic sees which routes changed.
 
-- **Acceptance checks as code.** The scorer writes each acceptance item as a runnable check
-  (a command, a request, a file assertion) when it can; Concerto runs them.
-- **Mutation spot checks.** For a story that adds tests, flip one condition in the new code and
-  check that a test fails; a test that passes with the feature broken fails the story.
-- **Behaviour diff.** For web projects, start the dev server before and after and compare chosen
-  routes.
-- **Critic disagreement.** A second critic from another vendor reviews high-risk stories; when the
-  two disagree the conductor decides.
-
-Done when: a story with a test that passes with the feature deleted is caught on 9 of 10 seeded
-examples.
+Done: 10 of 10 seeded weak tests caught, a real test left alone.
 
 ---
 

@@ -22,6 +22,12 @@ describe("child environment", () => {
     expect(childEnv({ PATH: "/bin", MY_TOKEN: "t", CONCERTO_ENV_PASSTHROUGH: "MY_TOKEN" }).MY_TOKEN).toBe("t");
   });
 
+  it("passes each agent CLI its own login, and still drops cloud credentials", () => {
+    const keys = { GEMINI_API_KEY: "g", GOOGLE_API_KEY: "g", CURSOR_API_KEY: "c", OPENROUTER_API_KEY: "o", GROQ_API_KEY: "q", MISTRAL_API_KEY: "m", OLLAMA_HOST: "h", AIDER_MODEL: "a", GOOSE_PROVIDER: "p", OPENCODE_CONFIG: "f" };
+    const env = childEnv({ ...keys, GOOGLE_APPLICATION_CREDENTIALS: "/creds.json", AWS_SECRET_ACCESS_KEY: "s" });
+    expect(Object.keys(env).sort()).toEqual(Object.keys(keys).sort());
+  });
+
   it("never lets a git hook's repository variables aim git or an agent at another repository", () => {
     const hook = { PATH: "/bin", GIT_DIR: "/repo/.git", GIT_INDEX_FILE: "/repo/.git/index", GIT_AUTHOR_NAME: "me" };
     expect(childEnv(hook)).toEqual({ PATH: "/bin", GIT_AUTHOR_NAME: "me" });

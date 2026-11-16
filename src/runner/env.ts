@@ -11,6 +11,9 @@ const ALLOWED = new RegExp(
       "LC_\\w+", "XDG_\\w+", "MISE_\\w+", "NODE_\\w+", "PNPM_\\w+", "NPM_CONFIG_\\w+", "COREPACK_\\w+",
       "GIT_\\w+", "CODEX_HOME", "CLAUDE_CONFIG_DIR", "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_USE_\\w+",
       "ANTHROPIC_\\w+", "OPENAI_\\w+", "PI_\\w+", "DEEPSEEK_\\w+", "XAI_\\w+", "CE_\\w+",
+      // The agent CLIs added in 0.13 and the providers they log into. Not GOOGLE_APPLICATION_CREDENTIALS: a cloud credential.
+      "GEMINI_\\w+", "GOOGLE_API_KEY", "GOOGLE_CLOUD_PROJECT", "GOOGLE_GENAI_USE_VERTEXAI", "CURSOR_API_KEY",
+      "OPENROUTER_\\w+", "GROQ_\\w+", "MISTRAL_\\w+", "OLLAMA_HOST", "LM_STUDIO_\\w+", "AIDER_\\w+", "GOOSE_\\w+", "OPENCODE_\\w+",
       // Windows: programs fail to start or find their config without these.
       "PATHEXT", "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "USERPROFILE", "APPDATA", "LOCALAPPDATA",
       "PROGRAMDATA", "PROGRAMFILES", "PROGRAMFILES\\(X86\\)", "HOMEDRIVE", "HOMEPATH", "USERNAME", "NUMBER_OF_PROCESSORS",

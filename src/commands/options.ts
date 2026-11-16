@@ -12,6 +12,7 @@ export const USAGE = `concerto [options] [request]
   --prefer <list>     providers to try first, e.g. ce-* or ce-gpt,openai
   --resume <id>       reopen a saved session (see /history) and build what did not pass
   --share <id>        write a saved session as one HTML file, secrets redacted
+  --mcp               serve Concerto to other agents as MCP tools on stdio
   --init              detect every linked AI and write your personal config
   --routing <choice>  with --init outside a terminal: subscriptions, proxy or api
   --probe             send each configured model a tiny prompt; failures are skipped for a day
@@ -40,6 +41,7 @@ export const OPTIONS = {
   budget: { type: "string" },
   resume: { type: "string" },
   share: { type: "string" },
+  mcp: { type: "boolean" },
   prefer: { type: "string" },
   init: { type: "boolean" },
   routing: { type: "string" },

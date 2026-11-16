@@ -22,6 +22,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Neovim, for the plugin's tests
+        run: sudo apt-get install -y --no-install-recommends neovim
       - run: pnpm typecheck
       - run: pnpm lint
       - name: Tests (SmartTest picks the affected ones on pull requests)

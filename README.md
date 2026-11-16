@@ -199,6 +199,32 @@ more stories here goes first. `concerto --insights` shows it all.
 Then ask any of them, for example, "plan this with Concerto" or "build it with Concerto in a new
 Orca worktree".
 
+## Concerto as MCP tools
+
+`concerto --mcp` serves Concerto on stdio to any agent that speaks the Model Context Protocol:
+Claude Code, Codex, Cursor and the rest. Five tools:
+
+| Tool | Does |
+|---|---|
+| `concerto_plan` | Splits a request into scored stories and picks their models; changes no file |
+| `concerto_build` | Builds a planned session: worktrees, checks, critics, merge |
+| `concerto_run` | Both in one call |
+| `concerto_status` | A saved session: its plan, or each story's result and the cost |
+| `concerto_sessions` | This project's sessions, or those matching a query |
+
+Each takes the project's absolute path as `cwd`, so one server serves every project. Long builds
+report each log line as MCP progress. For Claude Code:
+
+```sh
+claude mcp add concerto -- concerto --mcp
+```
+
+## Neovim
+
+[`editors/nvim`](editors/nvim) adds `:Concerto` and `:ConcertoPlan`. Over a visual selection,
+`:'<,'>Concerto round to cents` starts Concerto with the file, the lines and the selected code;
+`:ConcertoPlan` shows the plan without building.
+
 ## Use with Orca
 
 - **From any Orca terminal:** `concerto --orca "request"` creates a fresh worktree of the current

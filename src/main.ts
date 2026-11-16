@@ -68,6 +68,7 @@ async function standalone(values: Values, request: string): Promise<boolean> {
   if (values.stats) return printStats(process.cwd()), true;
   if (values["update-prices"]) return await updatePrices(), true;
   if (values.share) return await shareSession(values.share), true;
+  if (values.mcp) return await (await import("#src/commands/mcp.js")).runMcp(), true;
   if (values.insights) return (await import("#src/commands/insights.js")).insightsLines(process.cwd()).forEach((l) => process.stdout.write(`${l}\n`)), true;
   if (values["install-skills"]) return (await import("#src/commands/skills.js")).installSkills(), true;
   if (values.init) return await (await import("#src/commands/setup.js")).runInit(values.routing), true;

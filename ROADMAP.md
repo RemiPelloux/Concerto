@@ -182,14 +182,15 @@ scoring on an Ollama model, a security reviewer that sends a story back once and
 has every call in the report's table. In the test suite the CLIs are scripted; a live run needs
 each CLI logged in.
 
-### Sprint 12 · 0.13 · editors and tools
+### Sprint 12 · editors and tools · shipped
 
-- **MCP server:** other agents can plan, run and read Concerto runs as tools.
-- **VS Code and JetBrains extensions:** start a run from a selection, watch agents in a panel,
-  accept stories from the diff view.
-- **Neovim plugin** and an **Orca plugin** once Orca's plugin API can start terminal commands.
+- **MCP server:** `concerto --mcp` gives other agents `concerto_plan`, `concerto_build`,
+  `concerto_run`, `concerto_status` and `concerto_sessions`, with build progress as MCP progress.
+- **Neovim plugin:** `:Concerto` and `:ConcertoPlan`, on a request or the visual selection.
 
-Done when: a run can be started, watched and accepted from VS Code without opening a terminal.
+Done: Claude Code, given only Concerto's MCP tools, planned and built "add subtract with a test"
+in a test repository; the story passed review and was merged with `npm test` green. Neovim starts
+a run from a selection, tested in a real headless Neovim.
 
 ---
 

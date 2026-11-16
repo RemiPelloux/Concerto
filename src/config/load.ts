@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
+import { migrateConfig } from "#src/config/migrate.js";
 import { packageRoot } from "#src/config/root.js";
 import { ConfigSchema, type ConcertoConfig } from "#src/config/types.js";
 
@@ -30,6 +31,11 @@ function personalPath(cwd: string): string {
 function projectPath(cwd: string): string | null {
   const path = resolve(cwd, "concerto.config.json");
   return existsSync(path) && path !== BUNDLED && path !== personalPath(cwd) ? path : null;
+}
+
+/** The config files that are yours to change: the personal one (never the bundled default) and the project's. */
+export function configFiles(cwd: string): string[] {
+  return [personalPath(cwd), projectPath(cwd)].filter((p): p is string => p !== null && p !== BUNDLED && existsSync(p));
 }
 
 /** The one file a change to the config belongs in: the project's when it has one, else the personal config. */
@@ -64,7 +70,7 @@ export function isFirstLaunch(cwd: string): boolean {
 
 /** Validates a config object; errors name the file and the path of each bad field. */
 export function parseConfig(raw: unknown, source: string): ConcertoConfig {
-  const parsed = ConfigSchema.safeParse(raw);
+  const parsed = ConfigSchema.safeParse(migrateConfig(raw, source).config);
   if (parsed.success) return checkPolicy(parsed.data, source);
   const issues = parsed.error.issues.map((i) => `  ${i.path.join(".") || "(root)"}: ${i.message}`);
   throw new Error(`invalid config in ${source}:\n${issues.join("\n")}`);
@@ -95,9 +101,10 @@ export function withPolicy(config: ConcertoConfig): ConcertoConfig {
 export function loadConfig(cwd: string): ConcertoConfig {
   const personal = personalPath(cwd);
   const project = projectPath(cwd);
-  const raw = JSON.parse(readFileSync(personal, "utf8")) as unknown;
+  const raw = migrateConfig(JSON.parse(readFileSync(personal, "utf8")), personal).config;
   if (!project) return withPolicy(parseConfig(raw, personal));
-  return withPolicy(parseConfig(mergeConfig(raw, JSON.parse(readFileSync(project, "utf8"))), `${project} merged over ${personal}`));
+  const shared = migrateConfig(JSON.parse(readFileSync(project, "utf8")), project).config;
+  return withPolicy(parseConfig(mergeConfig(raw, shared), `${project} merged over ${personal}`));
 }
 
 export { packageRoot };

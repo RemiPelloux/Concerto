@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { EVENT_FORMAT } from "#src/events.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 import { perform } from "#src/orchestrator/perform.js";
 import { scoreRequest } from "#src/orchestrator/score.js";
@@ -7,7 +8,7 @@ const LABEL = 12;
 const DOLLAR_DIGITS = 3;
 const write = (line: string) => process.stdout.write(`${line}\n`);
 
-/** `--json`: one JSON object per line, `type` first: session, log, story, done (and pr). */
+/** `--json`: one JSON object per line, `type` first: session, log, story, done (and pr); see src/events.ts. */
 export const emit = (type: string, fields: object) => write(JSON.stringify({ type, ...fields }));
 
 function follow(concert: Concert, json: boolean): () => void {
@@ -42,7 +43,7 @@ function summary(concert: Concert, json: boolean): void {
 
 /** Scores and performs without the TUI, printing the log as it grows. Exit code 1 on failure. */
 export async function runHeadless(concert: Concert, request: string, opts: { log: { id: string; shownPath: string }; json: boolean }): Promise<void> {
-  if (opts.json) emit("session", { session: opts.log.id, log: opts.log.shownPath });
+  if (opts.json) emit("session", { format: EVENT_FORMAT, session: opts.log.id, log: opts.log.shownPath });
   else write(`session ${opts.log.id} · log ${opts.log.shownPath}`);
   const unsubscribe = follow(concert, opts.json);
   try {

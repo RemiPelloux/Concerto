@@ -22,6 +22,8 @@ message has no row here, so a new error cannot ship undocumented.
 
 | Message | Why it happens | What to do |
 |---|---|---|
+| `<file> was written by a newer Concerto (config version <n>; this one reads up to <max>). Update Concerto: concerto --update.` | The config's `version` is higher than this Concerto knows; a newer release wrote it. | Update Concerto with `concerto --update`, or remove the keys the newer version added and set `version` back. |
+| `<file>: "version" must be a whole number, the config format it was written in.` | `version` in the config is not a whole number. | Set `"version": 1`, or remove the key: a config without one is read as 0.x and migrated. |
 | `invalid config in <file>: <field>: <problem>` | A field in the personal or project config has the wrong type or value. Each bad field gets its own line. | Fix the named field in the named file. `concerto.config.json` in the package shows every field with a valid value. |
 | `invalid config in <file>: policy.requireReview: no custom review role named <role> in customRoles` | The policy requires a review role that `customRoles` does not define with `kind: "review"`. | Add the role to `customRoles`, or remove it from `policy.requireReview`. |
 

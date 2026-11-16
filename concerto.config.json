@@ -1,4 +1,5 @@
 {
+  "version": 1,
   "$comment": "Model refs are <prefix>/<model>. claude-code/* runs on your Claude Code subscription, codex/* on your ChatGPT subscription, codex@<profile>/* through a Codex profile (e.g. a proxy), anything else through pi (anthropic, openai, deepseek, or a proxy provider such as ce-gpt). Unreachable models are skipped. Chains are tried in order; a failed call moves to the next model.",
   "models": {
     "claude-code/claude-fable-5-2": {

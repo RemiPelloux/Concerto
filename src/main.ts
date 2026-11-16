@@ -1,6 +1,7 @@
 import { clearCache, printModels, printStats } from "#src/commands/info.js";
 import type { Values } from "#src/commands/options.js";
-import { configPath, isFirstLaunch, loadConfig, withPolicy } from "#src/config/load.js";
+import { configFiles, configPath, isFirstLaunch, loadConfig, withPolicy } from "#src/config/load.js";
+import { migrateFile } from "#src/config/migrate.js";
 import { keepSessions } from "#src/engine/history.js";
 import { SessionLog } from "#src/engine/session-log.js";
 import { ROLES, type ConcertoConfig } from "#src/config/types.js";
@@ -60,6 +61,12 @@ async function headless(s: Setup, request: string, values: Values): Promise<void
   if (pr) await publish.finishPr(concert, pr, Boolean(values.json));
 }
 
+function migrateConfigs(): void {
+  const files = configFiles(process.cwd());
+  if (files.length === 0) return void process.stdout.write("No config file of yours to migrate: Concerto is on its bundled default.\n");
+  files.forEach((f) => process.stdout.write(`${migrateFile(f) ? "migrated" : "already current"}  ${f}\n`));
+}
+
 async function shareSession(id: string): Promise<void> {
   const [{ readSession }, { writeShare }] = await Promise.all([import("#src/engine/history.js"), import("#src/engine/share.js")]);
   const state = readSession(process.cwd(), id);
@@ -81,6 +88,7 @@ async function standalone(values: Values, request: string): Promise<boolean> {
   if (values.share) return await shareSession(values.share), true;
   if (values.mcp) return await (await import("#src/commands/mcp.js")).runMcp(), true;
   if (values.costs) return (await import("#src/commands/costs.js")).printCosts({ since: values.since, csv: values.csv }), true;
+  if (values["migrate-config"]) return migrateConfigs(), true;
   if (values.update) return (await import("#src/commands/update.js")).runUpdate(), true;
   if (values.dashboard) return (await import("#src/commands/costs.js")).writeDashboard(), true;
   if (values.insights) return (await import("#src/commands/insights.js")).insightsLines(process.cwd()).forEach((l) => process.stdout.write(`${l}\n`)), true;

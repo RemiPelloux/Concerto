@@ -1,0 +1,212 @@
+{
+  "$comment": "Model refs are <backend>/<id>. claude-code/* runs on your Claude Code subscription, codex/* on your ChatGPT subscription through Codex, anything else through pi. Routes are tried in order; the first one with a reachable model wins.",
+  "models": {
+    "claude-code/claude-fable-5-2": {
+      "tier": 5
+    },
+    "claude-code/claude-opus-5-5": {
+      "tier": 4
+    },
+    "claude-code/claude-sonnet-5-5": {
+      "tier": 3
+    },
+    "claude-code/claude-haiku-5-5": {
+      "tier": 2
+    },
+    "codex/gpt-6-astra": {
+      "tier": 5
+    },
+    "codex/gpt-6.1-sol": {
+      "tier": 4
+    },
+    "codex/gpt-6-luna": {
+      "tier": 2
+    },
+    "anthropic/claude-fable-5-2": {
+      "tier": 5
+    },
+    "anthropic/claude-opus-5-5": {
+      "tier": 4
+    },
+    "anthropic/claude-sonnet-5-5": {
+      "tier": 3
+    },
+    "anthropic/claude-haiku-5-5": {
+      "tier": 2
+    },
+    "openai/gpt-6-astra": {
+      "tier": 5
+    },
+    "openai/gpt-6.1-sol": {
+      "tier": 4
+    },
+    "openai/gpt-6-luna": {
+      "tier": 2
+    },
+    "deepseek/deepseek-v4-pro": {
+      "tier": 3
+    },
+    "deepseek/deepseek-v4-flash": {
+      "tier": 1
+    }
+  },
+  "routes": [
+    {
+      "name": "ux-build",
+      "tags": [
+        "ui",
+        "ux",
+        "frontend",
+        "design-system"
+      ],
+      "role": "soloist",
+      "models": [
+        "claude-code/claude-opus-5-5",
+        "anthropic/claude-opus-5-5"
+      ],
+      "effort": "high"
+    },
+    {
+      "name": "complex-build",
+      "minScore": 55,
+      "role": "soloist",
+      "models": [
+        "claude-code/claude-opus-5-5",
+        "anthropic/claude-opus-5-5"
+      ],
+      "effort": "high"
+    },
+    {
+      "name": "light-build",
+      "role": "section",
+      "models": [
+        "codex/gpt-6.1-sol",
+        "openai/gpt-6.1-sol"
+      ],
+      "effort": "medium"
+    }
+  ],
+  "reviews": [
+    {
+      "tags": [
+        "ui",
+        "ux",
+        "frontend",
+        "design-system"
+      ],
+      "models": [
+        "codex/gpt-6-astra",
+        "openai/gpt-6-astra"
+      ]
+    }
+  ],
+  "roles": {
+    "conductor": {
+      "minTier": 5,
+      "effort": "high",
+      "tools": [
+        "read"
+      ],
+      "models": [
+        "claude-code/claude-fable-5-2",
+        "anthropic/claude-fable-5-2"
+      ]
+    },
+    "scorer": {
+      "minTier": 3,
+      "effort": "medium",
+      "tools": [],
+      "models": [
+        "claude-code/claude-sonnet-5-5",
+        "anthropic/claude-sonnet-5-5"
+      ]
+    },
+    "soloist": {
+      "minTier": 4,
+      "effort": "high",
+      "tools": [
+        "read",
+        "bash",
+        "edit",
+        "write"
+      ],
+      "models": [
+        "claude-code/claude-opus-5-5",
+        "anthropic/claude-opus-5-5"
+      ]
+    },
+    "critic": {
+      "minTier": 3,
+      "effort": "medium",
+      "tools": [
+        "read",
+        "bash"
+      ],
+      "models": [
+        "claude-code/claude-sonnet-5-5",
+        "anthropic/claude-sonnet-5-5"
+      ]
+    },
+    "section": {
+      "minTier": 1,
+      "effort": "low",
+      "tools": [
+        "read",
+        "bash",
+        "edit",
+        "write"
+      ],
+      "models": [
+        "codex/gpt-6.1-sol",
+        "openai/gpt-6.1-sol"
+      ]
+    }
+  },
+  "skills": [
+    {
+      "tags": [
+        "ui",
+        "ux",
+        "frontend"
+      ],
+      "paths": [
+        "~/.claude/skills/impeccable",
+        "~/.claude/skills/design-taste-frontend",
+        "~/.claude/skills/web-design-guidelines"
+      ]
+    },
+    {
+      "tags": [
+        "design-system"
+      ],
+      "paths": [
+        "~/.claude/skills/design-system",
+        "~/.claude/skills/ui-ux-pro-max"
+      ]
+    },
+    {
+      "tags": [
+        "copy",
+        "docs"
+      ],
+      "paths": [
+        "~/.claude/skills/humanizer"
+      ]
+    },
+    {
+      "tags": [
+        "perf"
+      ],
+      "paths": [
+        "~/.claude/skills/performance-optimization"
+      ]
+    }
+  ],
+  "swarm": {
+    "maxParallel": 6
+  },
+  "cache": {
+    "dir": ".concerto/cache",
+    "ttlHours": 72
+  }
+}

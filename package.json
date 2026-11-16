@@ -36,6 +36,7 @@
     "test": "vitest run",
     "test:affected": "smarttest run --affected",
     "test:explain": "smarttest explain",
+    "docs:api": "node --import tsx --conditions=source scripts/api-surface.ts > docs/api-surface.json",
     "docs:reference": "node --import tsx --conditions=source scripts/reference.ts > docs/reference.md",
     "bench:single": "pnpm build && mkdir -p out && node --import tsx --conditions=source scripts/bench-single.ts",
     "perf:budgets": "node --import tsx --conditions=source scripts/perf-budgets.ts dist/cli.js",

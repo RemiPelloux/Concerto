@@ -25,6 +25,7 @@ See [recipes](recipes.md) for what to do with them, and [failures](failures.md) 
 | `--dashboard` | write a page of every run: costs, pass rates, slowest stories |
 | `--plain` | the run as plain sentences, for screen readers (asks before building; --yes skips) |
 | `--sandbox` | run every agent in the sandbox: network only to model providers, secrets hidden |
+| `--migrate-config` | rewrite your config files in the current format (older ones still load as they are) |
 | `--update` | update Concerto the way it was installed (Homebrew, Scoop, Nix, the installer) |
 | `--json` | with --run: one JSON event per line (session, log, story, done, pr) |
 | `--commit` | with --run: commit each merged story on its own (clean tree needed) |
@@ -87,6 +88,7 @@ In `~/.config/concerto/config.json`, with a project's `concerto.config.json` mer
 
 | Key | Type | Default |
 |---|---|---|
+| `version` | number | `1` |
 | `models` | map of object |  |
 | `models.<key>.tier` | number |  |
 | `models.<key>.costFactor` | number, optional |  |

@@ -107,6 +107,8 @@ const NotifySchema = z.object({
 export type Notify = z.infer<typeof NotifySchema>;
 
 export const ConfigSchema = z.object({
+  /** The config format: 1 since Concerto 1.0. Older configs are migrated when they load. */
+  version: z.number().int().default(1),
   models: z.record(REF, z.object({ tier: TIER, costFactor: z.number().min(0).optional() })),
   /** Providers tried first in every chain, e.g. ["ce-*"] to send everything through a proxy. */
   prefer: z.array(PREFER).default([]),

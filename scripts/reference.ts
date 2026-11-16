@@ -29,7 +29,7 @@ function kind(schema: unknown): { type: string; inner?: unknown; value?: unknown
 }
 
 /** Every key under `schema`, depth first: `sandbox.allowHosts`, `models.<ref>.tier`, `routes[].models`. */
-function keys(schema: unknown, prefix: string): Row[] {
+export function keys(schema: unknown, prefix: string): Row[] {
   const d = def(schema);
   const shape = d.type === "object" ? (d.shape as Record<string, unknown>) : {};
   return Object.entries(shape).flatMap(([name, field]) => {

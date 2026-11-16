@@ -165,6 +165,8 @@ const CASES: Case[] = [
   { doc: "orca <command> <subcommand> failed: <error>", trigger: () => orcaAnswering({ ok: false, error: "not a repository" }), match: /^orca worktree create failed: "not a repository"$/ },
   { doc: "Orca did not return a worktree id.", trigger: () => orcaAnswering({ ok: true, result: { worktree: {} } }), match: /^Orca did not return a worktree id\.$/ },
   // Configuration
+  { doc: "<file> was written by a newer Concerto (config version <n>; this one reads up to <max>). Update Concerto: concerto --update.", trigger: () => parseConfig({ ...testConfig(), version: 9 }, "new.json"), match: /^new\.json was written by a newer Concerto \(config version 9; this one reads up to 1\)\. Update Concerto: concerto --update\.$/ },
+  { doc: "<file>: \"version\" must be a whole number, the config format it was written in.", trigger: () => parseConfig({ ...testConfig(), version: 1.5 }, "odd.json"), match: /^odd\.json: "version" must be a whole number/ },
   { doc: "invalid config in <file>: <field>: <problem>", trigger: () => parseConfig({ ...testConfig(), timeoutMinutes: "soon" }, "bad.json"), match: /^invalid config in bad\.json:\n {2}timeoutMinutes: / },
   { doc: "invalid config in <file>: policy.requireReview: no custom review role named <role> in customRoles", trigger: () => parseConfig({ ...testConfig(), policy: { protectedPaths: [], blockedModels: [], requireReview: [{ role: "security", paths: ["src/**"] }] } }, "team.json"), match: /^invalid config in team\.json:\n {2}policy\.requireReview: no custom review role named security in customRoles$/ },
   // Plans and edits

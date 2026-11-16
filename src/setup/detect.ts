@@ -2,11 +2,15 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { claudeBin, codexBin, piBin } from "#src/runner/bins.js";
 import { codexHome, codexProfiles, codexSlugs, opencodeRefs, piRefs } from "#src/models/discover.js";
+import { localModels } from "#src/runner/local.js";
 import { onPath } from "#src/runner/tool.js";
 import { inferTier } from "#src/setup/tiers.js";
 
 /** Claude Code accepts these ids; it has no command that lists them. */
 const CLAUDE_CODE_MODELS = ["claude-fable-5-2", "claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"];
+
+/** Local models start at the lowest tier: scoring and small stories, until their record says more. */
+const LOCAL_TIER = 1;
 
 export type Linked = { ref: string; tier: number; via: string };
 
@@ -53,7 +57,7 @@ function opencodeLinked(refs: string[]): Linked[] {
 /** Looks for every CLI and model Concerto can use on this machine. Reads no credentials. */
 export async function detect(): Promise<Detection> {
   const [claude, codex, pi] = [onPath(claudeBin()), onPath(codexBin()), onPath(piBin())];
-  const [piModels, opencode] = await Promise.all([pi ? piRefs() : new Set<string>(), opencodeRefs()]);
+  const [piModels, opencode, ollama, lmstudio] = await Promise.all([pi ? piRefs() : new Set<string>(), opencodeRefs(), localModels("ollama"), localModels("lmstudio")]);
   const profiles = codex ? codexProfiles() : [];
   const linked = [
     ...(claude ? tiered(CLAUDE_CODE_MODELS.map((id) => `claude-code/${id}`), "Claude Code subscription") : []),
@@ -61,6 +65,8 @@ export async function detect(): Promise<Detection> {
     ...tiered(profileRefs(profiles, piModels), "Codex profile"),
     ...tiered([...piModels], "pi"),
     ...opencodeLinked(opencode),
+    ...ollama.map((id) => ({ ref: `ollama/${id}`, tier: LOCAL_TIER, via: "Ollama, on this machine" })),
+    ...lmstudio.map((id) => ({ ref: `lmstudio/${id}`, tier: LOCAL_TIER, via: "LM Studio, on this machine" })),
   ];
   return { claude, codex, pi, rtk: onPath("rtk"), profiles, linked };
 }

@@ -279,6 +279,12 @@ the login or providers it is set up with:
 Builders get each CLI's own write access; Concerto still works in a worktree and merges the
 result. Prompts go in on stdin, and token use and cost are read from each CLI's output.
 
+Models on your own machine work too: `ollama/qwen3:8b` through Ollama (port 11434, or
+`OLLAMA_HOST`) and `lmstudio/<model>` through LM Studio (port 1234, or `LMSTUDIO_HOST`). They cost
+nothing, `concerto --setup` adds the ones the server has at tier 1, and they get a small tool set of
+their own: read and list files, and write them when building, inside the story's folder, with no
+shell. That suits scoring, diff reviews and small stories.
+
 How stories are checked is set in the same file:
 
 ```json

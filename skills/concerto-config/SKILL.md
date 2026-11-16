@@ -20,6 +20,7 @@ see the result. Invalid configs fail with the file and field named.
 - `gemini/<id>`, `cursor/<id>`: Gemini CLI and Cursor's agent, on their own logins.
 - `opencode/<provider>/<id>`, `goose/<provider>/<id>`, `aider/<id>`: those CLIs, with the
   providers they are set up with.
+- `ollama/<id>`, `lmstudio/<id>`: a model served on this machine, free, tier 1 by default.
 - anything else is a pi provider: `anthropic/...`, `openai/...`, `ce-claude/...`.
 
 Every model used must be listed under `models` with a `tier` (1 bulk work to 5 frontier).

@@ -2,7 +2,7 @@ import type { Effort } from "#src/config/types.js";
 import type { RunEvent } from "#src/runner/events.js";
 import type { Usage } from "#src/runner/usage.js";
 
-export type Backend = "claude-code" | "codex" | "pi" | "gemini" | "cursor" | "opencode" | "aider" | "goose";
+export type Backend = "claude-code" | "codex" | "pi" | "gemini" | "cursor" | "opencode" | "aider" | "goose" | "local";
 
 /** Prefixes that name a coding-agent CLI rather than a pi provider. */
 const AGENTS = new Set<string>(["gemini", "cursor", "opencode", "aider", "goose"]);
@@ -37,6 +37,7 @@ const CODEX = "codex";
  * - `gemini/<id>`, `cursor/<id>`: Gemini CLI and Cursor's agent on their own logins.
  * - `opencode/<provider>/<id>`, `goose/<provider>/<id>`, `aider/<litellm id>`: those CLIs with
  *   whatever providers they are set up with.
+ * - `ollama/<id>`, `lmstudio/<id>`: a model served on this machine.
  * - anything else: a pi provider, e.g. `anthropic/<id>`, `openai/<id>`, `ce-gpt/<id>`.
  */
 export function parseRef(ref: string): ModelRef {
@@ -47,6 +48,7 @@ export function parseRef(ref: string): ModelRef {
   if (prefix === CLAUDE_CODE) return { backend: "claude-code", prefix, provider: "anthropic", profile: "", id };
   const [head = "", profile = ""] = prefix.split("@");
   if (head === CODEX) return { backend: "codex", prefix, provider: profile || "openai", profile, id };
+  if (prefix === "ollama" || prefix === "lmstudio") return { backend: "local", prefix, provider: prefix, profile: "", id };
   if (AGENTS.has(prefix)) return { backend: prefix as Backend, prefix, provider: agentProvider(prefix, id), profile: "", id };
   return { backend: "pi", prefix, provider: prefix, profile: "", id };
 }

@@ -6,6 +6,8 @@ import { loadPriceIndex, priceFor } from "#src/models/prices.js";
 import type { ModelInfo } from "#src/models/types.js";
 
 const SUBSCRIPTION_COST_FACTOR = 0.25;
+/** A model on this machine costs nothing per token. */
+const FREE = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
 const SUBSCRIPTIONS = new Set<Backend>(["claude-code", "codex", "gemini", "cursor"]);
 
 /** Reachable models, indexed by ref so lookups never scan the list. */
@@ -43,7 +45,7 @@ export async function loadCatalog(config: ConcertoConfig, health: Health = readH
       ref,
       parsed,
       tier: entry.tier,
-      price: priceFor(prices, parsed),
+      price: parsed.backend === "local" ? FREE : priceFor(prices, parsed),
       costFactor: entry.costFactor ?? defaultCostFactor(parsed.backend, parsed.profile),
     }));
   return new Catalog(models);

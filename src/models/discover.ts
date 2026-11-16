@@ -3,6 +3,7 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { agentBin, claudeBin, codexBin, piBin } from "#src/runner/bins.js";
 import { childEnv } from "#src/runner/env.js";
+import { localModels } from "#src/runner/local.js";
 import { onPath, runTool } from "#src/runner/tool.js";
 import type { ModelRef } from "#src/runner/types.js";
 
@@ -105,18 +106,26 @@ export async function opencodeRefs(): Promise<string[]> {
   }
 }
 
+/** Local models the config names that their server has right now; servers not named are not asked. */
+async function localRefs(refs: ModelRef[]): Promise<Set<string>> {
+  const servers = [...new Set(refs.filter((r) => r.backend === "local").map((r) => r.prefix))];
+  const lists = await Promise.all(servers.map(async (s) => (await localModels(s)).map((id) => `${s}/${id}`)));
+  return new Set(lists.flat());
+}
+
 /**
  * Which configured refs can run right now. Each source is checked once, and pi is only
  * started when the config uses pi models at all.
  */
 export async function reachableRefs(refs: ModelRef[]): Promise<Set<string>> {
   const usesPi = refs.some((r) => r.backend === "pi");
-  const [pi, slugs] = [usesPi ? await piRefs() : new Set<string>(), codexSlugs()];
+  const [pi, slugs, local] = [usesPi ? await piRefs() : new Set<string>(), codexSlugs(), await localRefs(refs)];
   const hasClaude = onPath(claudeBin());
   const hasCodex = onPath(codexBin());
   const ok = (r: ModelRef): boolean => {
     if (r.backend === "claude-code") return hasClaude;
     if (r.backend === "pi") return pi.has(`${r.prefix}/${r.id}`);
+    if (r.backend === "local") return local.has(`${r.prefix}/${r.id}`);
     if (r.backend !== "codex") return onPath(agentBin(r.backend === "cursor" ? "cursor-agent" : r.backend));
     if (!hasCodex) return false;
     return r.profile ? existsSync(join(codexHome(), `${r.profile}.config.toml`)) : slugs.size === 0 || slugs.has(r.id);

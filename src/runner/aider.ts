@@ -53,7 +53,7 @@ export const runAider: Runner = async (req, onEvent) => {
   const messageFile = join(dir, "message.md");
   writeFileSync(messageFile, withRolePrompt(req), { mode: FILE_MODE });
   try {
-    return await runJsonl({ bin: agentBin("aider"), args: buildAiderArgs(req, messageFile), input: "", cwd: req.cwd, signal: req.signal, parse: aiderParser() }, onEvent);
+    return await runJsonl({ bin: agentBin("aider"), args: buildAiderArgs(req, messageFile), input: "", cwd: req.cwd, signal: req.signal, sandbox: req.sandbox, parse: aiderParser() }, onEvent);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

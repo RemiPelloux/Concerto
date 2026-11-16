@@ -42,7 +42,8 @@ export async function gate(c: Concert, job: { story: Story; cwd: string }): Prom
   if (checks.length === 0) return "";
   c.store.story(job.story.id, { status: "checking" });
   const timeoutMs = c.config.checks.timeoutMinutes * MS_PER_MINUTE;
-  const { ok, results } = await runGate(checks, { cwd: job.cwd, timeoutMs, signal: c.signal });
+  const sandbox = c.config.sandbox.enabled ? { hide: c.config.sandbox.hide } : undefined;
+  const { ok, results } = await runGate(checks, { cwd: job.cwd, timeoutMs, signal: c.signal, sandbox });
   c.store.story(job.story.id, { checks: results.map((r) => ({ name: r.name, command: r.command, ok: r.ok, ms: r.ms, flaky: r.flaky })) });
   c.store.log({ role: "critic", label: "Checks", detail: `${job.story.title}: ${summary(results)}`, result: ok ? "passed" : "failed" });
   const failed = results.find((r) => !r.ok);

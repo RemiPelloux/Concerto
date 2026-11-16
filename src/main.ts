@@ -19,7 +19,9 @@ function overrides(values: Values): Partial<ConcertoConfig> {
 
 async function setup(values: Values): Promise<Setup> {
   const cwd = process.cwd();
-  const config = withPolicy({ ...loadConfig(cwd), ...overrides(values) });
+  const base = loadConfig(cwd);
+  const sandbox = values.sandbox ? { sandbox: { ...base.sandbox, enabled: true } } : {};
+  const config = withPolicy({ ...base, ...overrides(values), ...sandbox });
   const catalog = await loadCatalog(config);
   const log = SessionLog.current ?? new SessionLog(cwd);
   const store = new Store((kind, text) => log.write(kind, text));

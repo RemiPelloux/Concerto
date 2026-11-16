@@ -10,6 +10,8 @@ import { AgentFeed } from "#src/orchestrator/feed.js";
 import { SessionLog } from "#src/engine/session-log.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 import { traced } from "#src/orchestrator/trace.js";
+import { audit } from "#src/orchestrator/audit-run.js";
+import type { SandboxSpec } from "#src/runner/sandbox.js";
 
 const MS_PER_MINUTE = 60_000;
 
@@ -41,11 +43,13 @@ export type Call = {
 
 export type CallResult = RunResult & { model: ModelInfo };
 
-function onEvent(c: Concert, role: Role) {
+/** Each tool call shows on the role's line and goes to the run's audit log, whole. */
+function onEvent(c: Concert, call: Call, model: string) {
   return (e: RunEvent): void => {
     if (e.kind !== "tool") return;
-    c.store.role(role, { note: `${e.name} ${e.detail}` });
-    if (role === "section") c.store.tool(e.name);
+    c.store.role(call.role, { note: `${e.name} ${e.detail}` });
+    if (call.role === "section") c.store.tool(e.name);
+    audit(c, { story: call.storyId, role: call.label ?? call.role, model, kind: e.name, detail: e.full ?? e.detail });
   };
 }
 
@@ -53,7 +57,7 @@ function onEvent(c: Concert, role: Role) {
 async function watched(c: Concert, call: Call, req: RunRequest): Promise<RunResult> {
   const id = `${call.role}:${call.sessionKey ?? call.role}`;
   const feed = new AgentFeed(c.store, id);
-  const notes = onEvent(c, call.role);
+  const notes = onEvent(c, call, req.model);
   c.store.agentStart({ id, role: call.role, model: req.model, label: call.label ?? call.role });
   const record = (answer: string, ok: boolean) => SessionLog.current?.call({ at: started, role: call.role, label: call.label ?? call.role, model: req.model, prompt: req.prompt, answer, ms: Date.now() - started, ok });
   const started = Date.now();
@@ -101,6 +105,17 @@ function charge(c: Concert, storyId: string, cost: number): void {
   c.store.story(storyId, { spent: spent + cost });
 }
 
+/** The sandbox for a call when the config asks for one; a host it refuses is logged and audited. */
+function sandboxFor(c: Concert, call: Call, sessionDir: string | undefined): SandboxSpec | undefined {
+  const box = c.config.sandbox;
+  if (!box.enabled) return undefined;
+  const blocked = (host: string) => {
+    c.store.log({ role: call.role, label: "Sandbox", detail: `${call.label ?? call.role}: refused a connection to ${host}`, result: "blocked" });
+    audit(c, { story: call.storyId, role: call.label ?? call.role, model: "-", kind: "network-blocked", detail: host });
+  };
+  return { allowHosts: box.allowHosts, hide: box.hide, writable: sessionDir ? [sessionDir] : [], blocked };
+}
+
 async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunResult> {
   const roleCfg = c.config.roles[call.role];
   const session = call.sessionKey ? c.sessions.open(call.sessionKey, model) : undefined;
@@ -112,10 +127,10 @@ async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
     systemFile: call.custom?.systemFile ?? c.prompts.file(call.role),
     tools: call.custom?.tools ?? roleCfg.tools,
     effort: call.effort ?? roleCfg.effort,
-    skills: c.skills.for(call.tags ?? []),
-    cwd: call.cwd ?? c.cwd,
+    skills: c.skills.for(call.tags ?? []), cwd: call.cwd ?? c.cwd,
     session,
     signal: AbortSignal.any([c.signal, timeout]),
+    sandbox: sandboxFor(c, call, session?.dir),
   });
   if (session) c.sessions.record(session, assembled.hashes);
   const entry = { usage: result.usage, price: model.price, brain: c.brainPrice, role: call.role, model: model.ref };

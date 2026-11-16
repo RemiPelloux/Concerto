@@ -1,6 +1,6 @@
 import { agentBin } from "#src/runner/bins.js";
 import type { RunEvent } from "#src/runner/events.js";
-import { asArray, asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
+import { type Json, asArray, asRecord, num, parseJsonLine, str, tool } from "#src/runner/json.js";
 import { withRolePrompt, writes } from "#src/runner/skill-note.js";
 import { runJsonl } from "#src/runner/spawn.js";
 import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
@@ -19,7 +19,7 @@ function toolEvent(call: Json): RunEvent {
   const [kind = "tool", body] = Object.entries(call)[0] ?? [];
   const args = asRecord(asRecord(body).args);
   const name = kind.replace(/ToolCall$/, "") === "shell" ? "bash" : kind.replace(/ToolCall$/, "");
-  return { kind: "tool", name, detail: oneLine(args.command ?? args.path ?? "") };
+  return tool(name, str(args.command ?? args.path ?? ""));
 }
 
 /**
@@ -41,4 +41,4 @@ export function cursorParser(): (line: string) => RunEvent | null {
 }
 
 export const runCursor: Runner = (req, onEvent) =>
-  runJsonl({ bin: agentBin("cursor-agent"), args: buildCursorArgs(req), input: withRolePrompt(req), cwd: req.cwd, signal: req.signal, parse: cursorParser() }, onEvent);
+  runJsonl({ bin: agentBin("cursor-agent"), args: buildCursorArgs(req), input: withRolePrompt(req), cwd: req.cwd, signal: req.signal, sandbox: req.sandbox, parse: cursorParser() }, onEvent);

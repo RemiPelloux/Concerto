@@ -43,6 +43,7 @@ export function testConfig(): ConcertoConfig {
     customRoles: [],
     policy: { protectedPaths: [], blockedModels: [], requireReview: [] },
     notify: [],
+    sandbox: { enabled: false, allowHosts: [], hide: [] },
     prefer: [],
     timeoutMinutes: 1,
     skills: [],

@@ -1,6 +1,6 @@
 import { agentBin } from "#src/runner/bins.js";
 import type { RunEvent } from "#src/runner/events.js";
-import { asRecord, num, oneLine, parseJsonLine, str } from "#src/runner/json.js";
+import { asRecord, num, oneLine, parseJsonLine, str, tool } from "#src/runner/json.js";
 import { withRolePrompt, writes } from "#src/runner/skill-note.js";
 import { runJsonl } from "#src/runner/spawn.js";
 import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
@@ -31,7 +31,7 @@ export function opencodeParser(): (line: string) => RunEvent | null {
     }
     if (event?.type === "tool_use") {
       const input = asRecord(asRecord(part.state).input);
-      return { kind: "tool", name: str(part.tool), detail: oneLine(input.command ?? input.filePath ?? input.path ?? "") };
+      return tool(str(part.tool), str(input.command ?? input.filePath ?? input.path ?? ""));
     }
     if (event?.type === "error") return { kind: "error", message: oneLine(asRecord(event.error).data ?? event.error) || "OpenCode failed" };
     if (event?.type !== "step_finish") return null;
@@ -43,4 +43,4 @@ export function opencodeParser(): (line: string) => RunEvent | null {
 }
 
 export const runOpencode: Runner = (req, onEvent) =>
-  runJsonl({ bin: agentBin("opencode"), args: buildOpencodeArgs(req), input: withRolePrompt(req), cwd: req.cwd, signal: req.signal, parse: opencodeParser() }, onEvent);
+  runJsonl({ bin: agentBin("opencode"), args: buildOpencodeArgs(req), input: withRolePrompt(req), cwd: req.cwd, signal: req.signal, sandbox: req.sandbox, parse: opencodeParser() }, onEvent);

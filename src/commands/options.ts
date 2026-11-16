@@ -15,6 +15,7 @@ export const USAGE = `concerto [options] [request]
   --mcp               serve Concerto to other agents as MCP tools on stdio
   --costs             what runs cost, by week, repository and model (--since <days>, --csv)
   --dashboard         write a page of every run: costs, pass rates, slowest stories
+  --sandbox           run every agent in the sandbox: network only to model providers, secrets hidden
   --update            update Concerto the way it was installed (Homebrew, Scoop, Nix, the installer)
   --json              with --run: one JSON event per line (session, log, story, done, pr)
   --commit            with --run: commit each merged story on its own (clean tree needed)
@@ -53,6 +54,7 @@ export const OPTIONS = {
   since: { type: "string" },
   dashboard: { type: "boolean" },
   update: { type: "boolean" },
+  sandbox: { type: "boolean" },
   json: { type: "boolean" },
   commit: { type: "boolean" },
   pr: { type: "boolean" },

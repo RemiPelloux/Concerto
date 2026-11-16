@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { childEnv } from "#src/runner/env.js";
+import { sandboxCommand } from "#src/runner/sandbox.js";
 
 const OUTPUT_TAIL = 4000;
 const NPM_PLACEHOLDER = /no test specified/;
@@ -74,13 +75,16 @@ export function detectChecks(cwd: string, settings: CheckSettings = {}): Check[]
   ];
 }
 
-export type RunOptions = { cwd: string; timeoutMs: number; signal?: AbortSignal };
+/** `sandbox`: run the command in the sandbox, with no network; `hide` names more home paths to hide. */
+export type RunOptions = { cwd: string; timeoutMs: number; signal?: AbortSignal; sandbox?: { hide: string[] } };
 
 /** Runs one check through the shell; output is kept to its tail, which is where failures are. */
 export function runCheck(check: Check, opts: RunOptions): Promise<CheckResult> {
   const started = Date.now();
+  const boxed = opts.sandbox ? sandboxCommand(check.command, { cwd: opts.cwd, hide: opts.sandbox.hide }) : null;
   return new Promise((resolve) => {
-    const child = spawn(check.command, { cwd: opts.cwd, env: childEnv(), shell: true, timeout: opts.timeoutMs, signal: opts.signal, stdio: ["ignore", "pipe", "pipe"] });
+    const how = { cwd: opts.cwd, env: childEnv(), timeout: opts.timeoutMs, signal: opts.signal, stdio: ["ignore", "pipe", "pipe"] as ["ignore", "pipe", "pipe"] };
+    const child = boxed ? spawn(boxed.bin, boxed.args, how) : spawn(check.command, { ...how, shell: true });
     let output = "";
     const keep = (chunk: Buffer) => (output = (output + chunk.toString()).slice(-OUTPUT_TAIL));
     child.stdout.on("data", keep);

@@ -1,27 +1,13 @@
 import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { scrub } from "#src/engine/secrets.js";
 import type { State } from "#src/state/types.js";
+
+export { scrub };
 
 const FILE_MODE = 0o600;
 const DIR_MODE = 0o700;
 const AGENT_TAIL = 12;
-
-/** What a secret usually looks like in a log: provider keys, tokens, private keys, `password=` pairs. */
-const SECRETS: RegExp[] = [
-  /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/g,
-  /\b(?:sk|pk|rk)-[A-Za-z0-9_-]{16,}/g,
-  /\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}|\bgithub_pat_[A-Za-z0-9_]{20,}/g,
-  /\bxox[abprs]-[A-Za-z0-9-]{10,}/g,
-  /\bAKIA[0-9A-Z]{16}\b/g,
-  /\bBearer\s+[A-Za-z0-9._~+/=-]{12,}/gi,
-];
-/** `password=…`, `api_key: …`: the name stays, the value goes. */
-const ASSIGNED = /\b((?:api[_-]?key|access[_-]?token|auth[_-]?token|secret|password|passwd|token)["']?\s*[:=]\s*["']?)[^\s"',;]{4,}/gi;
-
-/** The text with anything shaped like a secret replaced by [redacted]. */
-export function scrub(text: string): string {
-  return SECRETS.reduce((t, pattern) => t.replace(pattern, "[redacted]"), text).replace(ASSIGNED, "$1[redacted]");
-}
 
 const escape = (text: string) => scrub(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 

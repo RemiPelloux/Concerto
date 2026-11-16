@@ -1,6 +1,6 @@
 import { agentBin } from "#src/runner/bins.js";
 import type { RunEvent } from "#src/runner/events.js";
-import { asArray, asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
+import { type Json, asArray, asRecord, num, parseJsonLine, str, tool } from "#src/runner/json.js";
 import { withRolePrompt, writes } from "#src/runner/skill-note.js";
 import { runJsonl } from "#src/runner/spawn.js";
 import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
@@ -27,7 +27,7 @@ function messageEvents(message: Json): RunEvent[] {
     if (c.type === "text") return [{ kind: "text", delta: str(c.text) }];
     if (c.type !== "toolRequest") return [];
     const call = asRecord(asRecord(c.toolCall).value);
-    return [{ kind: "tool", name: str(call.name).replace(/^developer__/, ""), detail: oneLine(Object.values(asRecord(call.arguments))[0] ?? "") }];
+    return [tool(str(call.name).replace(/^developer__/, ""), str(Object.values(asRecord(call.arguments))[0] ?? ""))];
   });
 }
 
@@ -54,4 +54,4 @@ export function gooseParser(): (line: string) => RunEvent | null {
 }
 
 export const runGoose: Runner = (req, onEvent) =>
-  runJsonl({ bin: agentBin("goose"), args: buildGooseArgs(req), input: withRolePrompt(req), cwd: req.cwd, signal: req.signal, parse: gooseParser(), env: gooseEnv(req) }, onEvent);
+  runJsonl({ bin: agentBin("goose"), args: buildGooseArgs(req), input: withRolePrompt(req), cwd: req.cwd, signal: req.signal, sandbox: req.sandbox, parse: gooseParser(), env: gooseEnv(req) }, onEvent);

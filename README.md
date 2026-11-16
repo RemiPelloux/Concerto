@@ -251,6 +251,20 @@ budget caps it, and the issue gets a link to the pull request. On GitLab,
 [examples/gitlab/concerto.gitlab-ci.yml](examples/gitlab/concerto.gitlab-ci.yml) builds the
 `CONCERTO_REQUEST` of a pipeline and pushes a merge request.
 
+## Safety
+
+- `--sandbox`, or `"sandbox": { "enabled": true }`, runs every agent and every check sandboxed:
+  bubblewrap on Linux, `sandbox-exec` on macOS. The system is read-only and your credentials
+  (`~/.ssh`, `~/.aws`, `gh`, `.npmrc`…) are hidden. The only network is to the model providers
+  and `sandbox.allowHosts`.
+- Every change is scanned for keys, tokens and password literals before review; one sends the
+  story back and it never merges.
+- Each run keeps a signed audit log of every command its agents ran and every host the sandbox
+  refused, in `.concerto/audit/`.
+
+[docs/security.md](docs/security.md) lists every place model output reaches a shell, a path or a
+file, and what stands in the way.
+
 ## Costs, dashboard and traces
 
 Every finished run is recorded, from every repository, in `~/.config/concerto/runs.jsonl`.

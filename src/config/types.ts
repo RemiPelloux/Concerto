@@ -130,6 +130,11 @@ export const ConfigSchema = z.object({
   customRoles: z.array(CustomRoleSchema).default([]),
   policy: PolicySchema.default({ protectedPaths: [], blockedModels: [], requireReview: [] }),
   notify: z.array(NotifySchema).default([]),
+  /**
+   * Every agent CLI in the platform's sandbox (bubblewrap on Linux, sandbox-exec on macOS): the
+   * system read-only, credentials hidden, and network only to the model providers and allowHosts.
+   */
+  sandbox: z.object({ enabled: z.boolean().default(false), allowHosts: z.array(z.string()).default([]), hide: z.array(z.string()).default([]) }).default({ enabled: false, allowHosts: [], hide: [] }),
   skills: z.array(SkillRuleSchema),
   swarm: z.object({ maxParallel: z.number().int().min(1) }),
   /** "worktree": every story builds in its own git worktree and is merged back when it passes. */

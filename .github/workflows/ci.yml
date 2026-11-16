@@ -22,8 +22,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Neovim, for the plugin's tests
-        run: sudo apt-get install -y --no-install-recommends neovim
+      - name: Neovim and bubblewrap, for the plugin's and the sandbox's tests
+        run: |
+          sudo apt-get install -y --no-install-recommends neovim bubblewrap
+          # Ubuntu 24.04 stops unprivileged user namespaces by default; the sandbox needs them.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: pnpm typecheck
       - run: pnpm lint
       - name: Tests (SmartTest picks the affected ones on pull requests)

@@ -1,4 +1,5 @@
 import { useInput } from "ink";
+import { scrub } from "#src/engine/secrets.js";
 import { useState } from "react";
 import { fileDiff } from "#src/engine/changes.js";
 import type { State } from "#src/state/types.js";
@@ -37,7 +38,8 @@ function pick({ zone, index, state, cwd, open }: Pick): void {
   if (zone !== "changes") return;
   const file = state.changes[index]?.file ?? "";
   open({ kind: "diff", file, text: "loading…" });
-  fileDiff(cwd, file).then((text) => open({ kind: "diff", file, text }), () => open({ kind: "diff", file, text: "no diff" }));
+  // Shown with anything shaped like a secret redacted: a screen can be shared or recorded.
+  fileDiff(cwd, file).then((text) => open({ kind: "diff", file, text: scrub(text) }), () => open({ kind: "diff", file, text: "no diff" }));
 }
 
 /**

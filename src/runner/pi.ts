@@ -16,4 +16,4 @@ export function buildPiArgs(req: RunRequest): string[] {
 
 /** Any provider logged into pi: Anthropic, OpenAI, DeepSeek, Grok, a proxy such as ce-gpt. */
 export const runPi: Runner = (req, onEvent) =>
-  runJsonl({ bin: piBin(), args: buildPiArgs(req), input: req.prompt, cwd: req.cwd, signal: req.signal, parse: parseLine }, onEvent);
+  runJsonl({ bin: piBin(), args: buildPiArgs(req), input: req.prompt, cwd: req.cwd, signal: req.signal, sandbox: req.sandbox, parse: parseLine }, onEvent);

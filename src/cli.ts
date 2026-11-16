@@ -7,6 +7,9 @@ import { OPTIONS, USAGE } from "#src/commands/options.js";
  * load what they need, and only the terminal UI pays for Ink and React.
  */
 async function main(): Promise<void> {
+  // Inside the Linux sandbox: relay to the proxy, then run the agent. Never typed by a person.
+  const [, , first, ...rest] = process.argv;
+  if (first === "--sandbox-forward") return (await import("#src/commands/forward.js")).forward(rest);
   const { values, positionals } = parseArgs({ allowPositionals: true, options: OPTIONS });
   if (values.help) return void process.stdout.write(`${USAGE}\n`);
   if (values.version) {

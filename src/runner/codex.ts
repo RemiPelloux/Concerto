@@ -5,7 +5,7 @@ import { codexBin } from "#src/runner/bins.js";
 import type { Effort } from "#src/config/types.js";
 import { gitEnv } from "#src/runner/env.js";
 import type { RunEvent } from "#src/runner/events.js";
-import { asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
+import { type Json, asRecord, num, parseJsonLine, str, tool } from "#src/runner/json.js";
 import { withRolePrompt } from "#src/runner/skill-note.js";
 import { runJsonl } from "#src/runner/spawn.js";
 import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
@@ -49,7 +49,7 @@ export function buildCodexArgs(req: RunRequest): string[] {
 export const codexInput = withRolePrompt;
 
 function itemEvent(item: Json): RunEvent | null {
-  if (item.type === "command_execution") return { kind: "tool", name: "bash", detail: oneLine(str(item.command).replace(/^\S*bash -lc /, "")) };
+  if (item.type === "command_execution") return tool("bash", str(item.command).replace(/^\S*bash -lc /, ""));
   if (item.type === "file_change") return { kind: "tool", name: "edit", detail: "files" };
   if (item.type === "agent_message") return { kind: "text", delta: str(item.text) };
   return null;
@@ -87,4 +87,4 @@ export function codexParser(): (line: string) => RunEvent | null {
 }
 
 export const runCodex: Runner = (req, onEvent) =>
-  runJsonl({ bin: codexBin(), args: buildCodexArgs(req), input: codexInput(req), cwd: req.cwd, signal: req.signal, parse: codexParser() }, onEvent);
+  runJsonl({ bin: codexBin(), args: buildCodexArgs(req), input: codexInput(req), cwd: req.cwd, signal: req.signal, sandbox: req.sandbox, parse: codexParser() }, onEvent);

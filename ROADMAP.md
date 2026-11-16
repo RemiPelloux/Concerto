@@ -253,17 +253,21 @@ usual package manager, without installing Node first. The release workflow does 
 publishing: Homebrew on macOS, Scoop on Windows, apt in a bare Ubuntu container, and the Docker
 image. Every push already builds the five executables and runs the .deb in a container without Node.
 
-### Sprint 17 · 0.18 · safety
+### Sprint 17 · safety · shipped
 
-- **Optional sandbox** for every builder, not only Codex: bubblewrap on Linux, sandbox-exec on
-  macOS, a container elsewhere, with network off by default.
-- **Secret scanning** of every diff before it is shown or merged.
-- **Audit log** of every command an agent ran, signed and kept per run.
-- **Security review** of every place model output reaches a shell, a path or a file, and fuzzing
-  of the plan parser and every backend's event parser.
+- **Optional sandbox** for every agent and every check: bubblewrap on Linux, sandbox-exec on
+  macOS, refusing to run elsewhere; the system read-only, credentials hidden, network only to the
+  model providers through Concerto's allow-listing proxy.
+- **Secret scanning** of every diff before it is reviewed, shown or merged.
+- **Audit log** of every command an agent ran and every refused host, each line signed over the
+  one before it, kept per run.
+- **Security review** of every place model output reaches a shell, a path or a file
+  ([docs/security.md](docs/security.md)). It found and fixed one: a symbolic link in a story could
+  copy a file from outside the project into it at merge. Fuzzing of the plan parser and every
+  backend's event parser.
 
-Done when: a builder told to read `~/.ssh` or call an outside URL is stopped by the sandbox, and
-the attempt is in the audit log.
+Done: a builder process told to read `~/.ssh` and to call example.com is stopped by the sandbox,
+reaches only the host it is allowed, and both attempts are in the signed audit log.
 
 ### Sprint 18 · 0.19 · polish
 

@@ -1,9 +1,10 @@
-import { asArray, asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
+import { type Json, asArray, asRecord, num, parseJsonLine, str, tool } from "#src/runner/json.js";
 import type { Usage } from "#src/runner/usage.js";
 
 export type RunEvent =
   | { kind: "text"; delta: string }
-  | { kind: "tool"; name: string; detail: string }
+  /** `full`: the untruncated command or arguments when `detail` clips them. */
+  | { kind: "tool"; name: string; detail: string; full?: string }
   | { kind: "turn"; usage: Usage; text: string }
   /** The model call failed, reported inside the stream (pi exits 0 when that happens). */
   | { kind: "error"; message: string };
@@ -30,7 +31,7 @@ function textOf(message: Json): string {
 
 function toolDetail(args: unknown): string {
   const a = asRecord(args);
-  return oneLine(a.command ?? a.path ?? a.file_path ?? a.pattern);
+  return str(a.command ?? a.path ?? a.file_path ?? a.pattern);
 }
 
 /** Maps one line of `pi --mode json` output to the events Concerto cares about. */
@@ -39,7 +40,7 @@ export function parseLine(line: string): RunEvent | null {
   if (!event) return null;
   const update = asRecord(event.assistantMessageEvent);
   if (event.type === "message_update" && update.type === "text_delta") return { kind: "text", delta: str(update.delta) };
-  if (event.type === "tool_execution_start") return { kind: "tool", name: str(event.toolName) || "tool", detail: toolDetail(event.args) };
+  if (event.type === "tool_execution_start") return tool(str(event.toolName) || "tool", toolDetail(event.args));
   const message = asRecord(event.message);
   if (event.type === "message_end" && message.role === "assistant") {
     if (message.stopReason === "error") return { kind: "error", message: str(message.errorMessage) || "model call failed" };

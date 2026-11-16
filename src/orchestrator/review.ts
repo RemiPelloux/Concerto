@@ -95,7 +95,8 @@ export async function mutationProbe(c: Concert, job: Job): Promise<string> {
   const mutation = touchesTests(diff) ? findMutation(diff) : null;
   if (!mutation) return "";
   const restore = applyMutation(job.cwd, mutation);
-  const result = await runCheck(test, { cwd: job.cwd, timeoutMs: c.config.checks.timeoutMinutes * MS_PER_MINUTE, signal: c.signal }).finally(restore);
+  const sandbox = c.config.sandbox.enabled ? { hide: c.config.sandbox.hide } : undefined;
+  const result = await runCheck(test, { cwd: job.cwd, timeoutMs: c.config.checks.timeoutMinutes * MS_PER_MINUTE, signal: c.signal, sandbox }).finally(restore);
   const where = `${mutation.file}:${mutation.line}`;
   c.store.story(job.story.id, { mutation: { ...mutation, caught: !result.ok } });
   c.store.log({ role: "critic", label: "Mutation", detail: `${where}: \`${mutation.from.trim()}\` to \`${mutation.to.trim()}\``, result: result.ok ? "survived" : "caught" });

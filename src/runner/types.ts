@@ -1,6 +1,7 @@
 import type { Effort } from "#src/config/types.js";
 import type { RunEvent } from "#src/runner/events.js";
 import type { Usage } from "#src/runner/usage.js";
+import type { SandboxSpec } from "#src/runner/sandbox.js";
 
 export type Backend = "claude-code" | "codex" | "pi" | "gemini" | "cursor" | "opencode" | "aider" | "goose" | "local";
 
@@ -19,6 +20,8 @@ export type RunRequest = {
   /** `resume` is true when this session already has turns. */
   session?: { dir: string; id: string; resume: boolean };
   signal?: AbortSignal;
+  /** Run the CLI in the platform's sandbox, its network limited to the model providers. */
+  sandbox?: SandboxSpec;
 };
 
 export type RunResult = { text: string; usage: Usage; turns: number };

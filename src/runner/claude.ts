@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { claudeBin } from "#src/runner/bins.js";
 import type { Effort } from "#src/config/types.js";
 import type { RunEvent } from "#src/runner/events.js";
-import { asArray, asRecord, num, oneLine, parseJsonLine, str, type Json } from "#src/runner/json.js";
+import { type Json, asArray, asRecord, num, parseJsonLine, str, tool } from "#src/runner/json.js";
 import { withSkillNote } from "#src/runner/skill-note.js";
 import { runJsonl } from "#src/runner/spawn.js";
 import { parseRef, type Runner, type RunRequest } from "#src/runner/types.js";
@@ -50,7 +50,7 @@ function toolEvent(message: Json): RunEvent | null {
   const text = parts.filter((p) => p.type === "text").map((p) => str(p.text)).join("");
   if (!call) return text ? { kind: "text", delta: `${text}\n` } : null;
   const input = asRecord(call.input);
-  return { kind: "tool", name: (str(call.name) || "tool").toLowerCase(), detail: oneLine(input.command ?? input.file_path ?? input.pattern) };
+  return tool((str(call.name) || "tool").toLowerCase(), str(input.command ?? input.file_path ?? input.pattern));
 }
 
 function resultEvent(event: Json): RunEvent {
@@ -75,6 +75,6 @@ export function parseClaudeLine(line: string): RunEvent | null {
 
 export const runClaude: Runner = (req, onEvent) =>
   runJsonl(
-    { bin: claudeBin(), args: buildClaudeArgs(req), input: withSkillNote(req.prompt, req.skills), cwd: req.cwd, signal: req.signal, parse: parseClaudeLine },
+    { bin: claudeBin(), args: buildClaudeArgs(req), input: withSkillNote(req.prompt, req.skills), cwd: req.cwd, signal: req.signal, sandbox: req.sandbox, parse: parseClaudeLine },
     onEvent,
   );

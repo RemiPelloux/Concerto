@@ -54,6 +54,14 @@ describe("session history", () => {
     expect(second.store.get().phase).toBe("done");
   });
 
+  it("reopens a session saved before a role existed, with that role idle", () => {
+    const roles: Partial<State["roles"]> = { ...new Store().get().roles };
+    delete roles.rewriter;
+    const saved = { ...new Store().get(), roles } as State;
+    const state = resumable(saved);
+    expect(state.roles.rewriter).toEqual({ model: "", activity: "idle", note: "" });
+  });
+
   it("marks agents cut off mid-run as failed and leaves a finished session done", () => {
     const store = new Store();
     store.agentStart({ id: "section:a", role: "section", model: "a/swarm", label: "a" });

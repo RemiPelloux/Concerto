@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { Store } from "#src/state/store.js";
+import { initialState, type Store } from "#src/state/store.js";
 import type { State } from "#src/state/types.js";
 
 const DIR_MODE = 0o700;
@@ -92,5 +92,7 @@ export function resumable(saved: State): State {
   const agents = Object.fromEntries(Object.entries(saved.agents).map(([id, a]) => [id, a.status === "working" ? { ...a, status: "failed" as const, endedAt: a.lastAt } : a]));
   const left = saved.order.some((id) => stories[id]?.status !== "passed");
   const phase = !saved.plan ? "idle" : left ? "planned" : "done";
-  return { ...saved, stories, agents, phase, error: "" };
+  // Laid over a fresh state: a session saved by an older Concerto lacks roles and fields added since.
+  const fresh = initialState();
+  return { ...fresh, ...saved, roles: { ...fresh.roles, ...saved.roles }, stories, agents, phase, error: "" };
 }

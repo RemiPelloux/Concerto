@@ -25,6 +25,11 @@ see the result. Invalid configs fail with the file and field named.
 
 Every model used must be listed under `models` with a `tier` (1 bulk work to 5 frontier).
 
+Custom roles go in `customRoles`: `{ "name", "kind": "review" | "build", "instructions" (text or
+a repository file), "tags", "paths" (globs), "minScore", "models", "minTier", "tools", "effort" }`.
+A review runs after the critic passes and can send the story back; a build edits a passed story
+before its merge.
+
 ## What to change
 
 - **Who builds what:** `routes`, tried in order. A route matches on `tags` (any of),

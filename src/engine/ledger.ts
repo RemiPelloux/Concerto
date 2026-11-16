@@ -19,6 +19,8 @@ export type Ledger = {
   fallbacks: number;
   /** Usage per role (scorer, critic…): which prompts the provider's cache actually serves. */
   roles: Record<string, Usage>;
+  /** Calls and usage per model, so a report accounts for every call. Absent in sessions before 0.11. */
+  models?: Record<string, { calls: number; usage: Usage }>;
 };
 
 export const EMPTY_LEDGER: Ledger = {
@@ -30,6 +32,7 @@ export const EMPTY_LEDGER: Ledger = {
   dedupedTokens: 0,
   fallbacks: 0,
   roles: {},
+  models: {},
 };
 
 export function priceUsage(u: Usage, p: Price): number {
@@ -37,7 +40,14 @@ export function priceUsage(u: Usage, p: Price): number {
   return dollars / PER_MILLION;
 }
 
-type Entry = { usage: Usage; price: Price | null; brain: Price | null; role?: string };
+type Entry = { usage: Usage; price: Price | null; brain: Price | null; role?: string; model?: string };
+
+type ModelCalls = NonNullable<Ledger["models"]>;
+
+function addCalls(a: ModelCalls, b: ModelCalls): ModelCalls {
+  const refs = [...new Set([...Object.keys(a), ...Object.keys(b)])];
+  return Object.fromEntries(refs.map((r) => [r, { calls: (a[r]?.calls ?? 0) + (b[r]?.calls ?? 0), usage: addUsage(a[r]?.usage ?? ZERO_USAGE, b[r]?.usage ?? ZERO_USAGE) }]));
+}
 
 /** Adds one call. When the CLI reports no cost, list price is used (API-equivalent). */
 export function record(ledger: Ledger, entry: Entry): Ledger {
@@ -50,6 +60,7 @@ export function record(ledger: Ledger, entry: Entry): Ledger {
     soloCost: ledger.soloCost + (brain ? priceUsage(usage, brain) : usage.cost),
     cacheSaved: ledger.cacheSaved + saved,
     roles: entry.role ? { ...ledger.roles, [entry.role]: addUsage(ledger.roles[entry.role] ?? ZERO_USAGE, usage) } : ledger.roles,
+    models: entry.model ? addCalls(ledger.models ?? {}, { [entry.model]: { calls: 1, usage } }) : ledger.models,
   };
 }
 
@@ -72,5 +83,6 @@ export function mergeLedgers(a: Ledger, b: Ledger): Ledger {
     dedupedTokens: a.dedupedTokens + b.dedupedTokens,
     fallbacks: a.fallbacks + b.fallbacks,
     roles: Object.fromEntries([...new Set([...Object.keys(a.roles), ...Object.keys(b.roles)])].map((r) => [r, addUsage(a.roles[r] ?? ZERO_USAGE, b.roles[r] ?? ZERO_USAGE)])),
+    models: addCalls(a.models ?? {}, b.models ?? {}),
   };
 }

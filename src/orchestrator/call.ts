@@ -34,6 +34,8 @@ export type Call = {
   cwd?: string;
   /** Read-only calls may be answered by the local response cache. */
   cacheable?: boolean;
+  /** A custom role: its own system prompt and tools in place of the role's. */
+  custom?: { systemFile: string; tools: string[] };
 };
 
 export type CallResult = RunResult & { model: ModelInfo };
@@ -106,8 +108,8 @@ async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
   const result = await watched(c, call, {
     model: model.ref,
     prompt: assembled.prompt,
-    systemFile: c.prompts.file(call.role),
-    tools: roleCfg.tools,
+    systemFile: call.custom?.systemFile ?? c.prompts.file(call.role),
+    tools: call.custom?.tools ?? roleCfg.tools,
     effort: call.effort ?? roleCfg.effort,
     skills: c.skills.for(call.tags ?? []),
     cwd: call.cwd ?? c.cwd,
@@ -115,7 +117,7 @@ async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
     signal: AbortSignal.any([c.signal, timeout]),
   });
   if (session) c.sessions.record(session, assembled.hashes);
-  const entry = { usage: result.usage, price: model.price, brain: c.brainPrice, role: call.role };
+  const entry = { usage: result.usage, price: model.price, brain: c.brainPrice, role: call.role, model: model.ref };
   const before = c.store.get().ledger.usage.cost;
   c.store.update((s) => ({ ledger: bump(record(s.ledger, entry), "dedupedTokens", assembled.skippedTokens) }));
   const cost = c.store.get().ledger.usage.cost - before;

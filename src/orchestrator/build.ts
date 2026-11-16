@@ -1,4 +1,5 @@
 import { approxTokens, condense } from "#src/engine/condense.js";
+import { customBuilds } from "#src/orchestrator/custom-roles.js";
 import { bump } from "#src/engine/ledger.js";
 import { readChanges } from "#src/engine/changes.js";
 import { impactBrief } from "#src/engine/impact.js";
@@ -102,6 +103,7 @@ export async function buildStory(c: Concert, story: Story, opening = ""): Promis
       await closeWorkspace(c, ws, { pass: false, rebuild: false });
       throw error;
     });
+    if (result === true) await customBuilds(c, { story, cwd: ws.cwd, round });
     const ending = await closeWorkspace(c, ws, { pass: result === true, rebuild });
     if (result === null) return false;
     if (!ending.conflict || !rebuild) return finish(c, story, ending.merged);

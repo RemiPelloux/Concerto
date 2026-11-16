@@ -1,6 +1,7 @@
 import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { cacheHitRatio } from "#src/engine/ledger.js";
+import { promptTokens, type Usage } from "#src/runner/usage.js";
 import type { State } from "#src/state/types.js";
 
 const FILE_MODE = 0o600;
@@ -44,6 +45,16 @@ function totals(s: State): string[] {
   ];
 }
 
+/** Every model call of the run, by model: how many, the tokens and the cost; totals in the last row. */
+function calls(s: State): string[] {
+  const rows = Object.entries(s.ledger.models ?? {}).sort(([, a], [, b]) => b.usage.cost - a.usage.cost);
+  if (rows.length === 0) return [];
+  const row = (name: string, n: number, u: Usage) => `| ${name} | ${n} | ${promptTokens(u)} | ${u.cacheRead} | ${u.output} | $${u.cost.toFixed(CENTS)} |`;
+  const total = rows.reduce((sum, [, m]) => sum + m.calls, 0);
+  return ["## Calls", "", "| Model | Calls | Prompt tokens | From cache | Output tokens | Cost |", "|---|---|---|---|---|---|",
+    ...rows.map(([ref, m]) => row(`\`${ref}\``, m.calls, m.usage)), row("**All**", total, s.ledger.usage), ""];
+}
+
 function render(s: State): string {
   return [
     `# ${s.plan?.summary ?? "Concerto run"}`,
@@ -56,6 +67,7 @@ function render(s: State): string {
     "",
     ...storyDetails(s),
     ...(s.notes.length > 0 ? ["## Conductor notes", "", ...s.notes, ""] : []),
+    ...calls(s),
     "## Totals",
     "",
     ...totals(s),

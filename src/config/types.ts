@@ -7,6 +7,8 @@ const DEFAULT_TIMEOUT_MINUTES = 30;
 const DEFAULT_CACHE_ENTRIES = 500;
 const DEFAULT_CHECK_MINUTES = 10;
 const DEFAULT_READY_SECONDS = 60;
+/** A custom role, like the critic, runs on a solid model unless it names its own. */
+const DEFAULT_CUSTOM_TIER = 3;
 /** Claude Code and Codex subscriptions reset over about five hours. */
 const DEFAULT_WINDOW_HOURS = 5;
 /** A command, false to turn the check off, or absent to let Concerto detect it. */
@@ -56,6 +58,28 @@ const ReviewSchema = z.object({
 });
 export type Review = z.infer<typeof ReviewSchema>;
 
+/**
+ * A role of your own: a reviewer that runs after the critic passes a story (security, a migration
+ * check), or a builder that works on a passed story before it is merged (docs). No tags and no
+ * paths: every story at or above minScore.
+ */
+const CustomRoleSchema = z.object({
+  name: z.string().regex(/^[\w-]+$/, "role names are letters, digits, - and _"),
+  kind: z.enum(["review", "build"]),
+  /** What this role looks for or does: the text, or a path to a file in the repository. */
+  instructions: z.string().min(1),
+  tags: z.array(z.string()).default([]),
+  /** Globs on the story's files: `src/auth/**`, `**\/*.sql`. */
+  paths: z.array(z.string()).default([]),
+  minScore: z.number().min(0).max(MAX_SCORE).default(0),
+  models: z.array(REF).default([]),
+  minTier: TIER.default(DEFAULT_CUSTOM_TIER),
+  /** Default: the critic's tools for a review, the soloist's for a build. */
+  tools: z.array(z.string()).optional(),
+  effort: EffortSchema.default("medium"),
+});
+export type CustomRole = z.infer<typeof CustomRoleSchema>;
+
 export const ConfigSchema = z.object({
   models: z.record(REF, z.object({ tier: TIER, costFactor: z.number().min(0).optional() })),
   /** Providers tried first in every chain, e.g. ["ce-*"] to send everything through a proxy. */
@@ -79,6 +103,7 @@ export const ConfigSchema = z.object({
   }),
   routes: z.array(RouteSchema).default([]),
   reviews: z.array(ReviewSchema).default([]),
+  customRoles: z.array(CustomRoleSchema).default([]),
   skills: z.array(SkillRuleSchema),
   swarm: z.object({ maxParallel: z.number().int().min(1) }),
   /** "worktree": every story builds in its own git worktree and is merged back when it passes. */

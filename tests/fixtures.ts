@@ -40,6 +40,7 @@ export function testConfig(): ConcertoConfig {
     roles: { conductor: role(5), scorer: role(3), soloist: role(4), critic: role(3), section: role(1) },
     routes: [],
     reviews: [],
+    customRoles: [],
     prefer: [],
     timeoutMinutes: 1,
     skills: [],

@@ -285,6 +285,21 @@ nothing, `concerto --setup` adds the ones the server has at tier 1, and they get
 their own: read and list files, and write them when building, inside the story's folder, with no
 shell. That suits scoring, diff reviews and small stories.
 
+Roles of your own go in `customRoles`. A `review` role runs after the critic passes a story it
+applies to, and failing it sends the story back to its builder with the review. A `build` role
+works on a passed story in its worktree before the merge. Each takes its instructions as text or
+as a file of the repository, and applies by tag, by path glob, or to every story above `minScore`:
+
+```json
+"customRoles": [
+  { "name": "security", "kind": "review", "instructions": "docs/SECURITY_REVIEW.md", "tags": ["auth", "payments"], "models": ["codex/gpt-6.1-sol"] },
+  { "name": "migrations", "kind": "review", "instructions": "Fail any migration that cannot be rolled back.", "paths": ["**/migrations/**"] },
+  { "name": "docs", "kind": "build", "instructions": "Update README.md for what the story changed.", "paths": ["src/**"], "minTier": 2 }
+]
+```
+
+The run report lists every model call by model, with its tokens and cost.
+
 How stories are checked is set in the same file:
 
 ```json

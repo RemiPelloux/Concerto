@@ -165,16 +165,22 @@ Done: on [eight real repositories](docs/language-benchmark.md), one per language
 release, the graph finds the importer and the test a person checked by reading the code, 8 of 8.
 `pnpm bench:languages` runs it again.
 
-### Sprint 11 · 0.12 · more agents and models
+### Sprint 11 · more agents and models · shipped
 
-- **Backends:** Gemini CLI, OpenCode, Cursor's agent, Aider and Goose behind the same runner
-  interface, with the same fallbacks and accounting.
-- **Local models** through Ollama and LM Studio for scoring and small stories.
-- **Custom roles** defined in the config: a security reviewer, a docs writer, a migration checker,
-  each with its own prompt, tools and routing.
+- **Backends:** Gemini CLI, Cursor's agent, OpenCode, Goose and Aider behind the same runner,
+  with the same fallbacks and accounting. Each reads its prompt on stdin; reviewers run read-only
+  in each CLI's own way; token use and cost come from each CLI's output. OpenCode was run for
+  real; the others are read the way their installed code or source writes their output.
+- **Local models** through Ollama and LM Studio, free, with a small tool set of Concerto's own
+  (read, list, write inside the story's folder, no shell); `--setup` adds them at tier 1.
+- **Custom roles** in `customRoles`: reviewers that can send a story back, and builders that
+  work on a passed story before its merge, each with its own instructions, models and tools.
+- **The report lists every call** by model, with tokens and cost.
 
-Done when: one run uses five vendors, a local model and a custom role, and the report accounts for
-every call.
+Done: a run through Claude Code, Codex, Gemini CLI, OpenCode and Goose (five vendors), with
+scoring on an Ollama model, a security reviewer that sends a story back once and a docs writer,
+has every call in the report's table. In the test suite the CLIs are scripted; a live run needs
+each CLI logged in.
 
 ### Sprint 12 · 0.13 · editors and tools
 

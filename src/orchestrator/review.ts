@@ -9,6 +9,7 @@ import { headline, readTag, storyBrief, storySegments } from "#src/orchestrator/
 import { callRole } from "#src/orchestrator/call.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 import { consult } from "#src/orchestrator/consult.js";
+import { customReviews } from "#src/orchestrator/custom-roles.js";
 import { checksBrief } from "#src/orchestrator/gate.js";
 import { behaviourBrief, observeBehaviour } from "#src/orchestrator/observe.js";
 import type { Story } from "#src/orchestrator/plan.js";
@@ -62,7 +63,7 @@ const highRisk = (c: Concert, story: Story) => story.risk >= HIGH_RISK || c.stor
  * The critic's verdict, with the behaviour diff in hand when one is configured. On a high-risk story that passed, a second critic from another vendor
  * reviews it too; when the two disagree, the conductor decides.
  */
-export async function judge(c: Concert, job: Job): Promise<Verdict> {
+async function critics(c: Concert, job: Job): Promise<Verdict> {
   await observeBehaviour(c, job);
   const first = await critique(c, job);
   if (!first.pass || !highRisk(c, job.story)) return first;
@@ -74,6 +75,12 @@ export async function judge(c: Concert, job: Job): Promise<Verdict> {
   const call = await consult(c, "critics-disagree", `${storyBrief(job.story)}\n\n${reviews}`);
   if (call.verdict === "ok") return first;
   return { pass: false, text: `${second.text}\n\n## Conductor\n${call.finding}\n${call.guidance}`, model: second.model, stop: call.verdict === "stop" };
+}
+
+/** The critics' verdict; a story they pass then goes to the custom reviewers that apply to it. */
+export async function judge(c: Concert, job: Job): Promise<Verdict> {
+  const verdict = await critics(c, job);
+  return verdict.pass ? ((await customReviews(c, job)) ?? verdict) : verdict;
 }
 
 /**

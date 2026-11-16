@@ -151,14 +151,19 @@ Done: a failed run from last week was found by a file name, opened as a branch a
 
 ## Part 4 · Reach
 
-### Sprint 10 · 0.11 · more languages and repositories
+### Sprint 10 · more languages and repositories · shipped
 
-- **Import graph** for Go, Rust, PHP, Java, Kotlin, C#, Ruby and Swift.
-- **Monorepos:** workspace packages, project references, per-package test commands.
-- **Polyglot stories** that touch two languages are scored with both graphs.
+- **Import graph** for Go, Rust, PHP, Java, Kotlin, C#, Ruby and Swift, through each one's own
+  rules: `go.mod` modules, crates and `mod` files, PSR-4, declared packages and namespaces (same
+  package or namespace without an import included), `require`, SwiftPM targets.
+- **Monorepos:** workspace packages resolve by name; a story inside one package runs that
+  package's tests (`pnpm --filter`, `yarn workspace`, `npm --workspace`, `cargo test -p`,
+  `go -C`).
+- **Polyglot stories** are scored with one graph that holds every language.
 
-Done when: real open-source repositories in each of those languages score with correct importers
-and covering tests on a published benchmark set.
+Done: on [eight real repositories](docs/language-benchmark.md), one per language at a pinned
+release, the graph finds the importer and the test a person checked by reading the code, 8 of 8.
+`pnpm bench:languages` runs it again.
 
 ### Sprint 11 · 0.12 · more agents and models
 

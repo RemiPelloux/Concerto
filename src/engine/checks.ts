@@ -22,7 +22,7 @@ function packageScripts(cwd: string): Record<string, string> {
   }
 }
 
-function packageManager(cwd: string): string {
+export function packageManager(cwd: string): string {
   if (has(cwd, "pnpm-lock.yaml")) return "pnpm";
   if (has(cwd, "yarn.lock")) return "yarn";
   if (has(cwd, "bun.lockb") || has(cwd, "bun.lock")) return "bun";

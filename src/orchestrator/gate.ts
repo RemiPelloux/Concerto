@@ -1,4 +1,5 @@
 import { runGate, type Check, type CheckResult } from "#src/engine/checks.js";
+import { packageTest } from "#src/engine/package-tests.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 import type { Story } from "#src/orchestrator/plan.js";
 
@@ -23,6 +24,13 @@ export function checksBrief(c: Concert, storyId: string): string {
   return `## Checks Concerto ran on this change\n${ran.map((r) => `- \`${r.command}\`: ${r.ok ? "passed" : "failed"}${r.flaky ? " after a rerun (flaky)" : ""}`).join("\n")}`;
 }
 
+/** The detected test command, narrowed to the package a monorepo story stays in; set commands stay. */
+function scoped(c: Concert, story: Story): Check[] {
+  if (c.config.checks.test !== undefined) return c.checks;
+  const narrow = packageTest(c.cwd, story.files);
+  return narrow ? c.checks.map((check) => (check.name === "test" ? { ...check, command: narrow } : check)) : c.checks;
+}
+
 /**
  * Runs the project's checks, then the story's acceptance checks, in the story's folder after a
  * build, before the critic. Returns "" when they pass (or there are none), otherwise the
@@ -30,7 +38,7 @@ export function checksBrief(c: Concert, storyId: string): string {
  */
 export async function gate(c: Concert, job: { story: Story; cwd: string }): Promise<string> {
   const acceptance = job.story.checks.map((command): Check => ({ name: "acceptance", command }));
-  const checks = [...c.checks, ...acceptance];
+  const checks = [...scoped(c, job.story), ...acceptance];
   if (checks.length === 0) return "";
   c.store.story(job.story.id, { status: "checking" });
   const timeoutMs = c.config.checks.timeoutMinutes * MS_PER_MINUTE;

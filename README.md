@@ -222,7 +222,8 @@ to 100 from ten factors:
 | Scope uncertainty | 8% | Tests to run, churn over 90 days, areas touched | 4% each |
 
 Tests come from [SmartTest](https://github.com/RemiPelloux/SmarttyTest) when the repository uses it,
-otherwise from Concerto's own import graph (TypeScript, JavaScript, Python). A misremembered path is
+otherwise from Concerto's own import graph (TypeScript, JavaScript, Python, Go, Rust, PHP, Java,
+Kotlin, C#, Ruby, Swift; [benchmark](docs/language-benchmark.md)). A misremembered path is
 matched to the real file. If a story names no file, the model's four factors decide alone. Every
 score comes with its top three reasons, for example `why 64: complexity 4/5 · touches
 src/auth/session.ts · 2 of 2 source files untested`.

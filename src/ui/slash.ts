@@ -21,7 +21,7 @@ export type SlashContext = {
   show: (panel: Panel | null) => void;
   exit: (reason: ExitReason) => void;
   tour: () => void;
-  /** Opens the arrow-key model picker. */
+  /** Opens the config screen. */
   pick: () => void;
   log: SessionLog;
   /** Puts a saved session on screen and gets it ready to build. */
@@ -123,7 +123,7 @@ export const COMMANDS: readonly Command[] = [
   { name: "history", args: "[n|id]", help: "saved sessions; /history 2 reopens one and builds what did not pass", run: history },
   { name: "onboarding", args: "", help: "replay the animated tour of Concerto", run: (_a, ctx) => ctx.tour() },
   { name: "setup", args: "", help: "detect and test your models again, then pick the routing", run: (_a, ctx) => ctx.exit("setup") },
-  { name: "config", args: "[auto]", help: "pick the model of every role with the arrows; /config auto scans this machine", run: (a, ctx) => (a === "auto" ? configAuto(ctx) : ctx.pick()) },
+  { name: "config", args: "[auto]", help: "organigram, models, settings and skills, edited with the arrows; /config auto scans this machine", run: (a, ctx) => (a === "auto" ? configAuto(ctx) : ctx.pick()) },
   { name: "models", args: "", help: "each role's model chain and how stories route", run: (_a, ctx) => ctx.show({ title: "Models", lines: routingLines(ctx.session.catalog, ctx.session.config) }) },
   { name: "doctor", args: "", help: "models skipped after a failed probe, and why", run: (_a, ctx) => ctx.show({ title: "Doctor", lines: doctorLines(ctx) }) },
   { name: "probe", args: "", help: "test every installed model with one tiny prompt", run: (_a, ctx) => probe(ctx) },

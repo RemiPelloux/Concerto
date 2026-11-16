@@ -73,7 +73,7 @@ type OverlayKeys = { key: { escape: boolean; upArrow: boolean; downArrow: boolea
 
 /**
  * In an overlay, Esc or q closes it and arrows scroll: down is positive, up negative. Each view
- * clamps the value to what it shows. The tour handles its own keys; the model picker all of them.
+ * clamps the value to what it shows. The tour handles its own keys; the config screen all of them.
  */
 function overlayKeys({ key, input, setScroll, close, kind }: OverlayKeys): void {
   if (kind === "models") return;

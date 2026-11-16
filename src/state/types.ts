@@ -34,6 +34,8 @@ export type StoryView = {
   finding?: string;
   /** Files this story's merge wrote into the main folder (isolated runs). */
   merged?: string[];
+  /** The checks Concerto ran on the last attempt: command, result, time, and whether a rerun passed. */
+  checks?: { name: string; command: string; ok: boolean; ms: number; flaky?: boolean }[];
 };
 
 export type LogEntry = { role: Role; label: string; detail: string; result: string };

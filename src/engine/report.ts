@@ -24,8 +24,11 @@ function storyDetails(s: State): string[] {
     const v = s.stories[story.id];
     if (!v) return [];
     const merged = v.merged?.length ? [`- Merged: ${v.merged.map((f) => `\`${f}\``).join(", ")}`] : [];
+    const checks = (v.checks ?? []).map((r) => `- Ran \`${r.command}\`: ${r.ok ? "passed" : "failed"}${r.flaky ? " on a rerun (flaky)" : ""}, ${r.ms} ms`);
+    const covering = v.impact.tests.length ? [`- Tests that cover it: ${v.impact.tests.map((t) => `\`${t}\``).join(", ")}`] : [];
     const why = v.status !== "passed" && v.finding ? [`- Why it did not pass: ${v.finding}`] : [];
-    return merged.length + why.length > 0 ? [`### ${story.title}`, "", ...merged, ...why, ""] : [];
+    const lines = [...merged, ...checks, ...covering, ...why];
+    return lines.length > 0 ? [`### ${story.title}`, "", ...lines, ""] : [];
   });
   return lines.length > 0 ? ["## Stories", "", ...lines] : [];
 }

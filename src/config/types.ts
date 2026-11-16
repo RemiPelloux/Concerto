@@ -5,6 +5,9 @@ export const MAX_SCORE = 100;
 const TIER = z.number().int().min(1).max(MAX_TIER);
 const DEFAULT_TIMEOUT_MINUTES = 30;
 const DEFAULT_CACHE_ENTRIES = 500;
+const DEFAULT_CHECK_MINUTES = 10;
+/** A command, false to turn the check off, or absent to let Concerto detect it. */
+const CheckSetting = z.string().min(1).or(z.literal(false)).optional();
 /** Model refs are checked by parseRef at load; this only keeps obvious garbage out. */
 /** The model id may itself contain slashes (pi lists `z-ai/glm-5.3`); the prefix may not. */
 const REF = z.string().regex(/^[\w.@-]+\/[\w.:/[\]-]+$/, "model refs look like <backend>/<model>");
@@ -70,6 +73,10 @@ export const ConfigSchema = z.object({
   swarm: z.object({ maxParallel: z.number().int().min(1) }),
   /** "worktree": every story builds in its own git worktree and is merged back when it passes. */
   isolation: z.enum(["worktree", "off"]).default("worktree"),
+  /** Run after every build, before the critic: a red check sends the story back to its builder. */
+  checks: z
+    .object({ test: CheckSetting, typecheck: CheckSetting, lint: CheckSetting, timeoutMinutes: z.number().positive().default(DEFAULT_CHECK_MINUTES) })
+    .default({ timeoutMinutes: DEFAULT_CHECK_MINUTES }),
   cache: z.object({
     dir: z.string(),
     ttlHours: z.number().positive(),

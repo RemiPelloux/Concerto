@@ -6,6 +6,7 @@ import { ResponseCache } from "#src/engine/response-cache.js";
 import { Sessions } from "#src/engine/sessions.js";
 import { SystemPrompts } from "#src/engine/system-prompts.js";
 import { claimRun, clearLeftovers } from "#src/engine/worktree.js";
+import { detectChecks, type Check } from "#src/engine/checks.js";
 import { detectToolchain, toolchainNotes } from "#src/engine/toolchain.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { roleChain } from "#src/models/router.js";
@@ -33,6 +34,8 @@ export type Concert = {
   blastRadius: BlastRadius;
   /** Stories build in their own git worktrees (a git repository and isolation not turned off). */
   isolated: boolean;
+  /** What every story must pass before review: the project's tests, type check and lint. */
+  checks: Check[];
   /** Conductor list price: the "one frontier model alone" baseline in the cost panel. */
   brainPrice: Price | null;
 };
@@ -65,6 +68,7 @@ export async function createConcert(init: ConcertInit): Promise<Concert> {
     repo,
     blastRadius: new BlastRadius(cwd, repo.files),
     isolated,
+    checks: detectChecks(cwd, config.checks),
     brainPrice: roleChain(init.catalog, config, "conductor")[0]?.price ?? null,
   };
 }

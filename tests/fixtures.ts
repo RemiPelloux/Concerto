@@ -45,6 +45,7 @@ export function testConfig(): ConcertoConfig {
     skills: [],
     swarm: { maxParallel: 3 },
     isolation: "worktree",
+    checks: { test: false, typecheck: false, lint: false, timeoutMinutes: 1 },
     cache: { dir: ".concerto/cache", ttlHours: 1, maxEntries: 50 },
   };
 }

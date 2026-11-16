@@ -7,6 +7,7 @@ import { overBudget } from "#src/orchestrator/budget.js";
 import { callRole } from "#src/orchestrator/call.js";
 import type { Concert } from "#src/orchestrator/concert.js";
 import { consult } from "#src/orchestrator/consult.js";
+import { checksBrief, gate } from "#src/orchestrator/gate.js";
 import { closeWorkspace, openWorkspace } from "#src/orchestrator/isolate.js";
 import type { Story } from "#src/orchestrator/plan.js";
 
@@ -47,6 +48,7 @@ async function review(c: Concert, { story, cwd }: Job): Promise<{ pass: boolean;
     ...runSegments(c.store.get(), c.repo.text),
     { name: "story", text: storyBrief(story) },
     { name: "blast radius", text: impactBrief(view.impact) },
+    { name: "checks", text: checksBrief(c, story.id) },
   ];
   const chain = c.catalog.reachable(view.critics);
   const out = await callRole(c, { role: "critic", chain, segments, tags: story.tags, sessionKey: `${story.id}-critic`, label: `review: ${story.title}`, cwd });
@@ -63,22 +65,29 @@ async function finish(c: Concert, story: Story, pass: boolean): Promise<boolean>
 }
 
 /**
- * The critic tries to break each attempt, twice at most. Two failures wake the conductor; unless
- * it says stop, one last attempt runs with its guidance. Null: stopped by the budget.
+ * Two attempts, each checked by Concerto's own gate (tests, type check, lint) and then by the
+ * critic; a red gate sends the attempt back without the critic. Two failures wake the conductor;
+ * unless it says stop, one last attempt runs with its guidance. Null: stopped by the budget.
  */
 async function attempts(c: Concert, job: Job): Promise<boolean | null> {
   let feedback = "";
   for (let attempt = 1; attempt <= REVIEWED_ATTEMPTS; attempt += 1) {
     if (overBudget(c, job.story.id)) return null;
     await play(c, job, feedback);
+    const red = await gate(c, job);
+    if (red) {
+      feedback = compact(c, red);
+      continue;
+    }
     const verdict = await review(c, job);
     if (verdict.pass) return true;
     feedback = compact(c, verdict.text);
   }
-  const advice = await consult(c, "repeat-error", `${storyBrief(job.story)}\n\n## Last critique\n${feedback}`);
+  const advice = await consult(c, "repeat-error", `${storyBrief(job.story)}\n\n## Last failure\n${feedback}`);
   if (advice.verdict === "stop") return false;
   if (overBudget(c, job.story.id)) return null;
   await play(c, job, `${feedback}\n\n## Conductor guidance\n${advice.guidance || advice.finding}`);
+  if (await gate(c, job)) return false;
   return (await review(c, job)).pass;
 }
 

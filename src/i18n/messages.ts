@@ -7,6 +7,8 @@ export type Messages = {
   zone: { agents: string; stories: () => string; changes: string };
   retry: (n: number) => string;
   back: string;
+  /** The big call-out over a plan waiting for Enter. */
+  build: string;
   prompt: { scoring: string; planned: string; running: string; retry: (n: number) => string; idle: string };
 };
 
@@ -27,6 +29,7 @@ export const en: Messages = {
   },
   retry: (n) => `enter retries the ${n} ${n === 1 ? "story" : "stories"} that did not pass · tab to review · or type a new request`,
   back: "esc back",
+  build: "ENTER TO BUILD",
   prompt: {
     scoring: "Scoring… type / for commands; a change to the request waits for the plan.",
     planned: "Enter builds the plan · or type a change and Enter to re-plan · / for commands",
@@ -53,6 +56,7 @@ export const fr: Messages = {
   },
   retry: (n) => `entrée relance ${n === 1 ? "la story qui n'a pas réussi" : `les ${n} stories qui n'ont pas réussi`} · tab pour relire · ou tapez une nouvelle demande`,
   back: "échap retour",
+  build: "ENTRÉE POUR CONSTRUIRE",
   prompt: {
     scoring: "Évaluation… tapez / pour les commandes ; une modification de la demande attend le plan.",
     planned: "Entrée construit le plan · ou tapez une modification puis Entrée pour refaire le plan · / pour les commandes",

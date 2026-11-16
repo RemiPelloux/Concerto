@@ -2,17 +2,10 @@ import { Box, Text } from "ink";
 import { useEffect, useState } from "react";
 import { t } from "#src/i18n/index.js";
 import { COLOR } from "#src/ui/theme.js";
+import { GLYPHS, GLYPH_ROWS } from "#src/ui/glyphs.js";
 
-const GLYPHS: Record<string, string[]> = {
-  C: [" ████", "██   ", "██   ", "██   ", " ████"],
-  O: [" ███ ", "██ ██", "██ ██", "██ ██", " ███ "],
-  N: ["██  ██", "███ ██", "██████", "██ ███", "██  ██"],
-  E: ["█████", "██   ", "████ ", "██   ", "█████"],
-  R: ["████ ", "██ ██", "████ ", "██ ██", "██  █"],
-  T: ["██████", "  ██  ", "  ██  ", "  ██  ", "  ██  "],
-};
 const WORD = "CONCERTO";
-const ROWS = 5;
+const ROWS = GLYPH_ROWS;
 export const CREDIT = "built by github.com/RemiPelloux";
 /** How long the welcome stays on screen after launch; the logo stays. */
 export const WELCOME_MS = 3000;

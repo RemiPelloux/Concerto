@@ -102,7 +102,8 @@ describe("story isolation", () => {
       if (is("critic")(r)) return "VERDICT: pass\nchecked";
       const id = storyOf(r);
       prompts.push(r.prompt);
-      const lines = readFileSync(join(r.cwd, "app.txt"), "utf8").split("\n");
+      // A real builder edits CRLF files as they are; on Windows the worktree checkout has CRLF.
+      const lines = readFileSync(join(r.cwd, "app.txt"), "utf8").split(/\r?\n/);
       const rebuild = r.prompt.includes("Your change no longer applies");
       lines[0] = rebuild ? `${lines[0]}+${id}` : `exports: ${id}`;
       writeFileSync(join(r.cwd, "app.txt"), lines.join("\n"));

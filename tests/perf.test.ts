@@ -10,6 +10,8 @@ import { analyzeImpact } from "#src/engine/impact.js";
 import { BlastRadius } from "#src/engine/blast-radius.js";
 import { tempDir } from "#tests/fixtures.js";
 
+/** One benchmark fan-out takes 23 to 30 s on a Windows runner, where git processes start slowly. */
+const FAN_OUT_TIMEOUT_MS = 90_000;
 const boundary = vi.hoisted(() => ({ cwd: "", files: [] as string[], calls: [] as string[], fail: false }));
 
 vi.mock("node:child_process", async (original) => {
@@ -177,7 +179,7 @@ describe("performance harness", () => {
       fixture.cleanup();
     }
     expect(existsSync(fixture.cwd)).toBe(false);
-  });
+  }, FAN_OUT_TIMEOUT_MS);
 
   it("rejects a fan-out without a scored plan and cleans up", async () => {
     const fixture = await createFixture();

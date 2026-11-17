@@ -4,7 +4,6 @@ import { expect, it, vi } from "vitest";
 import { SessionLog } from "#src/engine/session-log.js";
 import { Store } from "#src/state/store.js";
 import { App } from "#src/ui/App.js";
-import { TUI_RENDER } from "#src/ui/launch.js";
 import { CATALOG, PLAN_REPLY, scriptedRunner, tempDir, testConfig } from "#tests/fixtures.js";
 
 // Colours on, as in a real terminal: without them every frame of the wave looks the same.
@@ -50,7 +49,7 @@ it("a plan waiting in a short, shrinking terminal never clears the screen and wr
   const cwd = tempDir();
   const terminal = new ShortTerminal();
   const deps = { config: testConfig(), catalog: CATALOG, store, runner: scriptedRunner(() => PLAN_REPLY).runner, cwd, autoPerform: false, initialRequest: "add health and auth", showTour: false, onExit: () => undefined, log: new SessionLog(cwd) };
-  const app = render(<App {...deps} />, { ...TUI_RENDER, stdout: terminal as never, stdin: new Keyboard() as never, patchConsole: false, exitOnCtrlC: false });
+  const app = render(<App {...deps} />, { stdout: terminal as never, stdin: new Keyboard() as never, patchConsole: false, exitOnCtrlC: false });
   await vi.waitFor(() => expect(store.get().phase).toBe("planned"), { timeout: 5000 });
   // The pane shrinks: the screen must follow, or the flood comes back.
   terminal.rows = 30;

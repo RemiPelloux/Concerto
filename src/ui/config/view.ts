@@ -9,7 +9,8 @@ export const ORG_TAB = 0;
 export const MODELS_TAB = 1;
 export const SKILLS_TAB = 3;
 
-export type ConfigProps = { config: ConcertoConfig; catalog: Catalog; cwd: string; onApply: (config: ConcertoConfig) => void; onClose: () => void };
+/** `rows`: the height the screen may take; unknown when the terminal does not say. */
+export type ConfigProps = { config: ConcertoConfig; catalog: Catalog; cwd: string; onApply: (config: ConcertoConfig) => void; onClose: () => void; rows?: number };
 export type Note = { note: string; bad: boolean };
 export type Confirm = { change: Change; question: string; after: Partial<View> };
 

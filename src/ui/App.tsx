@@ -13,6 +13,7 @@ import { Banner } from "#src/ui/Banner.js";
 import { BuildCallout } from "#src/ui/BuildCallout.js";
 import { UpdateNotice } from "#src/ui/UpdateNotice.js";
 import { ChangesTable } from "#src/ui/ChangesTable.js";
+import { Clip } from "#src/ui/Clip.js";
 import { ConductorPanel } from "#src/ui/ConductorPanel.js";
 import { ConfigScreen } from "#src/ui/config/ConfigScreen.js";
 import type { ConfigProps } from "#src/ui/config/view.js";
@@ -92,20 +93,21 @@ function Header({ state }: { state: State }) {
 
 function OverlayScreen({ state, nav, session }: { state: State; nav: Navigation; session: string }) {
   if (!nav.overlay) return null;
+  const view = <OverlayView overlay={nav.overlay} state={state} scroll={nav.scroll} close={() => nav.open(null)} />;
   return (
-    <Box flexDirection="column" paddingX={1}>
-      <Header state={state} />
-      <OverlayView overlay={nav.overlay} state={state} scroll={nav.scroll} close={() => nav.open(null)} />
+    <FitScreen top={<><Header state={state} />{view}</>}>
       <StatusLine state={state} zone={nav.zone} overlay session={session} />
-    </Box>
+    </FitScreen>
   );
 }
 
-function PickerScreen({ state, picker }: { state: State; picker: ConfigProps }) {
+/** `/config` fills the terminal less one row; the organigram already shows who does what, so no banner. */
+function PickerScreen({ picker }: { picker: ConfigProps }) {
+  const rows = useRows();
+  const height = rows ? rows - 1 : undefined;
   return (
-    <Box flexDirection="column" paddingX={1}>
-      <Header state={state} />
-      <ConfigScreen {...picker} />
+    <Box flexDirection="column" paddingX={1} height={height}>
+      <ConfigScreen {...picker} rows={height} />
     </Box>
   );
 }
@@ -158,9 +160,7 @@ function FitScreen({ top, children }: { top: ReactNode; children: ReactNode }) {
   const rows = useRows();
   return (
     <Box flexDirection="column" paddingX={1} height={rows ? rows - 1 : undefined}>
-      <Box flexDirection="column" flexShrink={1} overflow="hidden">
-        <Box flexDirection="column" flexShrink={0}>{top}</Box>
-      </Box>
+      <Clip>{top}</Clip>
       <Box flexDirection="column" flexShrink={0}>{children}</Box>
     </Box>
   );
@@ -192,7 +192,7 @@ export function App(deps: AppDeps) {
   const { panel, submit, enter, session, apply } = useConcert(deps, hooks);
   usePlanKeys(state, nav, submit);
   const brain = useMemo(() => shortModel(roleChain(deps.catalog, deps.config, "conductor")[0]?.ref ?? ""), [deps.catalog, deps.config]);
-  if (nav.overlay?.kind === "models") return <PickerScreen state={state} picker={{ config: session.config, catalog: session.catalog, cwd: deps.cwd, onApply: apply, onClose: () => nav.open(null) }} />;
+  if (nav.overlay?.kind === "models") return <PickerScreen picker={{ config: session.config, catalog: session.catalog, cwd: deps.cwd, onApply: apply, onClose: () => nav.open(null) }} />;
   if (nav.overlay) return <OverlayScreen state={state} nav={nav} session={deps.log.id} />;
   return (
     <FitScreen top={<Top state={state} nav={nav} brain={brain} swarm={roomy ? deps.config.swarm.maxParallel : 0} />}>

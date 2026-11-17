@@ -13,8 +13,8 @@ function cost(m: ModelInfo): string {
 }
 
 /** The models a slot may use; ● marks the one it runs now. */
-export function ModelList({ options, at, chosen }: { options: ModelInfo[]; at: number; chosen: string }) {
-  const { rows, offset } = around(options, at);
+export function ModelList({ options, at, chosen, room }: { options: ModelInfo[]; at: number; chosen: string; room?: number }) {
+  const { rows, offset } = around(options, at, room);
   return (
     <Box flexDirection="column">
       {rows.map((m, i) => {

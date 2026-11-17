@@ -1,4 +1,5 @@
 import { Box, Text, useStdout } from "ink";
+import { Clip } from "#src/ui/Clip.js";
 import { configPath } from "#src/config/load.js";
 import type { Field } from "#src/ui/config/fields.js";
 import { FieldList, Typing } from "#src/ui/config/FieldList.js";
@@ -19,6 +20,19 @@ const MAX_COLUMN = 34;
 const DEFAULT_COLUMNS = 120;
 
 type BodyProps = { view: View; fields: Field[]; props: ConfigProps };
+
+/** Rows the frame takes around the body: its border, the tab bar and its hint, the summary, the footer. */
+const FRAME_ROWS = 6;
+/** The organigram without leaves: the conductor's box, the branch line, the role boxes. */
+const CHART_ROWS = 11;
+const LEAF_ROWS = 2;
+/** The details box around the fields: its border and its title. */
+const DETAILS_ROWS = 3;
+
+/** Rows a list may take once `used` rows of the body are spoken for; the default when the height is unknown. */
+function room(props: ConfigProps, used: number): number | undefined {
+  return props.rows ? Math.max(1, props.rows - FRAME_ROWS - used) : undefined;
+}
 
 const TAB_HINT: Record<number, string> = {
   [ORG_TAB]: "arrows move · enter edit · a add · d delete · [ ] reorder · u undo",
@@ -62,7 +76,7 @@ function Picking({ view, fields, props }: BodyProps) {
   return (
     <Box flexDirection="column">
       <Text bold color={COLOR.brass}>{view.append ? "Add a fallback for" : "Pick the model for"} {field.slot.label}</Text>
-      <ModelList options={choices(props.catalog, field.slot)} at={view.pick ?? 0} chosen={current(props.config, props.catalog, field.slot)} />
+      <ModelList options={choices(props.catalog, field.slot)} at={view.pick ?? 0} chosen={current(props.config, props.catalog, field.slot)} room={room(props, 2)} />
       {field.slot.brain ? <Text color="gray">Premium only: Deepseek, Grok, Haiku, GPT Terra and Luna never do brain work.</Text> : null}
     </Box>
   );
@@ -90,13 +104,14 @@ const editing = (view: View) => (view.text !== null && !view.adding ? { text: vi
 function Organigram({ view, fields, props }: BodyProps) {
   const org = organize(props.config);
   const slot = selectedSlot(org, view.org);
+  const chart = CHART_ROWS + LEAF_ROWS * Math.max(...org.columns.map((c) => c.leaves.length));
   const scene = { config: props.config, catalog: props.catalog, width: useColumnWidth() };
   return (
     <Box flexDirection="column">
       <OrgChart {...scene} org={org} at={view.org} />
       <Box flexDirection="column" borderStyle="single" borderColor={view.open ? COLOR.brass : "gray"} paddingX={1}>
         <Text bold>{slot.label} <Text color="gray">· {slot.duty}{view.open ? "" : " · enter to edit"}</Text></Text>
-        <FieldList {...scene} fields={fields} at={view.open ? view.field : null} editing={editing(view)} />
+        <FieldList {...scene} fields={fields} at={view.open ? view.field : null} editing={editing(view)} room={room(props, chart + DETAILS_ROWS)} />
       </Box>
     </Box>
   );
@@ -106,7 +121,7 @@ function Listing({ view, fields, props }: BodyProps) {
   const empty = view.tab === SKILLS_TAB ? "No skill rules yet: a adds one." : "No models yet: a adds one.";
   return (
     <Box flexDirection="column">
-      {fields.length === 0 ? <Text color="gray">{empty}</Text> : <FieldList fields={fields} at={view.field} editing={editing(view)} config={props.config} catalog={props.catalog} />}
+      {fields.length === 0 ? <Text color="gray">{empty}</Text> : <FieldList fields={fields} at={view.field} editing={editing(view)} config={props.config} catalog={props.catalog} room={room(props, view.adding ? 1 : 0)} />}
       {view.adding ? <Text color={COLOR.brass}>New model: <Typing text={view.text ?? ""} caret={view.caret} /> <Text color="gray">e.g. anthropic/claude-opus-5-5 · enter adds it at tier 3</Text></Text> : null}
     </Box>
   );
@@ -124,15 +139,21 @@ function Footer({ view }: { view: View }) {
   return view.note ? <Text color={view.bad ? COLOR.bad : COLOR.good} wrap="truncate-end">{view.note}</Text> : null;
 }
 
-/** `/config`: the organigram of who does what, every model, the settings and the skill rules, all editable. */
+/**
+ * `/config`: the organigram of who does what, every model, the settings and the skill rules, all
+ * editable. It takes `rows` at most: lists scroll in the room left, and a body that still does not
+ * fit is cut at the bottom, so the frame never outgrows the terminal.
+ */
 export function ConfigScreen(props: ConfigProps) {
   const { view, fields } = useConfigScreen(props);
   return (
-    <Box flexDirection="column" borderStyle="round" borderColor={COLOR.brass} paddingX={1}>
-      <TabBar view={view} />
-      <Summary props={props} />
-      <Body view={view} fields={fields} props={props} />
-      <Footer view={view} />
+    <Box flexDirection="column" borderStyle="round" borderColor={COLOR.brass} paddingX={1} height={props.rows}>
+      <Box flexDirection="column" flexShrink={0}>
+        <TabBar view={view} />
+        <Summary props={props} />
+      </Box>
+      <Clip><Body view={view} fields={fields} props={props} /></Clip>
+      <Box flexShrink={0}><Footer view={view} /></Box>
     </Box>
   );
 }

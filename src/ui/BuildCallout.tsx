@@ -5,7 +5,7 @@ import { GLYPH_ROWS, glyphs, glyphWidth } from "#src/ui/glyphs.js";
 import { useEffect, useState } from "react";
 
 /** How long each colour holds before the wave moves on by one letter: slow enough to cost little. */
-export const STEP_MS = 250;
+export const STEP_MS = 400;
 /** The call-out's border and padding, plus the app's own side padding. */
 const CHROME = 6;
 const FALLBACK_COLUMNS = 80;

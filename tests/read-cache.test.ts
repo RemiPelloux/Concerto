@@ -9,6 +9,7 @@ import { BlastRadius } from "#src/engine/blast-radius.js";
 import { contextPack } from "#src/engine/context-pack.js";
 import { analyzeImpact } from "#src/engine/impact.js";
 import { ReadCache } from "#src/engine/read-cache.js";
+import { gitEnv } from "#src/runner/env.js";
 import { fixtureConcert, createFixture, performFixture, REQUEST } from "#scripts/perf-fixture.js";
 import { scoreRequest } from "#src/orchestrator/score.js";
 import { tempDir } from "#tests/fixtures.js";
@@ -139,8 +140,9 @@ describe("per-run file reads", () => {
 
   it("keeps cached and uncached change scans equivalent after writes and deletions", async () => {
     const cwd = tempDir();
-    await promisify(execFile)("git", ["init", "--quiet"], { cwd });
-    await promisify(execFile)("git", ["-c", "user.name=Test", "-c", "user.email=test@localhost", "-c", "commit.gpgsign=false", "commit", "--allow-empty", "-m", "fixture"], { cwd });
+    // gitEnv: inside a commit hook, git's GIT_DIR and GIT_INDEX_FILE would aim these at the real repository.
+    await promisify(execFile)("git", ["init", "--quiet"], { cwd, env: gitEnv() });
+    await promisify(execFile)("git", ["-c", "user.name=Test", "-c", "user.email=test@localhost", "-c", "commit.gpgsign=false", "commit", "--allow-empty", "-m", "fixture"], { cwd, env: gitEnv() });
     const path = join(cwd, "new.txt");
     writeFileSync(path, "first\n");
     const cache = new ReadCache();

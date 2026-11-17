@@ -39,8 +39,3 @@ Reproduce with `npx smarttest run --affected`. No timing claim or timing thresho
 is appropriate: the proposed cache has no remaining duplicate parse work to save.
 Existing mutation/coverage regressions remain in `tests/engine.test.ts` and
 `tests/read-cache.test.ts`; no existing cache correctness behavior is changed.
-
-Type check, build, changed-file ESLint and Pelloux audit pass. The affected run
-passes this regression, the performance tests and the startup tests. Seven
-existing failures in `tests/failures.test.ts` concern sandbox subprocess output,
-Git `EPERM` and timeouts; they are outside this test/documentation-only change.

@@ -533,6 +533,9 @@ Add it to pi or as a Codex profile with providers named `ce-gpt`, `ce-claude`, `
 - [Reference](docs/reference.md): every flag, slash command and config key, generated from the code.
 - [Recipes](docs/recipes.md): spend less, work as a team, build issues in CI, run untrusted work safely…
 - [Failures](docs/failures.md): every error message, why it happens and what to do; each one is tested.
+- [Performance](docs/perf-audit.md): the measured baseline, the N+1 audit and the budgets
+  `pnpm check` holds; the [per-run read cache](docs/performance-read-cache.md) and why a
+  [derived-result cache](docs/performance-derived-cache.md) was measured and dropped.
 - [Security](docs/security.md), the [language benchmark](docs/language-benchmark.md) and the
   [benchmark against one model alone](docs/benchmark-single.md).
 

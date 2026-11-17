@@ -59,26 +59,3 @@ concurrent reads, failure/retry, late completion, restored timestamps, deletion,
 recreation, binary bytes, capacity, cached/uncached equivalence and real change
 scans. Its benchmark fan-out regression requires exactly 280 source/untracked
 reads and no repeated path. Run with `npx smarttest run --affected`.
-
-The sandbox's shared node_modules link is read-only to Vite. Verification used a
-temporary local directory of dependency symlinks with writable Vite cache folders,
-then restored the original link. Temporary stdout/stderr forwarding via writeSync
-allowed the affected runner to collect Node subprocess output; no test or product
-code was changed for either environment workaround.
-
-## Verification
-
-Type check, build, changed-file ESLint and Pelloux audit pass. CLI `--help`,
-`--version` and `models --help` exit successfully. The final affected run reports
-109 passing tests and 128 cached passes, including all eight read-cache tests;
-34 failures remain outside this story. No assertions were skipped or loosened.
-
-Sandbox `spawnSync git EPERM` affects `tests/checks.test.ts`,
-`tests/failures.test.ts`, `tests/gate.test.ts`, `tests/isolation.test.ts`,
-`tests/policy.test.tsx`, `tests/publish.test.ts`, `tests/review-work.test.ts`,
-`tests/session-log.test.ts`, `tests/story-change.test.ts`, `tests/ui-logic.test.ts`,
-`tests/verify.test.ts` and one `tests/behaviour.test.ts` case.
-`tests/behaviour.test.ts` also cannot listen on localhost (`EPERM`). Timeout cases
-remain in `tests/failures.test.ts`, `tests/mcp.test.ts`,
-`tests/observability.test.ts` and `tests/policy.test.tsx`. These failures also
-occurred in the earlier affected run before the fan-out regression was added.

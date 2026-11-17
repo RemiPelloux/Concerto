@@ -105,8 +105,8 @@ what a single command loads.
 - Medians come from one machine on one day. Run 2 was 14–23 % faster than run 1
   for startup and fan-out, so a difference below that size is noise. Repeat the
   measurement before claiming a win.
-- The sandbox shares its host with other processes. Scheduling noise shows up
-  in the upper end of each sample range.
+- The machine runs other processes too. Scheduling noise shows up in the upper
+  end of each sample range.
 - The earlier audit in `docs/performance-baseline.md` used another revision and
   another sample count. Its numbers are not comparable with this section.
 

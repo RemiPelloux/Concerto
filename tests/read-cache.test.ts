@@ -24,6 +24,11 @@ vi.mock("node:fs/promises", async (original) => {
   return { ...fs, readFile: vi.fn(fs.readFile) };
 });
 
+/** More than one tick of the coarsest file clock the cache meets: Windows' ~16 ms. */
+const CLOCK_TICK_MS = 50;
+/** One benchmark fan-out takes about 25 s on a Windows runner, where git processes start slowly. */
+const FAN_OUT_TIMEOUT_MS = 90_000;
+
 function reads(path: string): number {
   return vi.mocked(readFileSync).mock.calls.filter(([file]) => file === path).length;
 }
@@ -44,7 +49,7 @@ describe("per-run file reads", () => {
     expect(reads(path) - before).toBe(3);
   });
 
-  it("refreshes edits with restored timestamps, deletions and recreations", () => {
+  it("refreshes edits with restored timestamps, deletions and recreations", async () => {
     const path = join(tempDir(), "source.ts");
     writeFileSync(path, "first");
     const cache = new ReadCache();
@@ -52,6 +57,9 @@ describe("per-run file reads", () => {
     const restored = new Date(0);
     utimesSync(path, restored, restored);
     expect(cache.read(path)).toBe("first");
+    // Only ctime tells this edit apart (same size, mtime put back), and Windows ticks ctime on a
+    // ~16 ms clock: the edit comes a tick after the read, as a builder's edits do.
+    await new Promise((resolve) => setTimeout(resolve, CLOCK_TICK_MS));
     writeFileSync(path, "other");
     utimesSync(path, restored, restored);
     expect(cache.read(path)).toBe("other");
@@ -173,6 +181,6 @@ describe("per-run file reads", () => {
     } finally {
       fixture.cleanup();
     }
-  });
+  }, FAN_OUT_TIMEOUT_MS);
 
 });

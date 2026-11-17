@@ -19,6 +19,9 @@ vi.mock("node:child_process", async (original) => {
   return { ...cp, execFile };
 });
 
+/** Two benchmark fan-outs: about 50 s on a Windows runner, where git processes start slowly. */
+const TWO_FAN_OUTS_TIMEOUT_MS = 120_000;
+
 async function measureFanout(cwd: string) {
   const { execFile } = await import("node:child_process");
   const { promisify } = await import("node:util");
@@ -64,5 +67,5 @@ describe("derived-cache duplicate-work gate", () => {
     } finally {
       fixture.cleanup();
     }
-  });
+  }, TWO_FAN_OUTS_TIMEOUT_MS);
 });

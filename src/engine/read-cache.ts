@@ -11,7 +11,12 @@ function stampOf(path: string): string {
   return `${s.dev}:${s.ino}:${s.size}:${s.mtimeNs}:${s.ctimeNs}`;
 }
 
-/** Source bytes owned by one concert; validate metadata even after external builder writes. */
+/**
+ * Source bytes owned by one concert; validate metadata even after external builder writes.
+ * An edit is seen through device, inode, size, mtime and ctime. One that keeps the size and puts
+ * the mtime back is seen only through ctime, so not within the same tick of the file clock as the
+ * read before it: about 16 ms on Windows.
+ */
 export class ReadCache {
   private readonly entries = new Map<string, Entry>();
   private readonly pending = new Map<string, Pending>();

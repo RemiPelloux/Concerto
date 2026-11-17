@@ -64,6 +64,8 @@ files and risk levels.
 | **The plan, before anything is built.** Edit it, reroute a story, or press Enter. | **Every score explained**, factor by factor. |
 | <img src="docs/assets/screens/agent.svg" alt="An agent's live view: each file it reads, each command it runs and what it says, as it happens."> | <img src="docs/assets/screens/diff.svg" alt="A changed file side by side, the changed words marked."> |
 | **Every agent, live.** | **Diffs side by side**, changed words marked. |
+| <img src="docs/assets/screens/config.svg" alt="The /config screen: the conductor over the rewriter, scorer, soloist, section and critic, each with its model, tier and effort, the routes under their builder, and the soloist's settings open below."> | |
+| **`/config`: who does what, edited in place.** Every model, route and setting, saved as you go. | |
 
 <p align="center"><img src="docs/assets/screens/finished.svg" width="100%" alt="A finished run: all four stories passed, the agents that built and reviewed each, the files changed, and the cost against one frontier model alone."></p>
 

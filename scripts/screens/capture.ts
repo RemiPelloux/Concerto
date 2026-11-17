@@ -6,6 +6,7 @@
  */
 import { EventEmitter } from "node:events";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { ROLES } from "#src/config/types.js";
 import { firstOf } from "#src/models/router.js";
@@ -20,7 +21,7 @@ const OUT = resolve("docs/assets/screens");
 const SIZE = { columns: 150, rows: 46 };
 const WAIT_MS = 15_000;
 const POLL_MS = 50;
-const KEYS = { enter: "\r", tab: "\t", down: "\u001b[B" };
+const KEYS = { enter: "\r", tab: "\t", down: "\u001b[B", right: "\u001b[C" };
 const ESC = "\u001b";
 /** Ink reads a lone Escape on its next tick; a pause keeps two of them apart. */
 const KEY_GAP_MS = 400;
@@ -72,7 +73,9 @@ async function until(check: () => boolean, what: string): Promise<void> {
 async function shot(t: Terminal, name: string, at: { text: string; title: string }): Promise<void> {
   await until(() => plainText(t.frame).includes(at.text), `"${at.text}" for ${name}`);
   await wait(SETTLE_MS);
-  writeFileSync(join(OUT, `${name}.svg`), frameToSvg(t.frame, { title: at.title, columns: SIZE.columns }));
+  // The home folder shows as ~: these shots are published, and a path names the person who took them.
+  const frame = t.frame.replaceAll(homedir(), "~");
+  writeFileSync(join(OUT, `${name}.svg`), frameToSvg(frame, { title: at.title, columns: SIZE.columns }));
   process.stdout.write(`${name}.svg\n`);
 }
 
@@ -104,6 +107,21 @@ async function plan({ t, k, title }: Rig): Promise<void> {
   k.press(KEYS.enter);
   await shot(t, "story", { text: "Why this score", title });
   // Esc closes the view, a second Esc goes back to the prompt.
+  await pressTimes(k, ESC, 2);
+  await until(() => plainText(t.frame).includes("enter to build"), "the prompt");
+  await config({ t, k, title });
+}
+
+/** /config on the soloist's box, then back to the plan. */
+async function config({ t, k }: Rig): Promise<void> {
+  k.press("/config");
+  await wait(KEY_GAP_MS);
+  await pressUntil({ t, k }, KEYS.enter, "Organigram");
+  await pressTimes(k, KEYS.down, 1);
+  await pressTimes(k, KEYS.right, 2);
+  k.press(KEYS.enter);
+  await shot(t, "config", { text: "› model", title: "concerto — /config" });
+  // Esc leaves the box, a second Esc closes /config.
   await pressTimes(k, ESC, 2);
   await until(() => plainText(t.frame).includes("enter to build"), "the prompt");
 }

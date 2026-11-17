@@ -34,7 +34,8 @@ export function demoConfig(): ConcertoConfig {
     ...base,
     models: Object.fromEntries(Object.entries(MODELS).map(([ref, { tier }]) => [ref, { tier }])),
     roles: {
-      conductor: role(TIER.top, ["claude-code/claude-opus-5-5"]), scorer: role(TIER.mid, ["claude-code/claude-sonnet-5-5"]),
+      conductor: role(TIER.top, ["claude-code/claude-opus-5-5"]), rewriter: role(TIER.mid, ["claude-code/claude-sonnet-5-5"]),
+      scorer: role(TIER.mid, ["claude-code/claude-sonnet-5-5"]),
       soloist: role(TIER.top, ["codex/gpt-6.1-sol"], ["read", "edit", "write", "bash"]), critic: role(TIER.mid, ["gemini/gemini-3-pro", "claude-code/claude-sonnet-5-5"]),
       section: role(TIER.local, ["claude-code/claude-haiku-5-5"], ["read", "edit", "write", "bash"]),
     },

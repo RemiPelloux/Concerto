@@ -76,8 +76,8 @@ it("keeps every /config frame shorter than the terminal, tab bar shown once, on 
   ];
   for (const [key, see] of steps) await press(key, see);
   app.unmount();
-  // Frames only: on unmount Ink also writes the escape that shows the cursor again.
-  const frames = terminal.frames.slice(opened).filter((f) => f.includes("\n"));
+  // Frames only: on unmount Ink also writes the escape that shows the cursor again, or under CI a newline.
+  const frames = terminal.frames.slice(opened).filter((f) => f.trim().length > 0 && !f.startsWith("\u001b[?25"));
   expect(frames.length).toBeGreaterThan(10);
   for (const frame of frames) {
     expect(frame.split("\n").length).toBeLessThan(ROWS);

@@ -2,8 +2,8 @@ import { execFile } from "node:child_process";
 import { mkdirSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { describe, expect, it } from "vitest";
-import { readChanges } from "#src/engine/changes.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { readChanges, workingDiff } from "#src/engine/changes.js";
 import { analyzeImpact } from "#src/engine/impact.js";
 import { childEnv, gitEnv } from "#src/runner/env.js";
 import { createFixture, enableSmarttest } from "#scripts/perf-fixture.js";
@@ -12,6 +12,57 @@ const run = promisify(execFile);
 const TAB_NAME = "tab\tname.txt";
 /** Windows forbids tabs in file names, so that case only exists on Linux and macOS. */
 const TAB_NAMES = process.platform === "win32" ? [] : [TAB_NAME];
+const gitStub = vi.hoisted(() => vi.fn<(args: string[]) => Promise<{ stdout: string }> | undefined>());
+
+vi.mock("node:child_process", async (original) => {
+  const cp = await original<typeof import("node:child_process")>();
+  const { promisify } = await import("node:util");
+  const run = promisify(cp.execFile);
+  const execFile = (...args: unknown[]) => Reflect.apply(cp.execFile, undefined, args);
+  Object.assign(execFile, { [promisify.custom]: (bin: string, args: string[], options: object) =>
+    (bin === "git" ? gitStub(args) : undefined) ?? run(bin, args, options) });
+  return { ...cp, execFile };
+});
+
+afterEach(() => gitStub.mockReset());
+
+describe("workingDiff subprocess budgets", () => {
+  it.each([0, 1, 32, 65])("uses 2 + N Git calls and at most 32 concurrent diffs for %i new files", async (count) => {
+    const files = Array.from({ length: count }, (_, index) => `new ${index}.txt`);
+    let active = 0;
+    let peak = 0;
+    gitStub.mockImplementation(async (args) => {
+      if (args[0] === "ls-files") return { stdout: [...files, ".concerto/state.json", ".serena/cache", ""].join("\0") };
+      if (!args.includes("--no-index")) return { stdout: args.includes("--") ? "" : "tracked\n" };
+      active += 1;
+      peak = Math.max(peak, active);
+      const file = args.at(-1)!;
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      if (file === files[0]) await new Promise<void>((resolve) => setImmediate(resolve));
+      active -= 1;
+      throw { stdout: `patch:${file}\n` };
+    });
+    expect(await workingDiff("/fixture")).toBe(`tracked\n${files.map((file) => `patch:${file}\n`).join("")}`);
+    expect(gitStub).toHaveBeenCalledTimes(2 + count);
+    expect(peak).toBe(Math.min(32, count));
+    expect(gitStub.mock.calls.slice(2).map(([args]) => args)).toEqual(files.map((file) => ["diff", "--no-index", "--", "/dev/null", file]));
+  });
+
+  it("keeps successful patches when an untracked file disappears", async () => {
+    gitStub.mockImplementation(async (args) => {
+      if (args[0] === "ls-files") return { stdout: "missing.txt\0new.txt\0" };
+      if (!args.includes("--no-index")) return { stdout: args.includes("--") ? "" : "tracked\n" };
+      if (args.at(-1) === "missing.txt") throw new Error("file disappeared");
+      throw { stdout: "new patch\n" };
+    });
+    expect(await workingDiff("/fixture")).toBe("tracked\nnew patch\n");
+  });
+
+  it("returns an empty diff outside Git", async () => {
+    gitStub.mockRejectedValue(new Error("not a repository"));
+    expect(await workingDiff("/fixture")).toBe("");
+  });
+});
 
 describe("batched subprocess behavior", () => {
   it("matches Git counts for text, empty, binary and symlink files", async () => {

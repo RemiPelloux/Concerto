@@ -1,14 +1,15 @@
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { ReadCache } from "#src/engine/read-cache.js";
 
 const FILE_MODE = 0o600;
 const DIR_MODE = 0o700;
 
-/** Size and modification time: what tells an unchanged file from a changed one. */
+/** Include identity and change time so same-size edits with restored mtimes invalidate. */
 function stampOf(path: string): string | null {
   try {
-    const s = statSync(path);
-    return `${s.size}:${s.mtimeMs}`;
+    const s = statSync(path, { bigint: true });
+    return `${s.dev}:${s.ino}:${s.size}:${s.mtimeNs}:${s.ctimeNs}`;
   } catch {
     return null;
   }
@@ -22,6 +23,7 @@ export type Parsed = { stamp: string; lines: number; specifiers: string[] };
  * whose size and modification time did not change is not read again.
  */
 export class ParseCache {
+  readonly reads = new ReadCache();
   private entries: Record<string, Parsed>;
   private dirty = false;
 

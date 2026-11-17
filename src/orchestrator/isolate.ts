@@ -73,6 +73,6 @@ export async function closeWorkspace(c: Concert, ws: Workspace, end: { pass: boo
   const keep = !ending.merged && !(ending.conflict && end.rebuild);
   await serial(c, () => (keep ? retire(c.cwd, tree.dir, "failed").then(() => undefined) : closeWorktree(c.cwd, tree)));
   // Awaited: a scan still running when the run returns would hold the folder (Windows cannot delete it).
-  await readChanges(c.cwd).then((changes) => c.store.update(() => ({ changes })), () => undefined);
+  await readChanges(c.cwd, c.blastRadius.parseCache.reads).then((changes) => c.store.update(() => ({ changes })), () => undefined);
   return ending;
 }

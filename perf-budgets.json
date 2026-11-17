@@ -1,8 +1,15 @@
 {
-  "_about": "Medians, in milliseconds, that scripts/perf-budgets.ts must stay under: about four times what a laptop measures, so CI runners pass and a real regression does not. Lower a budget when a change makes Concerto faster.",
-  "startup --version (ms)": 150,
-  "startup --help (ms)": 150,
-  "startup --doctor (ms)": 600,
-  "scoring 256 files (ms)": 400,
-  "frame (ms)": 160
+  "_about": "Seven-sample timing medians with at least twice the slower 2026-11-16 post-fix median for CI variance; help also covers twice the earlier 33 ms baseline median. Deterministic count ceilings have no margin. See docs/perf-audit.md Results for workloads and measurements.",
+  "startup --version (ms)": 60,
+  "startup --help (ms)": 70,
+  "startup --doctor (ms)": 230,
+  "scoring 256 files (ms)": 30,
+  "frame (ms)": 90,
+  "startup --help modules": 3,
+  "startup --help heavy modules": 0,
+  "startup --version modules": 8,
+  "startup --version heavy modules": 0,
+  "workingDiff git processes": 26,
+  "scoring runner calls": 1,
+  "fan-out runner calls": 18
 }

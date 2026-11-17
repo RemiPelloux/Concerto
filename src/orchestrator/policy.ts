@@ -20,7 +20,7 @@ export function policyBrief(c: Concert): string {
 export async function policyGate(c: Concert, job: Job): Promise<string> {
   const paths = c.config.policy.protectedPaths;
   if (paths.length === 0) return "";
-  const changed = job.tree ? (await changesIn(job.tree)).map((ch) => ch.file) : (await readChanges(job.cwd)).map((ch) => ch.file);
+  const changed = job.tree ? (await changesIn(job.tree)).map((ch) => ch.file) : (await readChanges(job.cwd, c.blastRadius.parseCache.reads)).map((ch) => ch.file);
   const hits = matching(changed, paths);
   if (hits.length === 0) return "";
   const rule = paths.join(", ");

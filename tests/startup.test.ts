@@ -60,8 +60,24 @@ function command(args: string[], extra: NodeJS.ProcessEnv = {}) {
 
 const BACKEND = /\/runner\/(?:index|claude|codex|pi)\.ts/;
 const UI = /\/(?:src\/ui|node_modules\/(?:ink|react))\//;
+const COMMAND = /\/src\/(?:main\.ts|orchestrator\/)/;
 
 describe("CLI startup imports", () => {
+  it.each(["--help", "-h", "--version", "-v"])("handles %s without loading command modules", (flag) => {
+    const result = command([flag]);
+    expect(result.status, result.output).toBe(0);
+    const version = JSON.parse(readFileSync(resolve("package.json"), "utf8")) as { version: string };
+    expect(result.output).toContain(flag === "--help" || flag === "-h" ? "concerto [options] [request]" : `concerto ${version.version}`);
+    expect(result.modules.filter((url) => COMMAND.test(url) || BACKEND.test(url) || UI.test(url))).toEqual([]);
+  });
+
+  it("rejects an unknown option without loading command modules", () => {
+    const result = command(["--unknown-option"]);
+    expect(result.status).toBe(1);
+    expect(result.output).toContain("Unknown option '--unknown-option'");
+    expect(result.modules.filter((url) => COMMAND.test(url) || BACKEND.test(url) || UI.test(url))).toEqual([]);
+  });
+
   it.each(["--help", "--doctor", "--models", "--clear-cache"])("keeps %s free of UI and backend modules", (flag) => {
     const result = command([flag]);
     expect(result.status, result.output).toBe(0);

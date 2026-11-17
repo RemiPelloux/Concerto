@@ -546,7 +546,7 @@ What is missing and what comes next: [ROADMAP.md](ROADMAP.md).
 git clone https://github.com/RemiPelloux/Concerto && cd Concerto
 pnpm install && git config core.hooksPath .githooks
 pnpm dev                           # run from source
-pnpm check                         # types, lint, tests, Pelloux audit
+pnpm check                         # types, lint, tests, Pelloux audit, build, perf budgets
 ```
 
 Imports use the `#src/...`, `#tests/...` and `#scripts/...` aliases (package.json `imports`),

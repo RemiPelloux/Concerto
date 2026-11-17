@@ -72,10 +72,11 @@ function countLines(text: string): number {
   return text === "" ? 0 : text.split("\n").length;
 }
 
-function readSource(cwd: string, path: string): string {
+function readSource(cwd: string, path: string, cache?: ParseCache): string {
   try {
     const full = join(cwd, path);
-    return statSync(full).size > MAX_BYTES ? "" : readFileSync(full, "utf8");
+    if (statSync(full).size > MAX_BYTES) return "";
+    return cache ? cache.reads.read(full) : readFileSync(full, "utf8");
   } catch {
     return "";
   }
@@ -117,7 +118,7 @@ export class ImportGraph {
     const repo = repoOf(cwd, files);
     const resolution = { files: repo.files, aliases: [...loadAliases(cwd), ...repo.manifests.workspaces] };
     const parse = (from: string) => () => {
-      const text = readSource(cwd, from);
+      const text = readSource(cwd, from, cache);
       return { lines: countLines(text), specifiers: specifiers(from, text) };
     };
     const parsed = files.filter((f) => SOURCE.test(f)).slice(0, MAX_FILES).map((from): [string, string[]] => {

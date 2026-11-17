@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { gitEnv } from "#src/runner/env.js";
 import type { FileChange } from "#src/state/types.js";
+import type { ReadCache } from "#src/engine/read-cache.js";
 
 const run = promisify(execFile);
 const GIT_TIMEOUT_MS = 10_000;
@@ -66,12 +67,12 @@ function addedLines(content: Buffer, binary?: boolean): number {
   return added;
 }
 
-async function untrackedChange(cwd: string, file: string, binary?: boolean): Promise<FileChange[]> {
+async function untrackedChange(cwd: string, file: string, options: { binary?: boolean; cache?: ReadCache }): Promise<FileChange[]> {
   try {
     const path = join(cwd, file);
     const stat = await lstat(path);
-    const content = stat.isSymbolicLink() ? Buffer.from(await readlink(path)) : await readFile(path);
-    return [{ file, added: addedLines(content, stat.isSymbolicLink() ? undefined : binary), removed: 0, status: "added" }];
+    const content = stat.isSymbolicLink() ? Buffer.from(await readlink(path)) : await (options.cache?.readBuffer(path) ?? readFile(path));
+    return [{ file, added: addedLines(content, stat.isSymbolicLink() ? undefined : options.binary), removed: 0, status: "added" }];
   } catch {
     return [];
   }
@@ -81,7 +82,7 @@ async function untrackedChange(cwd: string, file: string, binary?: boolean): Pro
  * What the agents changed in the working tree since the last commit, untracked files included.
  * Concerto's own `.concerto/` folder is left out. Empty outside git.
  */
-export async function readChanges(cwd: string): Promise<FileChange[]> {
+export async function readChanges(cwd: string, cache?: ReadCache): Promise<FileChange[]> {
   try {
     const [tracked, untracked] = await Promise.all([git(cwd, ["diff", "--numstat", "HEAD"]), git(cwd, ["ls-files", "--others", "--exclude-standard", "-z"])]);
     const added = untracked.split("\0").filter((f) => f && !OWN_STATE.test(f));
@@ -89,7 +90,7 @@ export async function readChanges(cwd: string): Promise<FileChange[]> {
     const fresh: FileChange[] = [];
     for (let i = 0; i < added.length; i += READ_CONCURRENCY) {
       const batch = added.slice(i, i + READ_CONCURRENCY);
-      fresh.push(...(await Promise.all(batch.map((file) => untrackedChange(cwd, file, modes.get(file))))).flat());
+      fresh.push(...(await Promise.all(batch.map((file) => untrackedChange(cwd, file, { binary: modes.get(file), cache })))).flat());
     }
     return [...parseNumstat(tracked), ...fresh].sort((a, b) => b.added + b.removed - (a.added + a.removed));
   } catch {
@@ -108,7 +109,13 @@ export async function fileDiff(cwd: string, file: string): Promise<string> {
 export async function workingDiff(cwd: string): Promise<string> {
   try {
     const [tracked, untracked] = await Promise.all([git(cwd, ["diff", "--no-color", "HEAD"]), git(cwd, ["ls-files", "--others", "--exclude-standard", "-z"])]);
-    const fresh = await Promise.all(untracked.split("\0").filter((f) => f && !OWN_STATE.test(f)).map((f) => fileDiff(cwd, f)));
+    const added = untracked.split("\0").filter((f) => f && !OWN_STATE.test(f));
+    const fresh: string[] = [];
+    for (let i = 0; i < added.length; i += READ_CONCURRENCY) {
+      const batch = added.slice(i, i + READ_CONCURRENCY);
+      fresh.push(...await Promise.all(batch.map((file) =>
+        git(cwd, ["diff", "--no-index", "--", "/dev/null", file]).catch((e: { stdout?: string }) => e.stdout ?? ""))));
+    }
     return [tracked, ...fresh].join("");
   } catch {
     return "";

@@ -43,7 +43,7 @@
     "bench:languages": "node --import tsx --conditions=source scripts/language-bench.ts",
     "perf": "pnpm build && node --import tsx --conditions=source scripts/perf-bench.ts",
     "pelloux": "python3 .pelloux/pelloux.py audit",
-    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm pelloux",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm pelloux && pnpm build && pnpm perf:budgets",
     "docs:screens": "node --import tsx --conditions=source scripts/screens/capture.ts"
   },
   "repository": "github:RemiPelloux/Concerto",

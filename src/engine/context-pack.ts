@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { extname, join } from "node:path";
 import { approxTokens } from "#src/engine/condense.js";
+import type { ParseCache } from "#src/engine/parse-cache.js";
 
 const MAX_BYTES = 262_144;
 const MAX_LINE = 140;
@@ -23,22 +24,23 @@ function signature(line: string): string {
 }
 
 /** The exported declarations of one repository file, or [] when it is new, large or another language. */
-export function exportsOf(cwd: string, file: string): string[] {
+export function exportsOf(cwd: string, file: string, cache?: ParseCache): string[] {
   const language = LANGUAGE[extname(file)];
   const path = join(cwd, file);
   if (!language || !existsSync(path) || statSync(path).size > MAX_BYTES) return [];
   const pattern = EXPORTS[language];
-  return pattern ? [...readFileSync(path, "utf8").matchAll(pattern)].map((m) => signature(m[0].trim())) : [];
+  const text = cache ? cache.reads.read(path) : readFileSync(path, "utf8");
+  return pattern ? [...text.matchAll(pattern)].map((m) => signature(m[0].trim())) : [];
 }
 
 /**
  * The story's context pack: each existing file it will touch, with what that file exports. Cut
  * at PACK_TOKENS, so a story naming many large files still gets a small, stable segment.
  */
-export function contextPack(cwd: string, files: readonly string[]): string {
+export function contextPack(cwd: string, files: readonly string[], cache?: ParseCache): string {
   const out = ["## Context pack (what the story's files export now)"];
   for (const file of files) {
-    const signatures = exportsOf(cwd, file);
+    const signatures = exportsOf(cwd, file, cache);
     if (signatures.length === 0) continue;
     const block = [`\`${file}\`:`, ...signatures.map((s) => `  ${s}`)];
     if (approxTokens([...out, ...block].join("\n")) > PACK_TOKENS) break;

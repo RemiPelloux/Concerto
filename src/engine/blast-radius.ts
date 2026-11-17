@@ -46,6 +46,7 @@ async function listFiles(cwd: string, dir = ""): Promise<string[]> {
 
 /** Owned by one concert, never shared between runs. Metadata checks do not reread sources. */
 export class BlastRadius {
+  readonly parseCache: ParseCache;
   private snapshot: Snapshot | undefined;
   private stamps = new Map<string, string>();
 
@@ -53,6 +54,7 @@ export class BlastRadius {
     // The parse cache lives under .concerto/; creating it later would change the folder's
     // modification time and read as a repository change.
     mkdirSync(join(cwd, ".concerto", "cache"), { recursive: true, mode: CACHE_DIR_MODE });
+    this.parseCache = ParseCache.for(cwd);
     this.remember();
   }
 
@@ -76,7 +78,7 @@ export class BlastRadius {
       this.remember();
     }
     if (!this.snapshot) await this.watchDirectories();
-    this.snapshot ??= { files: this.files, graph: new ImportGraph(this.cwd, this.files, ParseCache.for(this.cwd)), explained: new Map(), perFile: new Map() };
+    this.snapshot ??= { files: this.files, graph: new ImportGraph(this.cwd, this.files, this.parseCache), explained: new Map(), perFile: new Map() };
     return this.snapshot;
   }
 }

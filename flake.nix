@@ -4,16 +4,16 @@
   outputs = { self, nixpkgs }:
     let
       archives = {
-        x86_64-linux = { url = "https://github.com/RemiPelloux/Concerto/releases/download/v1.0.5/concerto-linux-x64.tar.gz"; sha256 = "da65e322efdb3c8fccb56bcda2fb77bb522f2a3bb131461f214aee2e91419bf4"; };
-        aarch64-linux = { url = "https://github.com/RemiPelloux/Concerto/releases/download/v1.0.5/concerto-linux-arm64.tar.gz"; sha256 = "81ab80372da797244867d5e33057b6cf074ddac3c76233a87620420877dc36c8"; };
-        x86_64-darwin = { url = "https://github.com/RemiPelloux/Concerto/releases/download/v1.0.5/concerto-macos-x64.tar.gz"; sha256 = "63238e57f80c83898936753270230a420e7a4fd5ad41970a0966a7702576f6db"; };
-        aarch64-darwin = { url = "https://github.com/RemiPelloux/Concerto/releases/download/v1.0.5/concerto-macos-arm64.tar.gz"; sha256 = "35c4d76606752b38e23882a92bab15618fd8d117406a1cddc89dc0f275185c65"; };
+        x86_64-linux = { url = "https://github.com/RemiPelloux/Concerto/releases/download/v1.1.0/concerto-linux-x64.tar.gz"; sha256 = "3610d3ecc4a6d610d3cebaab4c6b6e357699c8a722995296553dfcdfcae4cabe"; };
+        aarch64-linux = { url = "https://github.com/RemiPelloux/Concerto/releases/download/v1.1.0/concerto-linux-arm64.tar.gz"; sha256 = "b0903a92b714321a3171e47a8d173b619fe0617f1fde775466d4a6d254541efe"; };
+        x86_64-darwin = { url = "https://github.com/RemiPelloux/Concerto/releases/download/v1.1.0/concerto-macos-x64.tar.gz"; sha256 = "877998cc18a5deaba09e6cf5c9e0c29d948ded4867d5c7f92844c3fb374d6cba"; };
+        aarch64-darwin = { url = "https://github.com/RemiPelloux/Concerto/releases/download/v1.1.0/concerto-macos-arm64.tar.gz"; sha256 = "a5a014718759f3ca27a4d37d1ba02d5e5aad75fd3a802c669cb81bf11a099e4b"; };
       };
       package = system:
         let pkgs = nixpkgs.legacyPackages.${system};
         in pkgs.stdenvNoCC.mkDerivation {
           pname = "concerto";
-          version = "1.0.5";
+          version = "1.1.0";
           src = pkgs.fetchurl archives.${system};
           sourceRoot = ".";
           dontStrip = true;

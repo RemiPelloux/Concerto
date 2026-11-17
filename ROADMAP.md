@@ -26,6 +26,7 @@ is done.
 | 1.0.4 | A builder that reinstalls dependencies in its worktree no longer fails the whole run at cleanup |
 | 1.0.5 | Sessions saved before the rewriter existed reopen with --resume instead of crashing |
 | 1.1.0 | `/config` edits the whole config (organigram, models, settings, skills, with undo); a per-run read cache, the N+1 in change scans fixed, a lighter `--help` and `--version`, and count budgets in `pnpm check` |
+| 1.1.1 | `/config` fits any terminal and leaves no stale frames on screen: lists and routes scroll, the details box always shows |
 
 ---
 

@@ -2,11 +2,13 @@ import { Box, Text } from "ink";
 import type { ConcertoConfig, Role } from "#src/config/types.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { current, type Slot } from "#src/ui/model-slots.js";
+import { around } from "#src/ui/config/FieldList.js";
 import { branchLine, middle, type Org, type OrgAt } from "#src/ui/config/org.js";
 import { COLOR, ROLE_COLOR, shortModel } from "#src/ui/theme.js";
 
 type Scene = { config: ConcertoConfig; catalog: Catalog; width: number };
-type ChartProps = Scene & { org: Org; at: OrgAt };
+/** `leafRoom`: how many routes or reviews a column shows; the rest scroll with the cursor. */
+type ChartProps = Scene & { org: Org; at: OrgAt; leafRoom: number };
 type NodeProps = Scene & { slot: Slot; on: boolean; boxWidth: number; stem: number | null };
 
 const BORDER = 2;
@@ -62,16 +64,19 @@ function Leaf({ slot, on, last, ...scene }: Scene & { slot: Slot; on: boolean; l
   );
 }
 
-function Leaves({ leaves, row, ...scene }: Scene & { leaves: Slot[]; row: number }) {
+function Leaves({ leaves, row, room, ...scene }: Scene & { leaves: Slot[]; row: number; room: number }) {
+  const { rows, offset } = around(leaves, Math.max(0, row - 1), room);
+  const hidden = leaves.length - rows.length;
   return (
     <Box flexDirection="column" paddingLeft={LEAF_INDENT}>
-      {leaves.map((s, i) => <Leaf key={`${s.kind}-${s.key}`} {...scene} slot={s} on={row === i + 1} last={i === leaves.length - 1} />)}
+      {rows.map((s, i) => <Leaf key={`${s.kind}-${s.key}`} {...scene} slot={s} on={row === offset + i + 1} last={offset + i === leaves.length - 1} />)}
+      {hidden > 0 ? <Text color="gray">{`⋯ ${hidden} more`}</Text> : null}
     </Box>
   );
 }
 
 /** Who does what, as a chart: the conductor on top, the roles under it, routes and reviews below. */
-export function OrgChart({ org, at, ...scene }: ChartProps) {
+export function OrgChart({ org, at, leafRoom, ...scene }: ChartProps) {
   const { width } = scene;
   // Two columns wide, placed so its stem (width - 1 into the box) lands on the branch line's ┴.
   return (
@@ -86,7 +91,7 @@ export function OrgChart({ org, at, ...scene }: ChartProps) {
             <Box paddingLeft={1}>
               <NodeBox {...scene} slot={c.head} on={at.col === col && at.row === 0} boxWidth={width - BORDER} stem={c.leaves.length > 0 ? LEAF_STEM : null} />
             </Box>
-            <Leaves {...scene} leaves={c.leaves} row={at.col === col ? at.row : 0} />
+            <Leaves {...scene} leaves={c.leaves} row={at.col === col ? at.row : 0} room={leafRoom} />
           </Box>
         ))}
       </Box>

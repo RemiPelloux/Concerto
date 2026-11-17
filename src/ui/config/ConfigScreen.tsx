@@ -28,6 +28,17 @@ const CHART_ROWS = 11;
 const LEAF_ROWS = 2;
 /** The details box around the fields: its border and its title. */
 const DETAILS_ROWS = 3;
+/** Fields the details box keeps room for before routes and reviews get any: a role's five. */
+const DETAILS_FIELDS = 5;
+/** The "⋯ N more" line under a column whose routes do not all fit. */
+const MORE_ROWS = 1;
+
+/** Routes or reviews each column may show, leaving the details box its fields; all when the height is unknown. */
+function leafRoom(props: ConfigProps, fields: number): number {
+  if (!props.rows) return Number.MAX_SAFE_INTEGER;
+  const left = props.rows - FRAME_ROWS - CHART_ROWS - DETAILS_ROWS - Math.min(fields, DETAILS_FIELDS) - MORE_ROWS;
+  return Math.max(1, Math.floor(left / LEAF_ROWS));
+}
 
 /** Rows a list may take once `used` rows of the body are spoken for; the default when the height is unknown. */
 function room(props: ConfigProps, used: number): number | undefined {
@@ -104,11 +115,13 @@ const editing = (view: View) => (view.text !== null && !view.adding ? { text: vi
 function Organigram({ view, fields, props }: BodyProps) {
   const org = organize(props.config);
   const slot = selectedSlot(org, view.org);
-  const chart = CHART_ROWS + LEAF_ROWS * Math.max(...org.columns.map((c) => c.leaves.length));
+  const deepest = Math.max(...org.columns.map((c) => c.leaves.length));
+  const leaves = leafRoom(props, fields.length);
+  const chart = CHART_ROWS + LEAF_ROWS * Math.min(deepest, leaves) + (deepest > leaves ? MORE_ROWS : 0);
   const scene = { config: props.config, catalog: props.catalog, width: useColumnWidth() };
   return (
     <Box flexDirection="column">
-      <OrgChart {...scene} org={org} at={view.org} />
+      <OrgChart {...scene} org={org} at={view.org} leafRoom={leaves} />
       <Box flexDirection="column" borderStyle="single" borderColor={view.open ? COLOR.brass : "gray"} paddingX={1}>
         <Text bold>{slot.label} <Text color="gray">· {slot.duty}{view.open ? "" : " · enter to edit"}</Text></Text>
         <FieldList {...scene} fields={fields} at={view.open ? view.field : null} editing={editing(view)} room={room(props, chart + DETAILS_ROWS)} />

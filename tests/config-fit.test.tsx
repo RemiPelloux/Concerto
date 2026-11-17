@@ -8,7 +8,8 @@ import { CATALOG, scriptedRunner, tempDir, testConfig } from "#tests/fixtures.js
 
 const ROWS = 24;
 const COLUMNS = 120;
-const STEP_MS = 150;
+const SETTLE_MS = 150;
+const SLOW_CI_MS = 5000;
 const [DOWN, RIGHT, ENTER, ESCAPE, TAB] = ["\u001b[B", "\u001b[C", "\r", "\u001b", "\t"];
 const TAB_BAR = /Organigram\s+Models\s+Settings\s+Skills/;
 
@@ -55,17 +56,25 @@ it("keeps every /config frame shorter than the terminal, tab bar shown once, on 
   const [terminal, keyboard, cwd] = [new ShortTerminal(), new Keyboard(), tempDir()];
   const deps = { config: crowded(), catalog: CATALOG, store: new Store(), runner: scriptedRunner(() => "").runner, cwd, autoPerform: false, initialRequest: "", showTour: false, onExit: () => undefined, log: new SessionLog(cwd) };
   const app = render(<App {...deps} />, { stdout: terminal as never, stdin: keyboard as never, debug: true, patchConsole: false, exitOnCtrlC: false });
-  await wait(STEP_MS);
-  keyboard.press("/config");
-  await wait(STEP_MS);
-  keyboard.press(ENTER);
-  await vi.waitFor(() => expect(terminal.frames.at(-1)).toMatch(TAB_BAR));
-  await wait(STEP_MS);
-  const opened = terminal.frames.length - 1;
-  for (const key of [DOWN, RIGHT, RIGHT, ENTER, DOWN, DOWN, ESCAPE, DOWN, TAB, DOWN, DOWN, TAB, TAB, TAB, TAB, ENTER, DOWN]) {
+  const screen = () => terminal.frames.at(-1) ?? "";
+  // Each key waits for its result, and the view a moment to listen: a key sent early is lost, and an
+  // Esc that lands before the box opens closes /config instead.
+  const press = async (key: string, see: string) => {
     keyboard.press(key);
-    await wait(STEP_MS);
-  }
+    await vi.waitFor(() => expect(screen()).toContain(see), { timeout: SLOW_CI_MS });
+    await wait(SETTLE_MS);
+  };
+  await wait(SETTLE_MS);
+  keyboard.press("/config");
+  await wait(SETTLE_MS);
+  await press(ENTER, "Organigram");
+  const opened = terminal.frames.length - 1;
+  const steps: [string, string][] = [
+    [DOWN, "rewriter · sharpens"], [RIGHT, "scorer · scores"], [RIGHT, "soloist · builds"], [ENTER, "› model"],
+    [DOWN, "› chain"], [DOWN, "› effort"], [ESCAPE, "enter to edit"], [DOWN, "1. route-0"], [DOWN, "›2. route-1"], [DOWN, "›3. route-2"], [DOWN, "›4. route-3"],
+    [TAB, "a add · d delete · u undo"], [DOWN, "› "], [TAB, "› budget"], [TAB, "Skills"], [TAB, "arrows move"],
+  ];
+  for (const [key, see] of steps) await press(key, see);
   app.unmount();
   // Frames only: on unmount Ink also writes the escape that shows the cursor again.
   const frames = terminal.frames.slice(opened).filter((f) => f.includes("\n"));

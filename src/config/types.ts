@@ -29,6 +29,7 @@ export type Role = (typeof ROLES)[number];
 
 export const EffortSchema = z.enum(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 export type Effort = z.infer<typeof EffortSchema>;
+export const EFFORTS = EffortSchema.options;
 
 const RoleConfigSchema = z.object({
   minTier: TIER,

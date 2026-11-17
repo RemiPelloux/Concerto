@@ -14,9 +14,10 @@ import { BuildCallout } from "#src/ui/BuildCallout.js";
 import { UpdateNotice } from "#src/ui/UpdateNotice.js";
 import { ChangesTable } from "#src/ui/ChangesTable.js";
 import { ConductorPanel } from "#src/ui/ConductorPanel.js";
+import { ConfigScreen } from "#src/ui/config/ConfigScreen.js";
+import type { ConfigProps } from "#src/ui/config/view.js";
 import { CostBar } from "#src/ui/CostBar.js";
 import { LogView } from "#src/ui/LogView.js";
-import { ModelPicker, type PickerProps } from "#src/ui/ModelPicker.js";
 import { OverlayView } from "#src/ui/Overlays.js";
 import { PanelView } from "#src/ui/PanelView.js";
 import { PromptBar, promptHint } from "#src/ui/PromptBar.js";
@@ -100,11 +101,11 @@ function OverlayScreen({ state, nav, session }: { state: State; nav: Navigation;
   );
 }
 
-function PickerScreen({ state, picker }: { state: State; picker: PickerProps }) {
+function PickerScreen({ state, picker }: { state: State; picker: ConfigProps }) {
   return (
     <Box flexDirection="column" paddingX={1}>
       <Header state={state} />
-      <ModelPicker {...picker} />
+      <ConfigScreen {...picker} />
     </Box>
   );
 }

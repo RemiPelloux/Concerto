@@ -70,7 +70,7 @@ Type them in the TUI's prompt; Tab completes them.
 | `/history [n\|id]` | saved sessions; /history 2 reopens one and builds what did not pass |
 | `/onboarding` | replay the animated tour of Concerto |
 | `/setup` | detect and test your models again, then pick the routing |
-| `/config [auto]` | pick the model of every role with the arrows; /config auto scans this machine |
+| `/config [auto]` | organigram, models, settings and skills, edited with the arrows; /config auto scans this machine |
 | `/models` | each role's model chain and how stories route |
 | `/doctor` | models skipped after a failed probe, and why |
 | `/probe` | test every installed model with one tiny prompt |

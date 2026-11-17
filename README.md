@@ -174,7 +174,7 @@ Type `/` for commands, with suggestions as you type and Tab to complete:
 | `/share [n\|id]` | The run as one HTML file in `.concerto/share/`, keys and tokens redacted (`concerto --share <id>` too) |
 | `/onboarding` | Replay the animated tour |
 | `/setup` | Detect and test your models again, then pick the routing |
-| `/config` | Every role, build route and review rule with its model: ↑↓ to move, Enter to open the list of models, Enter to pick one. Applies now and saves to the config in use |
+| `/config` | The whole config on four tabs (Tab switches), all editable. **Organigram**: the conductor, the roles under it (rewriter, scorer, soloist, section, critic) and their routes and reviews as a chart; arrows move, Enter edits the box (model, chain, effort, tier, tools, tags, score band), `a` adds a route or review, `d` deletes it, `[` `]` change the order they are tried in. **Chain**: Enter on a chain to reorder it, `a` to add a fallback, `d` to remove one. **Models**: tier and cost factor of every model, `a` adds one, `d` deletes it. **Settings**: budget, the rewriter on or off, providers tried first, gates, timeout, parallel builders, cache. **Skills**: which tags get which skills, `a`/`d` add or delete a rule. ←→ change a value, Enter types or picks one, `u` undoes. Each change applies now and saves that one value to the config in use |
 | `/config auto` | Scan this machine (Claude Code, Codex and its servers, pi providers, API keys), test every model, save and apply the proposed organigram: who plans, scores, builds and reviews |
 | `/models` | Each role's model chain and how stories route |
 | `/doctor` | Models skipped after a failed probe, and why |

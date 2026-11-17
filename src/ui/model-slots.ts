@@ -1,19 +1,17 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { bundledConfigPath, editableConfigPath, userConfigPath } from "#src/config/load.js";
 import { MAX_SCORE, ROLES, type ConcertoConfig, type Role, type Route } from "#src/config/types.js";
 import { BRAIN_ROLES, isCheapModel } from "#src/models/brain.js";
 import type { Catalog } from "#src/models/catalog.js";
 import { roleChain } from "#src/models/router.js";
 import type { ModelInfo } from "#src/models/types.js";
 import { claudeFirst } from "#src/setup/organigram.js";
-import { writeUserConfig } from "#src/setup/user-config.js";
+import { savePath, type Path } from "#src/ui/config/paths.js";
 
 /** One place a model is chosen: a role, a build route or a review rule. */
 export type Slot = { kind: "roles" | "routes" | "reviews"; key: string; index: number; label: string; duty: string; brain: boolean };
 
 const DUTY: Record<Role, string> = {
-  rewriter: "sharpens the request, asks, writes the design brief",
   conductor: "plans the request and splits it into stories",
+  rewriter: "sharpens the request, asks, writes the design brief",
   scorer: "scores each story",
   soloist: "builds the hard stories",
   critic: "reviews every story",
@@ -26,15 +24,20 @@ function takes(r: Pick<Route, "tags" | "minScore" | "maxScore">): string {
   return parts.filter(Boolean).join(" · ") || "any story";
 }
 
+export function roleSlot(role: Role): Slot {
+  return { kind: "roles", key: role, index: ROLES.indexOf(role), label: role, duty: DUTY[role], brain: BRAIN_ROLES.has(role) };
+}
+
 /** Every slot, in the order the picker lists them: roles, then build routes, then reviews. */
 export function slots(config: ConcertoConfig): Slot[] {
-  const roles = ROLES.map((r, index): Slot => ({ kind: "roles", key: r, index, label: r, duty: DUTY[r], brain: BRAIN_ROLES.has(r) }));
+  const roles = ROLES.map(roleSlot);
   const routes = config.routes.map((r, index): Slot => ({ kind: "routes", key: r.name, index, label: `build: ${r.name}`, duty: `${r.role} · ${takes(r)}`, brain: BRAIN_ROLES.has(r.role) }));
   const reviews = config.reviews.map((r, index): Slot => ({ kind: "reviews", key: `review-${index}`, index, label: `review ${index + 1}`, duty: `reviews ${takes(r)}`, brain: true }));
   return [...roles, ...routes, ...reviews];
 }
 
-function slotModels(config: ConcertoConfig, slot: Slot): string[] {
+/** The models configured for the slot, in order: its chain before preferences and reachability. */
+export function slotModels(config: ConcertoConfig, slot: Slot): string[] {
   if (slot.kind === "roles") return config.roles[slot.key as Role].models;
   return config[slot.kind][slot.index]?.models ?? [];
 }
@@ -63,17 +66,12 @@ export function assign(config: ConcertoConfig, slot: Slot, ref: string): Concert
   return { ...config, [slot.kind]: config[slot.kind].map((r, i) => (i === slot.index ? { ...r, models } : r)) };
 }
 
-/**
- * Saves the choice to the config in use, editing only that slot so hand edits and comments stay.
- * The bundled default is never edited: the personal config gets the whole config instead.
- */
+/** Where the slot's model chain lives in the config. */
+export function slotPath(slot: Slot): Path {
+  return slot.kind === "roles" ? ["roles", slot.key, "models"] : [slot.kind, slot.index, "models"];
+}
+
+/** Saves the slot's chain to the config in use, editing only that slot in the file. */
 export function saveChoice(cwd: string, config: ConcertoConfig, slot: Slot): string {
-  const path = editableConfigPath(cwd);
-  if (path === bundledConfigPath() || !existsSync(path)) return writeUserConfig(config, userConfigPath());
-  const raw = JSON.parse(readFileSync(path, "utf8")) as Record<string, Record<string, { models?: string[] }> | undefined>;
-  const holder = slot.kind === "roles" ? raw.roles?.[slot.key] : raw[slot.kind]?.[slot.index];
-  if (!holder) return writeUserConfig(config, userConfigPath());
-  holder.models = slotModels(config, slot);
-  writeFileSync(path, `${JSON.stringify(raw, null, 2)}\n`);
-  return path;
+  return savePath(cwd, config, slotPath(slot));
 }

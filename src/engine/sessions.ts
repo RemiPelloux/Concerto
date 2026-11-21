@@ -11,6 +11,8 @@ export type SessionHandle = { dir: string; id: string; resume: boolean; sent: Re
  */
 export class Sessions {
   private readonly sent = new Map<string, Set<string>>();
+  /** How many times a session that never got going was given up, per key and model. */
+  private readonly restarts = new Map<string, number>();
 
   constructor(
     readonly dir: string,
@@ -19,9 +21,22 @@ export class Sessions {
 
   open(key: string, model: ModelInfo): SessionHandle | undefined {
     if (!RESUMABLE.has(model.parsed.backend)) return undefined;
-    const id = `${this.runId}-${key.replace(/[^\w-]/g, "_")}-${hashParts([model.ref])}`;
+    const base = `${this.runId}-${key.replace(/[^\w-]/g, "_")}-${hashParts([model.ref])}`;
+    const restarts = this.restarts.get(base) ?? 0;
+    const id = restarts ? `${base}-${restarts}` : base;
     const known = this.sent.get(id);
     return { dir: this.dir, id, resume: known !== undefined, sent: known ?? new Set() };
+  }
+
+  /**
+   * Called when a turn failed. A session that already worked stays: it can be resumed. One that
+   * this turn opened is given up, since the agent may have created it before failing: opening that
+   * id again as new is refused ("Session ID … is already in use"), so the next turn gets a new id.
+   */
+  discard(handle: SessionHandle): void {
+    if (handle.resume) return;
+    const base = handle.id.replace(/-\d+$/, "");
+    this.restarts.set(base, (this.restarts.get(base) ?? 0) + 1);
   }
 
   /** Called after a successful turn: the session now holds these segments. */

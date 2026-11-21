@@ -1,3 +1,4 @@
+import type { Usage } from "#src/runner/usage.js";
 import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { appendFileSync, chmodSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
@@ -24,7 +25,8 @@ export function excludeLocally(cwd: string): void {
 }
 
 /** One model call as /replay shows it. */
-export type CallRecord = { at: number; role: string; label: string; model: string; prompt: string; answer: string; ms: number; ok: boolean };
+/** `usage` and `turns`: what a finished call spent, from the agent's own report; absent on a failed call. */
+export type CallRecord = { at: number; role: string; label: string; model: string; prompt: string; answer: string; ms: number; ok: boolean; usage?: Usage; turns?: number };
 
 /** The calls a session recorded, oldest first; [] when it recorded none. */
 export function readCalls(path: string): CallRecord[] {

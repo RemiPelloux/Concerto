@@ -59,7 +59,7 @@ async function watched(c: Concert, call: Call, req: RunRequest): Promise<RunResu
   const feed = new AgentFeed(c.store, id);
   const notes = onEvent(c, call, req.model);
   c.store.agentStart({ id, role: call.role, model: req.model, label: call.label ?? call.role });
-  const record = (answer: string, ok: boolean) => SessionLog.current?.call({ at: started, role: call.role, label: call.label ?? call.role, model: req.model, prompt: req.prompt, answer, ms: Date.now() - started, ok });
+  const record = (answer: string, done?: RunResult) => SessionLog.current?.call({ at: started, role: call.role, label: call.label ?? call.role, model: req.model, prompt: req.prompt, answer, ms: Date.now() - started, ok: done !== undefined, usage: done?.usage, turns: done?.turns });
   const started = Date.now();
   try {
     const result = await c.runner(req, (e) => {
@@ -68,13 +68,13 @@ async function watched(c: Concert, call: Call, req: RunRequest): Promise<RunResu
     });
     feed.flush();
     c.store.agentEnd(id, "done");
-    record(result.text, true);
+    record(result.text, result);
     return result;
   } catch (error) {
     feed.push({ kind: "error", message: errorMessage(error).split("\n")[0] ?? "failed" });
     feed.flush();
     c.store.agentEnd(id, "failed");
-    record(errorMessage(error), false);
+    record(errorMessage(error));
     throw error;
   }
 }
@@ -130,15 +130,24 @@ async function execute(c: Concert, call: Call, model: ModelInfo): Promise<RunRes
     skills: c.skills.for(call.tags ?? []), cwd: call.cwd ?? c.cwd,
     session, signal: AbortSignal.any([c.signal, timeout]),
     fullAccess: c.config.codexFullAccess, sandbox: sandboxFor(c, call, session?.dir),
+  }).catch((error: unknown) => {
+    if (session) c.sessions.discard(session);
+    throw error;
   });
   if (session) c.sessions.record(session, assembled.hashes);
+  account(c, { call, model, result, skipped: assembled.skippedTokens });
+  return result;
+}
+
+/** Adds a finished call to the ledger, its story and its account's spending window. */
+function account(c: Concert, done: { call: Call; model: ModelInfo; result: RunResult; skipped: number }): void {
+  const { call, model, result } = done;
   const entry = { usage: result.usage, price: model.price, brain: c.brainPrice, role: call.role, model: model.ref };
   const before = c.store.get().ledger.usage.cost;
-  c.store.update((s) => ({ ledger: bump(record(s.ledger, entry), "dedupedTokens", assembled.skippedTokens) }));
+  c.store.update((s) => ({ ledger: bump(record(s.ledger, entry), "dedupedTokens", done.skipped) }));
   const cost = c.store.get().ledger.usage.cost - before;
   if (call.storyId) charge(c, call.storyId, cost);
   recordSpend(model.parsed.prefix, cost);
-  return result;
 }
 
 async function attempt(c: Concert, call: Call, model: ModelInfo): Promise<RunResult> {

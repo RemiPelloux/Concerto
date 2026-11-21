@@ -1,6 +1,6 @@
 {
   "name": "concerto",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Terminal orchestrator that scores a request into user stories and routes each one to the most efficient model available through pi.",
   "type": "module",
   "bin": {

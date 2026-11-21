@@ -27,6 +27,7 @@ is done.
 | 1.0.5 | Sessions saved before the rewriter existed reopen with --resume instead of crashing |
 | 1.1.0 | `/config` edits the whole config (organigram, models, settings, skills, with undo); a per-run read cache, the N+1 in change scans fixed, a lighter `--help` and `--version`, and count budgets in `pnpm check` |
 | 1.1.1 | `/config` fits any terminal and leaves no stale frames on screen: lists and routes scroll, the details box always shows |
+| 1.1.2 | Claude Code's 5-hour and weekly limits pause the account until their reset; a failed call no longer locks its session; the call log keeps each call's tokens |
 
 ---
 

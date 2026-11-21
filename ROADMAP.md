@@ -28,6 +28,7 @@ is done.
 | 1.1.0 | `/config` edits the whole config (organigram, models, settings, skills, with undo); a per-run read cache, the N+1 in change scans fixed, a lighter `--help` and `--version`, and count budgets in `pnpm check` |
 | 1.1.1 | `/config` fits any terminal and leaves no stale frames on screen: lists and routes scroll, the details box always shows |
 | 1.1.2 | Claude Code's 5-hour and weekly limits pause the account until their reset; a failed call no longer locks its session; the call log keeps each call's tokens |
+| 1.2.0 | The conductor gets a code map from the import graph, saved to `.concerto/code-map.md`, and the merged diff before calling done, instead of searching for them |
 
 ---
 

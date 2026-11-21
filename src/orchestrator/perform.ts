@@ -1,3 +1,4 @@
+import { mergedBrief } from "#src/orchestrator/merged-brief.js";
 import { relative } from "node:path";
 import { writeReport } from "#src/engine/report.js";
 import { announceEnd } from "#src/orchestrator/announce.js";
@@ -56,7 +57,7 @@ export async function perform(c: Concert): Promise<void> {
     if (!(await lockPlan(c))) return;
     const results: boolean[] = [];
     for (const wave of executionWaves(plan.stories)) results.push(...(await playWave(c, wave)));
-    const final = await consult(c, "before-done");
+    const final = await consult(c, "before-done", await mergedBrief(c.store.get(), c.cwd));
     const error = runOutcome(c, final.verdict === "ok" ? "" : final.finding);
     c.store.update(() => ({ phase: error ? "failed" : "done", error }));
   } finally {

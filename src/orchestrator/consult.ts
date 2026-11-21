@@ -1,3 +1,4 @@
+import { codeMap, saveCodeMap } from "#src/engine/code-map.js";
 import type { Checkpoint } from "#src/state/types.js";
 import { details, headline, logBrief, readTag, runSegments } from "#src/orchestrator/briefs.js";
 import { callRole } from "#src/orchestrator/call.js";
@@ -7,7 +8,7 @@ const QUESTIONS: Record<Checkpoint, string> = {
   "plan-lock": "Checkpoint: before the plan locks. What did the plan miss?",
   "repeat-error": "Checkpoint: the same story failed twice, or its builder is blocked. Root cause or rabbit hole? Give the one change that unblocks it.",
   "critics-disagree": "Checkpoint: two critics from different vendors disagree on a high-risk story. Read the change and both reviews: ok if it is right, revise with what to fix, stop if it cannot be fixed here.",
-  "before-done": "Checkpoint: before calling done. Did the diff break anything? Read the files; run nothing.",
+  "before-done": "Checkpoint: before calling done. Did the merged diff below break anything the stories did not mention? Start from the diff; open a file only when the diff cannot answer, never anything under .concerto/, where stories build. Run nothing.",
 };
 
 export type Consult = { verdict: "ok" | "revise" | "stop"; finding: string; guidance: string };
@@ -21,10 +22,26 @@ function verdictOf(reply: string): Consult["verdict"] {
  * Wakes the conductor at one of its checkpoints. It reads; it never writes. Its session
  * is warm across checkpoints, so the snapshot and plan are only sent the first time.
  */
+/** One code map per run, built when the conductor first wakes and saved for anyone to read. */
+const maps = new WeakMap<Concert, Promise<string>>();
+
+function runCodeMap(c: Concert): Promise<string> {
+  const known = maps.get(c);
+  if (known) return known;
+  const built = c.blastRadius.get().then(({ graph }) => {
+    const map = codeMap(graph, c.store.get().plan?.stories.flatMap((st) => st.files) ?? []);
+    saveCodeMap(c.cwd, map);
+    return map;
+  });
+  maps.set(c, built);
+  return built;
+}
+
 export async function consult(c: Concert, checkpoint: Checkpoint, extra = ""): Promise<Consult> {
   const s = c.store.get();
   const segments = [
     ...runSegments(s, c.repo.text),
+    { name: "code map", text: await runCodeMap(c) },
     { name: "log", text: logBrief(s.log) },
     { name: "question", text: [`## ${QUESTIONS[checkpoint]}`, extra].filter(Boolean).join("\n\n") },
   ];

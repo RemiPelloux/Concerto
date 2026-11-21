@@ -326,11 +326,18 @@ cache answers and only for the same request on the same repository.
   failed first conductor call is followed by a fresh session, then a resumed one. · shipped
 - **Every call's cost can be traced.** The call log keeps each call's tokens and turns. *Done:* a
   conductor call's line has its input, output, cache reads and writes. · shipped
-- **The conductor reads less.** At each checkpoint it gets the plan, the stories' state and the
-  merged diff, so it does not rebuild them with its own tools. *Done:* on the benchmark fixture,
-  conductor prompt tokens per checkpoint drop by half with the same verdicts.
+- **The conductor reads less.** It gets a code map built from the import graph, no model
+  involved (the most imported files, and who imports each file the plan touches), saved to
+  `.concerto/code-map.md`; before calling done it gets each story's merged files and the merged
+  diff, instead of being told to go and read them. · built, the map costs 31 ms and about 480
+  tokens on a 380-file repository. *Done:* on a real run of the benchmark fixture, the
+  conductor's tokens per checkpoint drop by half with the same verdicts.
 - **Agents stay in their own worktree.** No agent reads `.concerto/worktrees`, where the other
-  stories build. *Done:* a builder's or the conductor's file search never returns a path there.
+  stories build. The conductor is told so before calling done. *Done:* a builder's or the
+  conductor's file search never returns a path there.
+- **A folder summary from a light model, if the map is not enough.** One line per folder, written
+  once by a light model and kept in `.concerto` until that folder changes. *Done:* only when a
+  real run shows the conductor still exploring with the map in hand.
 
 ## Beyond 1.0
 

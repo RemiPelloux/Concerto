@@ -199,7 +199,7 @@ A finding is N+1 when a loop makes one awaited I/O call per item, and the number
 | `src/orchestrator/build.ts` | 121 | The attempts loop (also lines 125 and 149 to 158, the rounds loop). Each step calls a model or opens and closes a workspace. | None. | leave: model calls in sequence, and each step needs the previous result |
 | `src/orchestrator/custom-roles.ts` | 58 | One model call per custom role, in sequence (also line 73). | None. | leave: model calls, sequential by design |
 | `src/orchestrator/call.ts` | 169 | The model fallback chain tries each model in order until one answers. | None. | leave: a fallback chain is sequential by definition |
-| `src/orchestrator/perform.ts` | 18 | Stories run in batches of a fixed size (also lines 58 and 59, one wave at a time). | None. | leave: already batched by size and by wave |
+| `src/orchestrator/perform.ts` | 19 | Stories run in batches of a fixed size (also lines 59 and 60, one wave at a time). | None. | leave: already batched by size and by wave |
 | `src/runner/local.ts` | 106 | The agent step loop calls the model once per step. | None. | leave: each step depends on the previous model reply |
 
 `src/commands` has no awaited per-item loop. `src/ui` has one `await` outside a loop in `review-commands.ts`, which calls `storyPatch` once.

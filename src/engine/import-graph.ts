@@ -155,6 +155,16 @@ export class ImportGraph {
     return counted;
   }
 
+  /** The files that import `file` directly, sorted. */
+  importersOf(file: string): string[] {
+    return [...(this.importers.get(file) ?? [])].sort();
+  }
+
+  /** Every file something imports, the most imported first. */
+  ranked(): { file: string; importers: number }[] {
+    return [...this.importers].map(([file, from]) => ({ file, importers: from.size })).sort((a, b) => b.importers - a.importers || a.file.localeCompare(b.file));
+  }
+
   /** Files that import any of `files`, directly or through up to `depth` hops. */
   dependentsOf(files: readonly string[], depth = DEFAULT_DEPTH): string[] {
     return [...this.levels(files, depth).keys()];

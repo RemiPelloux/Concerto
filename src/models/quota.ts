@@ -1,6 +1,7 @@
 import { appendFileSync, chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { userConfigPath } from "#src/config/load.js";
+import { resetAt } from "#src/models/reset-time.js";
 
 const MS_PER_MINUTE = 60_000;
 const MS_PER_HOUR = 3_600_000;
@@ -11,7 +12,8 @@ const DIR_MODE = 0o700;
 const DEFAULT_PAUSE_MINUTES = 15;
 /** Usage older than the longest window anyone sets is dropped when the file is rewritten. */
 const KEEP_HOURS = 24;
-const RATE_LIMIT = /rate.?limit|usage limit|quota|too many requests|\b429\b/i;
+/** Claude Code says "You've hit your 5-hour limit" or "your weekly limit". */
+const RATE_LIMIT = /rate.?limit|usage limit|hit your [\w -]*limit|quota|too many requests|\b429\b/i;
 const RESET_EPOCH = /limit reached\|(\d{10})/i;
 const RESET_IN = /(?:try again|resets?) in (\d+)\s*(minute|hour)/i;
 
@@ -48,15 +50,16 @@ export function recordSpend(account: string, cost: number, path = usagePath()): 
 }
 
 /**
- * When an error says the account is rate-limited, pauses it until the reset it names (Claude
- * Code prints an epoch, Codex "try again in 2 hours"), or a quarter of an hour. Returns whether it did.
+ * When an error says the account is rate-limited, pauses it until the reset it names (an epoch,
+ * Codex's "try again in 2 hours", Claude Code's "resets 6:40pm (Europe/Paris)"), or a quarter of
+ * an hour. Returns whether it did.
  */
 export function pauseOnLimit(account: string, message: string, path = usagePath()): boolean {
   if (!RATE_LIMIT.test(message)) return false;
   const epoch = RESET_EPOCH.exec(message)?.[1];
   const inMatch = RESET_IN.exec(message);
   const wait = inMatch ? Number(inMatch[1]) * (inMatch[2]?.toLowerCase() === "hour" ? MS_PER_HOUR : MS_PER_MINUTE) : DEFAULT_PAUSE_MINUTES * MS_PER_MINUTE;
-  const until = epoch ? Number(epoch) * MS_PER_SECOND : Date.now() + wait;
+  const until = epoch ? Number(epoch) * MS_PER_SECOND : (resetAt(message) ?? Date.now() + wait);
   append(path, { at: Date.now(), account, until });
   return true;
 }

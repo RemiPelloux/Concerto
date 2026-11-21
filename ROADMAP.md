@@ -305,6 +305,32 @@ row fails the build; the benchmark runs from one command.
 
 ---
 
+## 1.2 · learn from real runs
+
+Each sprint starts from what Concerto's own runs recorded: `.concerto/logs/*.calls.jsonl`, the run
+reports and `stats.json`.
+
+### Sprint 19 · reliable under limits · in progress
+
+What two real runs showed: 6 fallbacks; the conductor cost $7.64 of $13.66, more than every
+builder together; the local cache never hit, which is expected, as only the scorer and rewriter
+cache answers and only for the same request on the same repository.
+
+- **Claude Code's limits are recognised.** "You've hit your 5-hour limit · resets 6:40pm
+  (Europe/Paris)" pauses the account until that time, or the named weekday for the weekly limit.
+  *Done:* the message pauses `claude-code` until the next 6:40pm in Paris, across a
+  daylight-saving change. · shipped
+- **A failed call no longer locks its session.** A turn that fails on a session it opened gives
+  the id up; the next turn starts fresh instead of "Session ID … is already in use". *Done:* a
+  failed first conductor call is followed by a fresh session, then a resumed one. · shipped
+- **Every call's cost can be traced.** The call log keeps each call's tokens and turns. *Done:* a
+  conductor call's line has its input, output, cache reads and writes. · shipped
+- **The conductor reads less.** At each checkpoint it gets the plan, the stories' state and the
+  merged diff, so it does not rebuild them with its own tools. *Done:* on the benchmark fixture,
+  conductor prompt tokens per checkpoint drop by half with the same verdicts.
+- **Agents stay in their own worktree.** No agent reads `.concerto/worktrees`, where the other
+  stories build. *Done:* a builder's or the conductor's file search never returns a path there.
+
 ## Beyond 1.0
 
 - **Remote runners:** send stories to machines or cloud workers, with the TUI as the control
